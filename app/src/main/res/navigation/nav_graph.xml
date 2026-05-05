@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/FirstFragment">
+
+    <fragment
+        android:id="@+id/FirstFragment"
+        android:name="com.example.cctest.FirstFragment"
+        android:label="@string/first_fragment_label"
+        tools:layout="@layout/fragment_first">
+
+        <action
+            android:id="@+id/action_FirstFragment_to_SecondFragment"
+            app:destination="@id/SecondFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/SecondFragment"
+        android:name="com.example.cctest.SecondFragment"
+        android:label="@string/second_fragment_label"
+        tools:layout="@layout/fragment_second">
+
+        <action
+            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            app:destination="@id/FirstFragment" />
+
+        <action
+            android:id="@+id/action_SecondFragment_to_PersonalInfoFragment"
+            app:destination="@id/PersonalInfoFragment" />
+
+        <action
+            android:id="@+id/action_SecondFragment_to_PersonalInfoListFragment"
+            app:destination="@id/PersonalInfoListFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/intentEntryFragment"
+        android:name="com.example.cctest.routing.ui.IntentEntryFragment"
+        android:label="@string/routing_entry_fragment_label"
+        tools:layout="@layout/fragment_intent_entry" />
+
+    <fragment
+        android:id="@+id/personalInfoFormStepFragment"
+        android:name="com.example.cctest.routing.ui.PersonalInfoFormStepFragment"
+        android:label="@string/routing_form_fragment_label"
+        tools:layout="@layout/fragment_personal_info" />
+
+    <fragment
+        android:id="@+id/reviewSubmitFragment"
+        android:name="com.example.cctest.routing.ui.ReviewSubmitFragment"
+        android:label="@string/routing_review_fragment_label"
+        tools:layout="@layout/fragment_review_submit" />
+
+    <fragment
+        android:id="@+id/resultFragment"
+        android:name="com.example.cctest.routing.ui.ResultFragment"
+        android:label="@string/routing_result_fragment_label"
+        tools:layout="@layout/fragment_result" />
+
+    <fragment
+        android:id="@+id/PersonalInfoFragment"
+        android:name="com.example.cctest.PersonalInfoFragment"
+        android:label="@string/personal_info_fragment_label"
+        tools:layout="@layout/fragment_personal_info" />
+
+    <fragment
+        android:id="@+id/PersonalInfoListFragment"
+        android:name="com.example.cctest.PersonalInfoListFragment"
+        android:label="@string/personal_info_list_fragment_label"
+        tools:layout="@layout/fragment_personal_info_list" />
+</navigation>

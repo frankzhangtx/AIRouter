@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能路由技术方案</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4eee4;
+            --surface: rgba(255, 250, 244, 0.9);
+            --surface-strong: #fff8f0;
+            --ink: #1f1a16;
+            --muted: #665a4f;
+            --line: rgba(79, 63, 47, 0.16);
+            --line-strong: rgba(79, 63, 47, 0.3);
+            --accent: #b04a1f;
+            --accent-soft: rgba(176, 74, 31, 0.12);
+            --teal: #146c67;
+            --teal-soft: rgba(20, 108, 103, 0.12);
+            --gold: #9c6918;
+            --gold-soft: rgba(156, 105, 24, 0.12);
+            --rose: #8d4656;
+            --rose-soft: rgba(141, 70, 86, 0.12);
+            --shadow: 0 24px 80px rgba(46, 31, 21, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1220px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(176, 74, 31, 0.16), transparent 32%),
+                radial-gradient(circle at top right, rgba(20, 108, 103, 0.12), transparent 30%),
+                linear-gradient(180deg, #fcf8f3 0%, var(--bg) 44%, #efe3d6 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.14em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -72px;
+            top: -72px;
+            width: 240px;
+            height: 240px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(176, 74, 31, 0.18), transparent 68%);
+            pointer-events: none;
+        }
+
+        .eyebrow,
+        .tag,
+        .phase {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.74);
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow,
+        .tag {
+            color: var(--accent);
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 10.8em;
+            font-family: "Iowan Old Style", "Georgia", serif;
+            font-size: clamp(2.6rem, 4.6vw, 4.9rem);
+            line-height: 0.95;
+            letter-spacing: -0.05em;
+        }
+
+        .hero p {
+            margin-top: 18px;
+            max-width: 900px;
+            color: var(--muted);
+            font-size: 1.04rem;
+            line-height: 1.76;
+        }
+
+        .hero-grid,
+        .pill-grid,
+        .architecture-grid,
+        .double-grid,
+        .triple-grid,
+        .flow-grid,
+        .lane-grid,
+        .focus-grid,
+        .phase-grid,
+        .file-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-grid {
+            margin-top: 24px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .hero-stat,
+        .pill-card,
+        .layer-card,
+        .model-card,
+        .note-card,
+        .flow-card,
+        .lane-card,
+        .focus-card,
+        .phase-card,
+        .file-card {
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.74);
+        }
+
+        .hero-stat small {
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero-stat strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 1.78rem;
+            line-height: 1;
+        }
+
+        .hero-stat span,
+        .pill-card p,
+        .layer-card p,
+        .model-card p,
+        .note-card p,
+        .flow-card p,
+        .lane-card p,
+        .focus-card p,
+        .phase-card p,
+        .file-card p {
+            display: block;
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.62;
+            font-size: 0.94rem;
+        }
+
+        section {
+            margin-top: 28px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .panel-title {
+            max-width: 820px;
+        }
+
+        .panel-title h2 {
+            font-size: 1.58rem;
+            line-height: 1.15;
+        }
+
+        .panel-title p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.72;
+        }
+
+        .pill-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .architecture-grid {
+            margin-top: 20px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .layer-card {
+            min-height: 212px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(251, 246, 239, 0.94));
+        }
+
+        .label {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .layer-card h3,
+        .model-card h3,
+        .note-card h3,
+        .flow-card h3,
+        .lane-card h3,
+        .focus-card h3,
+        .phase-card h3,
+        .file-card h3 {
+            margin-top: 14px;
+            font-size: 1.03rem;
+        }
+
+        .layer-card ul,
+        .model-card ul,
+        .note-card ul,
+        .phase-card ul,
+        .file-card ul {
+            margin: 12px 0 0;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.62;
+            font-size: 0.92rem;
+        }
+
+        .double-grid {
+            grid-template-columns: 1.05fr 0.95fr;
+            align-items: start;
+        }
+
+        .triple-grid {
+            margin-top: 20px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .flow-shell {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(250, 244, 235, 0.96));
+        }
+
+        .flow-grid {
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            align-items: stretch;
+        }
+
+        .flow-card {
+            min-height: 180px;
+            background: var(--surface-strong);
+        }
+
+        .flow-step {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: var(--teal-soft);
+            color: var(--teal);
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 1.65rem;
+            font-weight: 800;
+        }
+
+        .lane-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .lane-card {
+            min-height: 238px;
+        }
+
+        .lane-card.dashboard {
+            background: linear-gradient(180deg, rgba(176, 74, 31, 0.08), rgba(255, 255, 255, 0.82));
+        }
+
+        .lane-card.list {
+            background: linear-gradient(180deg, rgba(20, 108, 103, 0.08), rgba(255, 255, 255, 0.82));
+        }
+
+        .lane-card.detail {
+            background: linear-gradient(180deg, rgba(156, 105, 24, 0.08), rgba(255, 255, 255, 0.82));
+        }
+
+        .lane-card.workflow {
+            background: linear-gradient(180deg, rgba(141, 70, 86, 0.08), rgba(255, 255, 255, 0.82));
+        }
+
+        .kind {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            font-size: 0.74rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .route-pills {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .route-pills span {
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.84);
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .focus-grid,
+        .file-grid,
+        .phase-grid {
+            margin-top: 20px;
+        }
+
+        .focus-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .focus-card.highlight {
+            background: linear-gradient(180deg, rgba(20, 108, 103, 0.1), rgba(255, 255, 255, 0.82));
+            border-color: rgba(20, 108, 103, 0.26);
+        }
+
+        .focus-card.warn {
+            background: linear-gradient(180deg, rgba(156, 105, 24, 0.1), rgba(255, 255, 255, 0.82));
+            border-color: rgba(156, 105, 24, 0.26);
+        }
+
+        .decision,
+        .footer-note {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            border: 1px dashed var(--line-strong);
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 0.94rem;
+        }
+
+        .file-grid,
+        .phase-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .phase-card {
+            min-height: 280px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(250, 246, 239, 0.94));
+        }
+
+        .phase {
+            background: var(--gold-soft);
+            color: var(--gold);
+        }
+
+        @media (max-width: 1100px) {
+            .hero-grid,
+            .pill-grid,
+            .architecture-grid,
+            .triple-grid,
+            .lane-grid,
+            .file-grid,
+            .phase-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .double-grid,
+            .focus-grid,
+            .flow-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .arrow {
+                transform: rotate(90deg);
+                min-height: 18px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding-top: 18px;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero-grid,
+            .pill-grid,
+            .architecture-grid,
+            .triple-grid,
+            .lane-grid,
+            .focus-grid,
+            .file-grid,
+            .phase-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header class="hero">
+            <div class="eyebrow">Technical Solution · Journey Routing</div>
+            <h1>智能路由技术方案<br>Journey 执行版</h1>
+            <p>
+                这份技术方案不再把“文本 -> 终点页”当成唯一主线，而是改成“文本 -> 最终目标 -> JourneyPlan -> 顺序回放”。
+                重点不是让系统跳得更快，而是让系统在保持 parser 可切换的同时，严格遵循当前 App 已有页面路径和动作语义，
+                例如 <code>FirstFragment -&gt; SecondFragment -&gt; HouseDashboardActivity</code>。
+            </p>
+
+            <div class="hero-grid">
+                <article class="hero-stat">
+                    <small>默认行为</small>
+                    <strong>操作回放</strong>
+                    <span>优先回放已有页面路径，而不是首页直跳终态。</span>
+                </article>
+                <article class="hero-stat">
+                    <small>核心对象</small>
+                    <strong>JourneyPlan</strong>
+                    <span>最终目标和到达路径必须同时建模。</span>
+                </article>
+                <article class="hero-stat">
+                    <small>规划拆分</small>
+                    <strong>2 段</strong>
+                    <span><code>TargetPlanner</code> 先定目标，<code>JourneyPlanner</code> 再定步骤。</span>
+                </article>
+                <article class="hero-stat">
+                    <small>LLM 接入时机</small>
+                    <strong>最后再接</strong>
+                    <span>先把 Journey 骨架立稳，再把模糊理解切给真实 provider。</span>
+                </article>
+            </div>
+        </header>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>技术主干</h2>
+                    <p>新版主干不是缩短路径，而是让“理解”和“执行”各自处在正确的层级里。</p>
+                </div>
+                <div class="tag">Technical Spine</div>
+            </div>
+
+            <div class="pill-grid">
+                <article class="pill-card">
+                    <h3>1. Parser 继续只给语义</h3>
+                    <p><code>IntentParser</code> 仍只输出 <code>UserGoal + Slots</code>，不返回 UI 动作或 Journey。</p>
+                </article>
+                <article class="pill-card">
+                    <h3>2. TargetPlanner 只定最终目标</h3>
+                    <p>把语义收敛成 <code>RouteTarget</code>、<code>RecordRef</code>、<code>ListFocusRequest</code> 等终态信息。</p>
+                </article>
+                <article class="pill-card">
+                    <h3>3. JourneyPlanner 负责“怎么去”</h3>
+                    <p>根据当前所在页面和可达关系，规划需要经过哪些页面、执行哪些动作。</p>
+                </article>
+                <article class="pill-card">
+                    <h3>4. JourneyExecutor 顺序回放</h3>
+                    <p>执行步骤、等待页面 ready、避免重复触发，并在必要时停在中间页。</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>分层架构图</h2>
+                    <p>执行模型改变后，架构边界应从“解析 -> 规划 -> 导航”升级为“解析 -> 目标规划 -> 路径规划 -> Journey 执行”。</p>
+                </div>
+                <div class="tag">Architecture</div>
+            </div>
+
+            <div class="architecture-grid">
+                <article class="layer-card">
+                    <div class="label">Input</div>
+                    <h3>输入入口层</h3>
+                    <ul>
+                        <li><code>FirstFragment</code></li>
+                        <li><code>SecondFragment</code></li>
+                        <li><code>IntentEntryFragment</code></li>
+                        <li>收集文本和 entry source</li>
+                    </ul>
+                </article>
+
+                <article class="layer-card">
+                    <div class="label">Parse</div>
+                    <h3>组合解析层</h3>
+                    <ul>
+                        <li><code>CompositeIntentParser</code></li>
+                        <li><code>RuleBasedIntentParser</code></li>
+                        <li><code>LlmIntentParser</code></li>
+                        <li><code>ParseResultValidator</code></li>
+                    </ul>
+                </article>
+
+                <article class="layer-card">
+                    <div class="label">Target</div>
+                    <h3>目标规划层</h3>
+                    <ul>
+                        <li><code>TargetPlanner</code></li>
+                        <li><code>RouteTarget</code></li>
+                        <li><code>PersonalInfoRecordResolver</code></li>
+                        <li>决定最终业务目标</li>
+                    </ul>
+                </article>
+
+                <article class="layer-card">
+                    <div class="label">Journey</div>
+                    <h3>路径规划层</h3>
+                    <ul>
+                        <li><code>JourneyPlanner</code></li>
+                        <li><code>JourneyPlan</code></li>
+                        <li><code>JourneyStep</code></li>
+                        <li>决定先去哪个页面、再做什么</li>
+                    </ul>
+                </article>
+
+                <article class="layer-card">
+                    <div class="label">Execute</div>
+                    <h3>执行与同步层</h3>
+                    <ul>
+                        <li><code>JourneyExecutor</code></li>
+                        <li><code>RoutingSessionViewModel</code></li>
+                        <li><code>UiEffect</code></li>
+                        <li>顺序回放并等待页面 ready</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="double-grid">
+            <article class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>核心协议</h2>
+                        <p>这些协议决定“理解”和“执行”之间有没有被正确隔离。</p>
+                    </div>
+                    <div class="tag">Contracts</div>
+                </div>
+
+                <div class="triple-grid">
+                    <article class="model-card">
+                        <h3><code>ParseResult</code></h3>
+                        <p>仍然只包含受限业务语义，不允许穿透到 UI 细节层。</p>
+                        <ul>
+                            <li><code>userGoal</code></li>
+                            <li><code>slots</code></li>
+                            <li><code>confidence</code></li>
+                            <li><code>ambiguityReason</code></li>
+                        </ul>
+                    </article>
+
+                    <article class="model-card">
+                        <h3><code>RouteTarget</code></h3>
+                        <p>只表示最终业务目标，不承载“先去哪一页”的路径信息。</p>
+                        <ul>
+                            <li><code>WorkflowTarget</code></li>
+                            <li><code>ListTarget</code></li>
+                            <li><code>DetailTarget</code></li>
+                            <li><code>HouseDashboardTarget</code></li>
+                        </ul>
+                    </article>
+
+                    <article class="model-card">
+                        <h3><code>JourneyPlan</code></h3>
+                        <p>真正描述用户可感知执行路径的主对象。</p>
+                        <ul>
+                            <li><code>entryScreen</code></li>
+                            <li><code>steps</code></li>
+                            <li><code>fallbackPolicy</code></li>
+                            <li><code>completionCondition</code></li>
+                        </ul>
+                    </article>
+                </div>
+            </article>
+
+            <article class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>执行约束</h2>
+                        <p>Journey 模型必须解决“像用户操作”，但不能退化成不受控的 UI 自动化。</p>
+                    </div>
+                    <div class="tag">Guardrails</div>
+                </div>
+
+                <div class="triple-grid" style="grid-template-columns: 1fr;">
+                    <article class="note-card">
+                        <h3>模型不能返回 UI 拓扑</h3>
+                        <p>LLM 不允许输出“先去 SecondFragment”或“点击某个按钮”这类路径细节。</p>
+                    </article>
+                    <article class="note-card">
+                        <h3>可达关系必须本地声明</h3>
+                        <p><code>First -&gt; Second</code>、<code>Second -&gt; List / Dashboard</code>、<code>List -&gt; Detail</code> 必须在本地 registry 里显式存在。</p>
+                    </article>
+                    <article class="note-card">
+                        <h3>直达只能作为产品优化开关</h3>
+                        <p>默认策略仍然是 Journey 回放。只有产品明确要求时，才允许跳过中间页。</p>
+                    </article>
+                </div>
+            </article>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>Journey 主流程</h2>
+                    <p>主流程从“识别后导航”升级成“识别后规划目标，再规划路径，再执行 Journey”。</p>
+                </div>
+                <div class="tag">Journey Flow</div>
+            </div>
+
+            <div class="flow-shell">
+                <div class="flow-grid">
+                    <article class="flow-card">
+                        <div class="flow-step">Step 01</div>
+                        <h3>自然语言输入</h3>
+                        <p>例如“打开 Work 看板”“查看第 12 条记录”“查看张雨桐的信息”。</p>
+                    </article>
+                    <div class="arrow">→</div>
+                    <article class="flow-card">
+                        <div class="flow-step">Step 02</div>
+                        <h3>解析业务语义</h3>
+                        <p>规则优先，LLM 补强，但输出始终限定为 <code>UserGoal + Slots</code>。</p>
+                    </article>
+                    <div class="arrow">→</div>
+                    <article class="flow-card">
+                        <div class="flow-step">Step 03</div>
+                        <h3>目标与路径规划</h3>
+                        <p>先得到最终 <code>RouteTarget</code>，再生成完整 <code>JourneyPlan</code>。</p>
+                    </article>
+                    <div class="arrow">→</div>
+                    <article class="flow-card">
+                        <div class="flow-step">Step 04</div>
+                        <h3>顺序回放 Journey</h3>
+                        <p>进入中间页、聚焦列表、打开详情或启动 Activity，并在必要时停下。</p>
+                    </article>
+                </div>
+
+                <div class="lane-grid">
+                    <article class="lane-card dashboard">
+                        <div class="kind">Dashboard Journey</div>
+                        <h3>打开 Work 看板</h3>
+                        <p>用户应先看到第二页，再进入看板页，最后停在 <code>WORK</code>。</p>
+                        <div class="route-pills">
+                            <span>First</span>
+                            <span>Second</span>
+                            <span>Dashboard</span>
+                            <span>WORK</span>
+                        </div>
+                    </article>
+
+                    <article class="lane-card list">
+                        <div class="kind">List Journey</div>
+                        <h3>查看第 12 条记录</h3>
+                        <p>先到第二页，再进列表页，最后在列表页执行聚焦和高亮。</p>
+                        <div class="route-pills">
+                            <span>First</span>
+                            <span>Second</span>
+                            <span>List</span>
+                            <span>Focus</span>
+                        </div>
+                    </article>
+
+                    <article class="lane-card detail">
+                        <div class="kind">Detail Journey</div>
+                        <h3>查看张雨桐的信息</h3>
+                        <p>默认先过列表页。唯一命中才打开详情，歧义时停在列表页等待确认。</p>
+                        <div class="route-pills">
+                            <span>First</span>
+                            <span>Second</span>
+                            <span>List</span>
+                            <span>Detail / Stop</span>
+                        </div>
+                    </article>
+
+                    <article class="lane-card workflow">
+                        <div class="kind">Workflow Journey</div>
+                        <h3>补全个人资料</h3>
+                        <p>工作流也应复用 Journey 主干，避免让用户瞬移到难理解的中间步骤页。</p>
+                        <div class="route-pills">
+                            <span>First</span>
+                            <span>Second</span>
+                            <span>Form</span>
+                            <span>Review / Result</span>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>状态、副作用与页面就绪同步</h2>
+                    <p>Journey 能否稳定，取决于状态里有没有步骤索引，以及执行器能否在页面 ready 后再继续。</p>
+                </div>
+                <div class="tag">State &amp; Effects</div>
+            </div>
+
+            <div class="focus-grid">
+                <article class="focus-card">
+                    <h3>1. SessionState 增加 journey 维度</h3>
+                    <p>建议增加 <code>activeJourneyId</code>、<code>currentJourneyStepIndex</code>、<code>journeyStatus</code>。</p>
+                </article>
+                <article class="focus-card highlight">
+                    <h3>2. UiEffect 改为执行 Journey</h3>
+                    <p>核心副作用从 <code>NavigateTo(target)</code> 升级为 <code>ExecuteJourney(plan)</code>。</p>
+                </article>
+                <article class="focus-card">
+                    <h3>3. 页面 ready 后再继续</h3>
+                    <p>JourneyExecutor 需要等待目标 Fragment / Activity 稳定后再执行下一步。</p>
+                </article>
+                <article class="focus-card warn">
+                    <h3>4. 歧义时允许暂停</h3>
+                    <p>Journey 状态应支持 <code>PAUSED</code>，让流程停在列表页而不是强行继续。</p>
+                </article>
+                <article class="focus-card">
+                    <h3>5. 旋转屏不能重复执行</h3>
+                    <p>动作本身仍然不能长期常驻状态，否则会在重建后再次打开看板或详情。</p>
+                </article>
+            </div>
+
+            <div class="decision">
+                <strong>关键结论：</strong>
+                Journey 不是“把多个导航动作串在一起”那么简单，它必须包含步骤索引、页面 ready 同步和暂停/失败处理能力。
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>可达关系与改造落点</h2>
+                    <p>代码改动应集中在页面可达关系、规划层和执行层，不把 Journey 细节扩散到每个页面各自判断。</p>
+                </div>
+                <div class="tag">Module Map</div>
+            </div>
+
+            <div class="file-grid">
+                <article class="file-card">
+                    <h3>Reachability</h3>
+                    <p>描述页面和动作的可达关系。</p>
+                    <ul>
+                        <li><code>DestinationContractRegistry.kt</code></li>
+                        <li><code>EntryActionRegistry.kt</code></li>
+                        <li>声明 <code>First -&gt; Second</code>、<code>Second -&gt; List / Dashboard</code></li>
+                    </ul>
+                </article>
+
+                <article class="file-card">
+                    <h3>Planning</h3>
+                    <p>把最终目标和路径规划拆开。</p>
+                    <ul>
+                        <li><code>TargetPlanner.kt</code></li>
+                        <li><code>JourneyPlanner.kt</code></li>
+                        <li><code>RouteTarget.kt</code>、<code>JourneyPlan.kt</code></li>
+                    </ul>
+                </article>
+
+                <article class="file-card">
+                    <h3>State &amp; Execution</h3>
+                    <p>负责会话状态、步骤索引和顺序回放。</p>
+                    <ul>
+                        <li><code>RoutingSessionViewModel.kt</code></li>
+                        <li><code>SessionState.kt</code></li>
+                        <li><code>UiEffect.kt</code>、<code>JourneyExecutor.kt</code></li>
+                    </ul>
+                </article>
+
+                <article class="file-card">
+                    <h3>Page Behavior</h3>
+                    <p>页面只负责暴露动作和承接回放。</p>
+                    <ul>
+                        <li><code>SecondFragment.kt</code></li>
+                        <li><code>PersonalInfoListFragment.kt</code></li>
+                        <li><code>HouseDashboardActivity.kt</code>、<code>PersonalInfoDetailActivity.kt</code></li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="decision">
+                <strong>页面角色变化：</strong>
+                <code>SecondFragment</code> 不再只是示例页；它会成为首页进入列表、看板和工作流的重要 Journey 节点。
+                <code>PersonalInfoListFragment</code> 也不再只是终点页，而是详情页前的显式确认/聚焦页。
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <h2>建议实施节奏</h2>
+                    <p>阶段顺序必须围绕 Journey 骨架展开，而不是先接真实 LLM 再回头修执行体验。</p>
+                </div>
+                <div class="tag">Phased Delivery</div>
+            </div>
+
+            <div class="phase-grid">
+                <article class="phase-card">
+                    <div class="phase">Stage 1</div>
+                    <h3>补页面可达关系</h3>
+                    <p>先把真实页面路径结构化。</p>
+                    <ul>
+                        <li>明确 <code>First -&gt; Second</code></li>
+                        <li>明确 <code>Second -&gt; List / Dashboard</code></li>
+                        <li>明确 <code>List -&gt; Detail</code></li>
+                    </ul>
+                </article>
+
+                <article class="phase-card">
+                    <div class="phase">Stage 2</div>
+                    <h3>引入 Journey 核架</h3>
+                    <p>从单点导航升级为分步回放。</p>
+                    <ul>
+                        <li>新增 <code>JourneyPlan</code>、<code>JourneyStep</code>、<code>JourneyExecutor</code></li>
+                        <li>增加 journey 状态和执行副作用</li>
+                        <li>打通页面 ready 同步逻辑</li>
+                    </ul>
+                </article>
+
+                <article class="phase-card">
+                    <div class="phase">Stage 3</div>
+                    <h3>跑通三条关键路径</h3>
+                    <p>优先交付用户最容易感知的 Journey。</p>
+                    <ul>
+                        <li><code>First -&gt; Second -&gt; Dashboard</code></li>
+                        <li><code>First -&gt; Second -&gt; List -&gt; Focus</code></li>
+                        <li><code>First -&gt; Second -&gt; List -&gt; Detail / Stop</code></li>
+                    </ul>
+                </article>
+
+                <article class="phase-card">
+                    <div class="phase">Stage 4</div>
+                    <h3>最后再接真实 LLM</h3>
+                    <p>Journey 稳定后，再把模糊语义接到真实 provider。</p>
+                    <ul>
+                        <li>保持 parser 只输出语义</li>
+                        <li>通过 gateway 和 feature flag 接入 provider</li>
+                        <li>避免退回“理解后直跳终态”的旧模型</li>
+                    </ul>
+                </article>
+            </div>
+
+            <div class="footer-note">
+                这版技术方案对应项目根目录的 <code>add-intelligent-routing.md</code>。
+                当前最重要的结论是：<strong>先立住 Journey 主干，再接真实 LLM。</strong>
+                如果顺序反过来，系统只会更擅长“猜到目标”，但仍然不会“像用户一样到达目标”。
+            </div>
+        </section>
+    </main>
+</body>
+</html>

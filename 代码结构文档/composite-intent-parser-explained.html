@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompositeIntentParser 类说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.92);
+            --surface-strong: #fff9f2;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.28);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1260px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 800px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.02;
+        }
+
+        .hero .lead {
+            margin-top: 14px;
+            max-width: 780px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel + .panel,
+        .layout + .panel,
+        .panel + .diagram-panel {
+            margin-top: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 26px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(249, 243, 234, 0.86) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.5px;
+            line-height: 1.78;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .summary-grid,
+        .branch-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card,
+        .branch-card {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .summary-card h3,
+        .branch-card h3 {
+            font-size: 16px;
+        }
+
+        .summary-card p,
+        .branch-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .branch-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .chip {
+            padding: 9px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.58);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .callout {
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--gold);
+            border-radius: 14px;
+            background: var(--gold-soft);
+            color: #4f3917;
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 8px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.72), rgba(244, 236, 227, 0.92));
+            border: 1px solid var(--line);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 1040px;
+            height: auto;
+            display: block;
+        }
+
+        .caption {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1040px) {
+            .layout,
+            .branch-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding: 18px 0 52px;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 22px;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            pre {
+                font-size: 12.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="eyebrow">routing / parser</div>
+            <h1><code>CompositeIntentParser</code> 类说明与流程图</h1>
+            <p class="lead">
+                这个页面仿照现有的 <code>submitUserInput</code> 说明页，收录
+                <code>app/src/main/java/com/example/cctest/routing/parser/CompositeIntentParser.kt</code>
+                中 <code>parse()</code> 的带注释版本，并把规则解析、LLM 解析、失败兜底三层逻辑拆开展示。
+            </p>
+            <div class="meta-list">
+                <div class="meta-item">源码位置：<code>CompositeIntentParser.kt:3-47</code></div>
+                <div class="meta-item">验证依据：<code>CompositeIntentParserTest.kt:20-78</code> 覆盖 4 条主要分支</div>
+                <div class="meta-item">适用场景：理解意图解析器如何在规则引擎与 LLM 之间做分流与兜底</div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">带中文注释的核心函数</h2>
+                        <p class="panel-subtitle">注释仅用于阅读说明，不会改动 Kotlin 源文件。</p>
+                    </div>
+                </div>
+                <div class="code-shell">
+<pre><code>class CompositeIntentParser(
+    private val ruleBasedIntentParser: IntentParser,
+    private val llmIntentParser: IntentParser,
+    private val config: IntentParsingConfig
+) : IntentParser {
+    override suspend fun parse(request: ParseRequest): ParseOutcome {
+        <span class="comment">// 第一步永远先走规则解析器，拿到一个 ruleOutcome。</span>
+        val ruleOutcome = ruleBasedIntentParser.parse(request)
+
+        <span class="comment">// 只有同时满足 3 个条件，才直接信任规则结果并立刻返回：</span>
+        <span class="comment">// 1. 规则解析成功</span>
+        <span class="comment">// 2. 目标不是 Unknown，说明不是“我没识别出来”</span>
+        <span class="comment">// 3. 置信度达到配置阈值 minRuleConfidence</span>
+        if (ruleOutcome is ParseOutcome.Success &amp;&amp;
+            ruleOutcome.result.userGoal != UserGoal.Unknown &amp;&amp;
+            ruleOutcome.result.confidence &gt;= config.minRuleConfidence
+        ) {
+            return ruleOutcome
+        }
+
+        <span class="comment">// 如果规则结果不够强，但配置明确禁止 LLM，再差也只能把规则结果原样返回。</span>
+        if (!config.enableLlmParsing) {
+            return ruleOutcome
+        }
+
+        <span class="comment">// 允许 LLM 时，再发起第二阶段解析。</span>
+        val llmOutcome = llmIntentParser.parse(request)
+
+        <span class="comment">// 只要 LLM 成功，就优先采用 LLM 的结构化结果。</span>
+        if (llmOutcome is ParseOutcome.Success) {
+            <span class="comment">// 这里会重写 parserSource，用来保留“这次结果是如何得到的”。</span>
+            val parserSource = if (ruleOutcome is ParseOutcome.Success) {
+                <span class="comment">// 说明规则其实也产出了结果，只是置信度不够，后来被 LLM 接管。</span>
+                ParserSource.RULE_THEN_LLM
+            } else {
+                <span class="comment">// 说明规则阶段直接失败，最终结果纯粹来自 LLM。</span>
+                ParserSource.LLM
+            }
+            return ParseOutcome.Success(
+                llmOutcome.result.copy(
+                    parserMetadata = llmOutcome.result.parserMetadata.copy(
+                        parserSource = parserSource
+                    )
+                )
+            )
+        }
+
+        <span class="comment">// 走到这里说明 LLM 失败了。</span>
+        return if (config.fallbackToRuleOnLlmFailure &amp;&amp; ruleOutcome is ParseOutcome.Success) {
+            <span class="comment">// 如果允许失败兜底，而且规则阶段其实拿到过一个成功结果，</span>
+            <span class="comment">// 那就把那个结果救回来，并把来源标记成 FALLBACK。</span>
+            ParseOutcome.Success(
+                ruleOutcome.result.copy(
+                    parserMetadata = ruleOutcome.result.parserMetadata.copy(
+                        parserSource = ParserSource.FALLBACK
+                    )
+                )
+            )
+        } else {
+            <span class="comment">// 否则就把 LLM 的失败直接往上抛，交给上层处理。</span>
+            llmOutcome
+        }
+    }
+}</code></pre>
+                </div>
+                <div class="callout">
+                    这个类不是把两个解析器的结果做加权投票，而是明显的串行策略：
+                    <code>Rule First - LLM Second - Optional Rule Fallback</code>。
+                    真正决定是否短路、是否继续、是否回退的控制点，全部集中在
+                    <code>minRuleConfidence</code>、<code>enableLlmParsing</code> 和
+                    <code>fallbackToRuleOnLlmFailure</code> 这三个配置上。
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">阅读抓手</h2>
+                        <p class="panel-subtitle">先抓住这 4 个判断，再回头看代码，逻辑会很直。</p>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <section class="summary-card">
+                        <h3>1. 高置信规则结果可短路</h3>
+                        <p>规则结果必须成功、不是 <code>UserGoal.Unknown</code>、并且置信度达到阈值，才会直接返回；否则就视作“还不能信”。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>2. 是否允许 LLM 是总开关</h3>
+                        <p><code>enableLlmParsing</code> 关闭时，类不会尝试第二阶段解析，即使规则结果只是低置信成功或完全失败。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>3. LLM 成功后会改写来源标签</h3>
+                        <p>当 LLM 接管结果时，<code>parserMetadata.parserSource</code> 不一定保留原值，而是被改成 <code>RULE_THEN_LLM</code> 或 <code>LLM</code>。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>4. 回退只在一种场景成立</h3>
+                        <p>必须同时满足“LLM 失败”“开启回退”“规则阶段曾成功”三项条件，才会返回 <code>FALLBACK</code> 结果。</p>
+                    </section>
+                </div>
+                <div class="chips">
+                    <div class="chip"><code>RULE</code>：规则阶段直接命中并短路</div>
+                    <div class="chip"><code>RULE_THEN_LLM</code>：规则有结果但不够稳，最终被 LLM 接管</div>
+                    <div class="chip"><code>LLM</code>：规则阶段失败，结果纯来自 LLM</div>
+                    <div class="chip"><code>FALLBACK</code>：LLM 失败后退回规则结果</div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">关键分支与测试对照</h2>
+                    <p class="panel-subtitle">测试文件把这个类的主路径基本全覆盖了，适合和源码一起看。</p>
+                </div>
+            </div>
+            <div class="branch-grid">
+                <section class="branch-card">
+                    <h3>规则命中并短路返回</h3>
+                    <p>
+                        对应测试 <code>parse_returnsRuleResultWhenConfidenceExceedsThreshold()</code>。
+                        当规则结果置信度达到 <code>0.82f</code> 阈值时，LLM 即使也能返回结果，也根本不会被采用。
+                    </p>
+                </section>
+                <section class="branch-card">
+                    <h3>规则低置信，交给 LLM 接管</h3>
+                    <p>
+                        对应测试 <code>parse_usesLlmWhenRuleConfidenceFallsBelowThreshold()</code>。
+                        规则成功但只有 <code>0.5f</code>，所以继续调用 LLM，最终来源标签改成 <code>RULE_THEN_LLM</code>。
+                    </p>
+                </section>
+                <section class="branch-card">
+                    <h3>LLM 失败，回退到规则结果</h3>
+                    <p>
+                        对应测试 <code>parse_returnsRuleFallbackWhenLlmFailsAndFallbackEnabled()</code>。
+                        这里规则结果虽然低置信，但仍是一个成功结果，因此可以在 LLM 超时后被救回来。
+                    </p>
+                </section>
+                <section class="branch-card">
+                    <h3>LLM 失败，失败直接上抛</h3>
+                    <p>
+                        对应测试 <code>parse_returnsLlmFailureWhenFallbackDisabled()</code>。
+                        当 <code>fallbackToRuleOnLlmFailure</code> 为 <code>false</code> 时，最终返回的就是 LLM 的 <code>ParseError.Timeout</code>。
+                    </p>
+                </section>
+            </div>
+            <div class="callout">
+                一个容易忽略的点是：低置信规则结果并不会被立刻丢弃。它会暂存在
+                <code>ruleOutcome</code> 里，既用于判定 LLM 成功时应标记为
+                <code>RULE_THEN_LLM</code>，也用于 LLM 失败时是否能够执行
+                <code>FALLBACK</code>。
+            </div>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">执行流程图</h2>
+                    <p class="panel-subtitle">从进入 <code>parse(request)</code> 开始，到返回最终 <code>ParseOutcome</code> 为止。</p>
+                </div>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1120 1520" role="img" aria-label="CompositeIntentParser parse 执行流程图">
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#5d4c3a"></path>
+                        </marker>
+                        <style>
+                            .flow-line { stroke: #5d4c3a; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+                            .flow-text { fill: #201b16; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 20px; font-weight: 600; }
+                            .flow-sub { fill: #675d52; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 16px; }
+                            .box { fill: #fffaf4; stroke: #c9b49e; stroke-width: 2.4; rx: 20; }
+                            .box-accent { fill: #fff2ea; stroke: #d7926f; stroke-width: 2.4; rx: 20; }
+                            .box-teal { fill: #eff9f7; stroke: #6fb3aa; stroke-width: 2.4; rx: 20; }
+                            .box-gold { fill: #fff7ea; stroke: #d0ab65; stroke-width: 2.4; rx: 20; }
+                            .decision { fill: #fffdf8; stroke: #b08c58; stroke-width: 2.6; }
+                            .end { fill: #efe6d8; stroke: #8c745a; stroke-width: 2.6; }
+                        </style>
+                    </defs>
+
+                    <ellipse class="end" cx="560" cy="60" rx="116" ry="34"></ellipse>
+                    <text class="flow-text" x="560" y="67" text-anchor="middle">开始</text>
+
+                    <rect class="box" x="375" y="118" width="370" height="92"></rect>
+                    <text class="flow-text" x="560" y="158" text-anchor="middle">执行 ruleBasedIntentParser.parse()</text>
+                    <text class="flow-sub" x="560" y="184" text-anchor="middle">得到 ruleOutcome</text>
+
+                    <polygon class="decision" points="560,242 730,332 560,422 390,332"></polygon>
+                    <text class="flow-text" x="560" y="318" text-anchor="middle">规则结果是否成功</text>
+                    <text class="flow-sub" x="560" y="344" text-anchor="middle">且 goal != Unknown 且 confidence >= threshold</text>
+
+                    <rect class="box-accent" x="786" y="286" width="244" height="96"></rect>
+                    <text class="flow-text" x="908" y="324" text-anchor="middle">直接返回 ruleOutcome</text>
+                    <text class="flow-sub" x="908" y="350" text-anchor="middle">parserSource 保持 RULE</text>
+
+                    <rect class="box" x="382" y="468" width="356" height="94"></rect>
+                    <text class="flow-text" x="560" y="506" text-anchor="middle">检查 enableLlmParsing</text>
+                    <text class="flow-sub" x="560" y="532" text-anchor="middle">决定是否进入第二阶段</text>
+
+                    <polygon class="decision" points="560,602 710,680 560,758 410,680"></polygon>
+                    <text class="flow-text" x="560" y="674" text-anchor="middle">LLM 是否启用？</text>
+
+                    <rect class="box-accent" x="786" y="632" width="244" height="96"></rect>
+                    <text class="flow-text" x="908" y="670" text-anchor="middle">返回 ruleOutcome</text>
+                    <text class="flow-sub" x="908" y="696" text-anchor="middle">即使它是低置信或失败</text>
+
+                    <rect class="box-teal" x="360" y="806" width="400" height="104"></rect>
+                    <text class="flow-text" x="560" y="846" text-anchor="middle">执行 llmIntentParser.parse()</text>
+                    <text class="flow-sub" x="560" y="872" text-anchor="middle">得到 llmOutcome</text>
+
+                    <polygon class="decision" points="560,950 710,1028 560,1106 410,1028"></polygon>
+                    <text class="flow-text" x="560" y="1022" text-anchor="middle">LLM 是否成功？</text>
+
+                    <rect class="box-teal" x="784" y="978" width="248" height="126"></rect>
+                    <text class="flow-text" x="908" y="1014" text-anchor="middle">采用 llmOutcome.result</text>
+                    <text class="flow-sub" x="908" y="1040" text-anchor="middle">若 ruleOutcome 成功</text>
+                    <text class="flow-sub" x="908" y="1062" text-anchor="middle">标记 RULE_THEN_LLM</text>
+                    <text class="flow-sub" x="908" y="1084" text-anchor="middle">否则标记 LLM</text>
+
+                    <polygon class="decision" points="560,1160 744,1250 560,1340 376,1250"></polygon>
+                    <text class="flow-text" x="560" y="1242" text-anchor="middle">fallbackToRuleOnLlmFailure</text>
+                    <text class="flow-sub" x="560" y="1268" text-anchor="middle">且 ruleOutcome 是 Success？</text>
+
+                    <rect class="box-gold" x="118" y="1192" width="240" height="112"></rect>
+                    <text class="flow-text" x="238" y="1232" text-anchor="middle">返回规则成功结果</text>
+                    <text class="flow-sub" x="238" y="1258" text-anchor="middle">改写 parserSource = FALLBACK</text>
+
+                    <rect class="box-accent" x="782" y="1192" width="250" height="112"></rect>
+                    <text class="flow-text" x="907" y="1232" text-anchor="middle">返回 llmOutcome</text>
+                    <text class="flow-sub" x="907" y="1258" text-anchor="middle">把失败错误继续向上传递</text>
+
+                    <ellipse class="end" cx="560" cy="1446" rx="116" ry="34"></ellipse>
+                    <text class="flow-text" x="560" y="1453" text-anchor="middle">结束</text>
+
+                    <path class="flow-line" d="M560 94 L560 118"></path>
+                    <path class="flow-line" d="M560 210 L560 242"></path>
+                    <path class="flow-line" d="M730 332 L786 332"></path>
+                    <path class="flow-line" d="M560 422 L560 468"></path>
+                    <path class="flow-line" d="M560 562 L560 602"></path>
+                    <path class="flow-line" d="M710 680 L786 680"></path>
+                    <path class="flow-line" d="M560 758 L560 806"></path>
+                    <path class="flow-line" d="M560 910 L560 950"></path>
+                    <path class="flow-line" d="M710 1028 L784 1028"></path>
+                    <path class="flow-line" d="M560 1106 L560 1160"></path>
+                    <path class="flow-line" d="M376 1250 L358 1250"></path>
+                    <path class="flow-line" d="M744 1250 L782 1250"></path>
+                    <path class="flow-line" d="M238 1304 C238 1388 470 1388 528 1414"></path>
+                    <path class="flow-line" d="M907 1304 C907 1388 648 1388 592 1414"></path>
+                    <path class="flow-line" d="M908 382 C908 430 740 430 688 454"></path>
+                    <path class="flow-line" d="M908 728 C908 782 728 782 684 800"></path>
+
+                    <text class="flow-sub" x="748" y="318">是</text>
+                    <text class="flow-sub" x="574" y="452">否</text>
+                    <text class="flow-sub" x="728" y="666">否</text>
+                    <text class="flow-sub" x="574" y="790">是</text>
+                    <text class="flow-sub" x="728" y="1014">是</text>
+                    <text class="flow-sub" x="574" y="1138">否</text>
+                    <text class="flow-sub" x="288" y="1238">是</text>
+                    <text class="flow-sub" x="748" y="1238">否</text>
+                </svg>
+            </div>
+            <p class="caption">
+                整个流程的关键不是“谁先返回”，而是“规则结果是否足够可信”。一旦不足够可信，
+                <code>CompositeIntentParser</code> 就把规则结果保留下来，既作为 LLM 接管时的上下文，
+                也作为 LLM 失败时的最后兜底。
+            </p>
+        </section>
+    </div>
+</body>
+</html>

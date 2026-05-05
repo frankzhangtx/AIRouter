@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Doc HTML"
+  short_description: "阅读类函数功能代码并生成带流程图的 HTML 解释文档"
+  default_prompt: "Use $generate-code-doc-html to read a class, function, or feature implementation and generate an HTML explanation document with a flowchart saved under 代码结构文档/."

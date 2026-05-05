@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanningDecision 中 targetPlan 与 journeyPlan 解析说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f7efe7;
+            --surface: rgba(255, 250, 244, 0.94);
+            --surface-strong: #fff9f3;
+            --ink: #201b17;
+            --muted: #665b52;
+            --line: rgba(78, 65, 53, 0.16);
+            --line-strong: rgba(78, 65, 53, 0.3);
+            --accent: #b45828;
+            --accent-soft: rgba(180, 88, 40, 0.12);
+            --teal: #166a63;
+            --teal-soft: rgba(22, 106, 99, 0.12);
+            --gold: #8b651e;
+            --gold-soft: rgba(139, 101, 30, 0.12);
+            --shadow: 0 26px 70px rgba(44, 30, 20, 0.12);
+            --radius-xl: 30px;
+            --radius-lg: 22px;
+            --radius-md: 16px;
+            --max: 1220px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(180, 88, 40, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(22, 106, 99, 0.12), transparent 25%),
+                linear-gradient(180deg, #fffaf4 0%, #f7efe7 42%, #efdfd1 100%);
+        }
+
+        h1, h2, h3, p, ul, ol {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.16em 0.42em;
+            border-radius: 8px;
+            background: rgba(36, 30, 24, 0.06);
+            font-family: "SFMono-Regular", "Menlo", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            right: -84px;
+            top: -84px;
+            width: 260px;
+            height: 260px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(180, 88, 40, 0.16), transparent 68%);
+            pointer-events: none;
+        }
+
+        .eyebrow,
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.76);
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 11em;
+            font-family: "Iowan Old Style", "Georgia", serif;
+            font-size: clamp(2.5rem, 4.8vw, 4.8rem);
+            line-height: 0.94;
+            letter-spacing: -0.05em;
+        }
+
+        .hero p {
+            margin-top: 18px;
+            max-width: 930px;
+            color: var(--muted);
+            font-size: 1.02rem;
+            line-height: 1.8;
+        }
+
+        .hero-grid,
+        .two-grid,
+        .three-grid,
+        .four-grid,
+        .trace-grid,
+        .case-grid,
+        .field-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-grid {
+            margin-top: 24px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .hero-stat,
+        .card,
+        .trace-card,
+        .case-card,
+        .field-card,
+        .mini-card {
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.78);
+        }
+
+        .hero-stat small,
+        .label {
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .hero-stat strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 1.72rem;
+            line-height: 1.02;
+        }
+
+        .hero-stat span,
+        .card p,
+        .trace-card p,
+        .case-card p,
+        .field-card p,
+        .mini-card p {
+            display: block;
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.68;
+            font-size: 0.95rem;
+        }
+
+        section {
+            margin-top: 28px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: end;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .panel-title {
+            max-width: 900px;
+        }
+
+        .panel-title h2 {
+            font-size: 1.58rem;
+            line-height: 1.14;
+        }
+
+        .panel-title p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.74;
+        }
+
+        .callout {
+            margin-top: 18px;
+            padding: 18px 20px;
+            border-left: 5px solid var(--accent);
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(180, 88, 40, 0.09), rgba(180, 88, 40, 0.04));
+        }
+
+        .callout p {
+            color: var(--ink);
+            line-height: 1.72;
+        }
+
+        .two-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .three-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .four-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .trace-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .trace-card {
+            position: relative;
+            min-height: 198px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(251, 246, 240, 0.94));
+        }
+
+        .trace-card::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 28px;
+            width: 20px;
+            height: 2px;
+            background: var(--line-strong);
+        }
+
+        .trace-card:last-child::after {
+            display: none;
+        }
+
+        .trace-index {
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-weight: 800;
+        }
+
+        .trace-card h3,
+        .case-card h3,
+        .card h3,
+        .field-card h3 {
+            margin-top: 16px;
+            font-size: 1rem;
+        }
+
+        .trace-card ul,
+        .card ul,
+        .card ol,
+        .case-card ul,
+        .case-card ol {
+            margin-top: 12px;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.72;
+        }
+
+        .flow-block {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.74);
+        }
+
+        .flow-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .flow-title h3 {
+            font-size: 1.1rem;
+        }
+
+        .flow-title p {
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .flow-rows {
+            display: grid;
+            gap: 14px;
+            margin-top: 18px;
+        }
+
+        .flow-row {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) 44px minmax(220px, 1.1fr) 44px minmax(220px, 1.1fr) 44px minmax(220px, 1fr);
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .flow-node {
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(250, 245, 239, 0.92));
+            min-height: 100px;
+        }
+
+        .flow-node strong {
+            display: block;
+            font-size: 1rem;
+            line-height: 1.32;
+        }
+
+        .flow-node span {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.62;
+            font-size: 0.92rem;
+        }
+
+        .flow-node.accent {
+            background: linear-gradient(180deg, rgba(180, 88, 40, 0.12), rgba(255, 255, 255, 0.94));
+        }
+
+        .flow-node.teal {
+            background: linear-gradient(180deg, rgba(22, 106, 99, 0.12), rgba(255, 255, 255, 0.94));
+        }
+
+        .flow-node.gold {
+            background: linear-gradient(180deg, rgba(139, 101, 30, 0.12), rgba(255, 255, 255, 0.94));
+        }
+
+        .flow-arrow {
+            display: grid;
+            place-items: center;
+            color: var(--accent);
+            font-size: 1.45rem;
+            font-weight: 900;
+        }
+
+        .route-diagram {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.74);
+        }
+
+        .route-line {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .route-node {
+            flex: 1 1 170px;
+            padding: 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.9);
+            min-height: 100px;
+        }
+
+        .route-node strong {
+            display: block;
+            font-size: 0.98rem;
+        }
+
+        .route-node span {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 0.92rem;
+        }
+
+        .route-link {
+            display: grid;
+            place-items: center;
+            flex: 0 0 26px;
+            color: var(--accent);
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .field-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .field-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(250, 245, 239, 0.95));
+        }
+
+        .field-table {
+            margin-top: 12px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 180px minmax(0, 1fr);
+            gap: 10px;
+            align-items: start;
+            padding: 10px 12px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.72);
+        }
+
+        .field-name {
+            font-weight: 800;
+        }
+
+        .field-value {
+            color: var(--muted);
+            line-height: 1.62;
+        }
+
+        .case-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .case-card {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(250, 245, 239, 0.94));
+        }
+
+        .case-card .tag {
+            margin-bottom: 14px;
+        }
+
+        .footer-note {
+            margin-top: 22px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--muted);
+            line-height: 1.72;
+        }
+
+        @media (max-width: 1120px) {
+            .hero-grid,
+            .three-grid,
+            .four-grid,
+            .trace-grid,
+            .case-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .flow-row {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+
+            .trace-card::after {
+                display: none;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding: 18px 0 48px;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero-grid,
+            .two-grid,
+            .three-grid,
+            .four-grid,
+            .trace-grid,
+            .case-grid,
+            .field-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .route-line {
+                flex-direction: column;
+            }
+
+            .route-link {
+                transform: rotate(90deg);
+                width: 100%;
+                flex-basis: auto;
+            }
+
+            .field-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="hero">
+            <div class="eyebrow">PlanningDecision Analysis</div>
+            <h1>在此工程里，<br>PlanningDecision 中的<br>targetPlan 和 journeyPlan<br>是怎么解析出来的</h1>
+            <p>
+                这份说明只聚焦一个问题：<code>RoutePlanner.plan(...)</code> 返回的
+                <code>PlanningDecision</code>，为什么会得到当前的 <code>targetPlan</code> 和
+                <code>journeyPlan</code>。核心结论是：
+                <strong><code>targetPlan</code> 由 <code>TargetPlanner</code> 根据 <code>ParseResult</code> 生成，</strong>
+                <strong><code>journeyPlan</code> 由 <code>JourneyPlanner</code> 根据 <code>targetPlan</code> 和当前页面生成。</strong>
+            </p>
+            <div class="hero-grid">
+                <div class="hero-stat">
+                    <small>返回结构</small>
+                    <strong>PlanningDecision</strong>
+                    <span>包含两个成员：<code>targetPlan</code> 与可空的 <code>journeyPlan</code>。</span>
+                </div>
+                <div class="hero-stat">
+                    <small>目标规划</small>
+                    <strong>TargetPlan</strong>
+                    <span>回答“最终要去哪、带什么业务上下文”。</span>
+                </div>
+                <div class="hero-stat">
+                    <small>路径规划</small>
+                    <strong>JourneyPlan</strong>
+                    <span>回答“从当前页如何一步步走到目标”。</span>
+                </div>
+                <div class="hero-stat">
+                    <small>调度者</small>
+                    <strong>RoutePlanner</strong>
+                    <span>自己不做复杂业务判断，只负责顺序组合两个 planner。</span>
+                </div>
+            </div>
+        </header>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>先看代码里真正的生成点</h2>
+                        <p>
+                            <code>PlanningDecision</code> 不是多处分散拼出来的，而是在
+                            <code>app/src/main/java/com/example/cctest/routing/workflow/RoutePlanner.kt</code>
+                            里一次性构造。
+                        </p>
+                    </div>
+                    <div class="tag">Core</div>
+                </div>
+                <div class="callout">
+                    <p>
+                        生成顺序非常固定：先调用 <code>targetPlanner.plan(result, currentFields)</code> 得到
+                        <code>targetPlan</code>，然后只有在 <code>targetPlan.target != null</code> 时，
+                        才调用 <code>journeyPlanner.plan(currentDestinationId, targetPlan)</code> 生成
+                        <code>journeyPlan</code>。如果目标都不存在，路径规划自然也不会发生。
+                    </p>
+                </div>
+                <div class="route-diagram">
+                    <div class="flow-title">
+                        <h3>RoutePlanner 主流程图</h3>
+                        <p>这一条流程线就是 <code>RoutePlanner.plan()</code> 的真实逻辑。</p>
+                    </div>
+                    <div class="route-line">
+                        <div class="route-node">
+                            <strong>输入</strong>
+                            <span><code>ParseResult</code> + <code>currentDestinationId</code> + <code>currentFields</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>targetPlanner.plan(...)</strong>
+                            <span>先把用户意图和 slots 解释成业务目标。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>得到 targetPlan</strong>
+                            <span>它可能包含 <code>target</code>、<code>workflowId</code>、<code>recordRef</code>、<code>fallbackMessage</code> 等。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>targetPlan.target 是否为空</strong>
+                            <span>为空则 <code>journeyPlan = null</code>；不为空才继续。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>journeyPlanner.plan(...)</strong>
+                            <span>把目标变成一串可执行步骤。</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>流程图一：PlanningDecision 进入点</h2>
+                        <p>
+                            从调用链上看，<code>PlanningDecision</code> 的生成起点在
+                            <code>RoutingSessionViewModel.submitUserInput()</code>。
+                        </p>
+                    </div>
+                    <div class="tag">Entry</div>
+                </div>
+
+                <div class="trace-grid">
+                    <div class="trace-card">
+                        <div class="trace-index">1</div>
+                        <h3>用户输入文本</h3>
+                        <p>例如“查看张雨桐详情”“填写李晨曦的个人信息”。</p>
+                        <ul>
+                            <li>先做空串校验</li>
+                            <li>写入 session state 的 <code>rawInputText</code></li>
+                        </ul>
+                    </div>
+                    <div class="trace-card">
+                        <div class="trace-index">2</div>
+                        <h3>生成 ParseRequest</h3>
+                        <p>会把当前页面和当前 workflow step 一起传给 parser。</p>
+                        <ul>
+                            <li><code>currentDestinationId -> AppScreen</code></li>
+                            <li><code>sessionSnapshot = currentStepId</code></li>
+                        </ul>
+                    </div>
+                    <div class="trace-card">
+                        <div class="trace-index">3</div>
+                        <h3>得到 ParseResult</h3>
+                        <p>通过 parser 识别出 <code>userGoal</code>、<code>slots</code>、<code>confidence</code>。</p>
+                        <ul>
+                            <li>例如详情意图</li>
+                            <li>例如姓名、手机号、列表位置等 slot</li>
+                        </ul>
+                    </div>
+                    <div class="trace-card">
+                        <div class="trace-index">4</div>
+                        <h3>标准化与校验</h3>
+                        <p>先经过 <code>SlotNormalizer</code>，再经过 <code>ParseResultValidator</code>。</p>
+                        <ul>
+                            <li>手机号只留数字</li>
+                            <li>详情意图必须带识别条件</li>
+                        </ul>
+                    </div>
+                    <div class="trace-card">
+                        <div class="trace-index">5</div>
+                        <h3>调用 RoutePlanner</h3>
+                        <p><code>routePlanner.plan(normalizedResult, currentDestinationId, currentFields)</code></p>
+                        <ul>
+                            <li>返回 <code>PlanningDecision</code></li>
+                            <li>随后写回 UI state 并发出 effect</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    也就是说，<code>PlanningDecision</code> 的直接输入不是原始文本，而是已经规范化、验证过的
+                    <code>ParseResult</code> 与当前 UI 上下文。
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>流程图二：targetPlan 是如何解析出来的</h2>
+                        <p>
+                            <code>TargetPlanner</code> 是 “业务目标解析器”。它并不关心如何一步步导航，
+                            它只关心根据用户意图最终应该落到哪类目标。
+                        </p>
+                    </div>
+                    <div class="tag">TargetPlan</div>
+                </div>
+
+                <div class="flow-block">
+                    <div class="flow-title">
+                        <h3>TargetPlanner 决策流程</h3>
+                        <p>分支入口是 <code>when (result.userGoal)</code>。</p>
+                    </div>
+                    <div class="flow-rows">
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>FillPersonalInfo</strong>
+                                <span>表示用户要进入个人信息工作流。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>读取 workflow</strong>
+                                <span>从 <code>WorkflowRegistry.personalInfoWorkflow()</code> 取得完整工作流定义。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>取起始 step</strong>
+                                <span>用 <code>WorkflowEngine.start()</code> 拿到第一个 step，也就是 form 页。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>生成 WorkflowTarget</strong>
+                                <span>写入 <code>workflowId</code>、<code>currentStepId</code>、<code>formFields</code> 与提示文案。</span>
+                            </div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>BrowsePersonalInfoList</strong>
+                                <span>表示用户要去列表页，可能还要定位某条记录。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>resolveFromSlots()</strong>
+                                <span>用姓名 / 手机 / 城市 / 第 N 条 解析记录命中情况。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>构造 ListFocusRequest</strong>
+                                <span>可能是唯一命中、位置命中、模糊查询，或空请求。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>生成 ListTarget</strong>
+                                <span>写入 <code>listFocusRequest</code>、可选 <code>recordRef</code> 与列表提示文案。</span>
+                            </div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>OpenPersonalInfoDetail</strong>
+                                <span>表示用户要看详情页，但未必能直接命中唯一记录。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>resolveFromSlots()</strong>
+                                <span>先判断详情目标是否唯一。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>唯一命中？</strong>
+                                <span>是：生成 <code>DetailTarget</code>。否：回退为 <code>ListTarget</code>。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>附带回退语义</strong>
+                                <span>歧义或未命中时会写入 <code>fallbackMessage</code>。</span>
+                            </div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>OpenHouseDashboard / Unknown</strong>
+                                <span>分别是家居看板和无法识别请求。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>看板分支</strong>
+                                <span>构造 <code>HouseDashboardLaunchSpec</code> 与 <code>HouseDashboardTarget</code>。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>未知分支</strong>
+                                <span>仅返回 <code>routeIntent = Unknown</code> 和 <code>fallbackMessage</code>。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>关键后果</strong>
+                                <span>Unknown 分支里 <code>target = null</code>，这会直接阻断后续 journey 生成。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-grid">
+                    <div class="field-card">
+                        <h3><code>targetPlan</code> 每个字段来自哪里</h3>
+                        <div class="field-table">
+                            <div class="field-row">
+                                <div class="field-name"><code>target</code></div>
+                                <div class="field-value">由不同分支生成不同的 <code>RouteTarget</code>，例如 <code>WorkflowTarget</code>、<code>ListTarget</code>、<code>DetailTarget</code>、<code>HouseDashboardTarget</code>。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>workflowId</code></div>
+                                <div class="field-value">只在填表工作流分支设置，来源是 <code>WorkflowDefinition.workflowId</code>。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>currentStepId</code></div>
+                                <div class="field-value">只在工作流分支设置，来源是 <code>WorkflowEngine.start()</code> 返回的 step。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>routeIntent</code></div>
+                                <div class="field-value">基本等于 <code>ParseResult.userGoal</code>，是该次规划的业务意图标签。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>activeTargetLabel</code></div>
+                                <div class="field-value">多来自 <code>DestinationContractRegistry</code> 中 contract 的 screen 名称或 pageType。</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field-card">
+                        <h3>剩余字段的来源</h3>
+                        <div class="field-table">
+                            <div class="field-row">
+                                <div class="field-name"><code>formFields</code></div>
+                                <div class="field-value">只在填表分支出现，由 <code>currentFields.mergeFrom(result.slots.personalInfoFields)</code> 生成。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>recordRef</code></div>
+                                <div class="field-value">多来自 <code>RecordResolution.toRecordRef()</code>，用于详情页或列表定位上下文。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>listFocusRequest</code></div>
+                                <div class="field-value">来自记录解析结果或 slot 自身，用于列表页聚焦。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>infoMessage</code></div>
+                                <div class="field-value">表示正常引导提示，例如“已生成列表定位请求”“已进入个人信息工作流”。</div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field-name"><code>fallbackMessage</code></div>
+                                <div class="field-value">表示回退提示，例如详情目标歧义时引导回列表确认。</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="route-diagram">
+                    <div class="flow-title">
+                        <h3>详情分支为何最关键</h3>
+                        <p>它最能体现 targetPlan 不是“机械映射”，而是带有业务回退策略。</p>
+                    </div>
+                    <div class="route-line">
+                        <div class="route-node">
+                            <strong>用户说“查看详情”</strong>
+                            <span>这只说明目标类型是 detail，并不说明具体是哪一条记录。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>RecordResolver 查记录</strong>
+                            <span>按 recordId、phone、position、name、city 依次匹配。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>唯一命中</strong>
+                            <span>生成 <code>DetailTarget</code>，后续可继续开详情。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>歧义或未命中</strong>
+                            <span>不再坚持详情，回退生成 <code>ListTarget</code>。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>结果</strong>
+                            <span>targetPlan 决定了后续 journey 是“打开详情链路”还是“停留列表确认链路”。</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>流程图三：journeyPlan 是如何解析出来的</h2>
+                        <p>
+                            <code>JourneyPlanner</code> 处理的是“路径问题”。此时目标已经由
+                            <code>targetPlan</code> 决定，它只需要从当前页出发，拼出一串步骤。
+                        </p>
+                    </div>
+                    <div class="tag">JourneyPlan</div>
+                </div>
+
+                <div class="flow-block">
+                    <div class="flow-title">
+                        <h3>JourneyPlanner 总流程</h3>
+                        <p>这部分直接对应 <code>JourneyPlanner.plan()</code> 方法。</p>
+                    </div>
+                    <div class="flow-rows">
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>读取 targetPlan.target</strong>
+                                <span>如果为空，直接返回 <code>null</code>，PlanningDecision 中的 <code>journeyPlan</code> 就为空。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>currentDestinationId -> entryScreen</strong>
+                                <span>通过 <code>AppScreen.fromDestinationId()</code> 映射当前页面。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>normalizeEntryScreen()</strong>
+                                <span>如果当前页识别不出来，就强制按 <code>SECOND</code> 作为默认起点。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>按 target 类型分发</strong>
+                                <span>交给 <code>buildWorkflowJourney</code>、<code>buildListJourney</code>、<code>buildDetailJourney</code> 等。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="three-grid">
+                    <div class="card">
+                        <h3><code>WorkflowTarget</code> 如何转成 journey</h3>
+                        <ol>
+                            <li>目标屏幕视为 <code>PERSONAL_INFO_FORM</code></li>
+                            <li>调用 <code>resolvePathSteps(entryScreen, PERSONAL_INFO_FORM)</code></li>
+                            <li>如果能找到路径，就按路径上的 action 转成 <code>NavigateToFragment</code></li>
+                            <li>如果找不到路径，则直接使用 <code>entryDestinationId</code> 形成一个直达步骤</li>
+                        </ol>
+                    </div>
+                    <div class="card">
+                        <h3><code>ListTarget</code> 如何转成 journey</h3>
+                        <ol>
+                            <li>先规划到 <code>PERSONAL_INFO_LIST</code></li>
+                            <li>若 <code>targetPlan.listFocusRequest</code> 存在且可定位，则追加 <code>FocusList</code></li>
+                            <li>若 <code>fallbackMessage</code> 存在，则追加 <code>ShowFallbackMessage</code></li>
+                            <li>最后固定追加 <code>StopAtCurrentScreen</code></li>
+                        </ol>
+                    </div>
+                    <div class="card">
+                        <h3><code>DetailTarget</code> 如何转成 journey</h3>
+                        <ol>
+                            <li>先规划到 <code>PERSONAL_INFO_LIST</code>，不是直接进详情</li>
+                            <li>再从 <code>targetPlan.listFocusRequest</code> 或 <code>recordRef</code> 补出定位信息</li>
+                            <li>如果有定位条件，追加 <code>FocusList</code></li>
+                            <li>最后追加 <code>OpenFocusedRecordDetail</code></li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="route-diagram">
+                    <div class="flow-title">
+                        <h3>JourneyPlanner 里的路径搜索图</h3>
+                        <p>底层依赖是 <code>EntryActionRegistry.resolvePath()</code> 的 BFS 搜索。</p>
+                    </div>
+                    <div class="route-line">
+                        <div class="route-node">
+                            <strong>输入</strong>
+                            <span><code>from = entryScreen</code>，<code>to = targetScreen</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>actionsFrom(current)</strong>
+                            <span>取当前屏幕可走的所有边，例如 <code>FIRST -> SECOND</code>。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>BFS 逐层扩展</strong>
+                            <span>遇到第一个命中 <code>to</code> 的路径就返回，天然是较短路径。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>actionToSteps()</strong>
+                            <span>把每个 <code>EntryAction</code> 翻译为一个或多个 <code>JourneyStep</code>。</span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>生成 JourneyPlan</strong>
+                            <span>填入 <code>journeyId</code>、<code>entryScreen</code>、<code>steps</code>、<code>fallbackPolicy</code>。</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-grid">
+                    <div class="card">
+                        <h3>为什么 journeyPlan 依赖 targetPlan</h3>
+                        <ul>
+                            <li>因为目标类型不同，补的步骤不同</li>
+                            <li><code>DetailTarget</code> 需要 <code>recordRef</code> 或 <code>listFocusRequest</code></li>
+                            <li><code>HouseDashboardTarget</code> 需要 <code>launchSpec</code></li>
+                            <li><code>fallbackMessage</code> 会直接影响 <code>fallbackPolicy</code> 和附加步骤</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>journeyPlan 为空的场景</h3>
+                        <ul>
+                            <li><code>TargetPlan.target == null</code></li>
+                            <li>典型就是 <code>UserGoal.Unknown</code></li>
+                            <li>这时 RoutePlanner 不会调用 <code>JourneyPlanner.plan()</code></li>
+                            <li>ViewModel 也不会发出 <code>ExecuteJourney</code>，最多只发提示信息</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>流程图四：从 targetPlan 到 journeyPlan 的联动关系</h2>
+                        <p>
+                            把两个 planner 串起来看，你会更容易理解为什么同样一句“查看详情”，最后可能得到完全不同的 journey。
+                        </p>
+                    </div>
+                    <div class="tag">Coupling</div>
+                </div>
+
+                <div class="flow-block">
+                    <div class="flow-title">
+                        <h3>联动流程</h3>
+                        <p><code>targetPlan</code> 是 <code>journeyPlan</code> 的先决条件。</p>
+                    </div>
+                    <div class="flow-rows">
+                        <div class="flow-row">
+                            <div class="flow-node accent">
+                                <strong>ParseResult</strong>
+                                <span>给出用户意图和解析出的 slot。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node teal">
+                                <strong>TargetPlanner</strong>
+                                <span>先判断最终目标到底是 Workflow、List、Detail 还是 Dashboard。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node gold">
+                                <strong>TargetPlan.target</strong>
+                                <span>这一字段直接决定 JourneyPlanner 走哪个 <code>buildXxxJourney</code> 分支。</span>
+                            </div>
+                            <div class="flow-arrow">&rarr;</div>
+                            <div class="flow-node">
+                                <strong>JourneyPlanner</strong>
+                                <span>再按当前页和目标页组合出步骤列表。</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="route-diagram">
+                    <div class="flow-title">
+                        <h3>同一意图，不同命中结果，journey 也会不同</h3>
+                        <p>以“打开个人信息详情”为例。</p>
+                    </div>
+                    <div class="route-line">
+                        <div class="route-node">
+                            <strong>输入</strong>
+                            <span><code>UserGoal.OpenPersonalInfoDetail</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>唯一命中记录</strong>
+                            <span><code>targetPlan.target = DetailTarget</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>journey 分支</strong>
+                            <span>列表页路径 + <code>FocusList</code> + <code>OpenFocusedRecordDetail</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>结果</strong>
+                            <span>最终会真正打开详情。</span>
+                        </div>
+                    </div>
+                    <div class="route-line">
+                        <div class="route-node">
+                            <strong>输入</strong>
+                            <span><code>UserGoal.OpenPersonalInfoDetail</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>歧义或未命中</strong>
+                            <span><code>targetPlan.target = ListTarget</code> + <code>fallbackMessage</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>journey 分支</strong>
+                            <span>列表页路径 + <code>FocusList</code>（可选）+ <code>ShowFallbackMessage</code> + <code>StopAtCurrentScreen</code></span>
+                        </div>
+                        <div class="route-link">&rarr;</div>
+                        <div class="route-node">
+                            <strong>结果</strong>
+                            <span>不会强开详情，而是停留在列表让用户确认。</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>三个测试用例，直接验证 PlanningDecision 的生成结果</h2>
+                        <p>
+                            下面三个案例都来自现有测试文件，它们能直接证明 <code>targetPlan</code> 与
+                            <code>journeyPlan</code> 的解析逻辑。
+                        </p>
+                    </div>
+                    <div class="tag">Tests</div>
+                </div>
+
+                <div class="case-grid">
+                    <div class="case-card">
+                        <div class="tag">Case A</div>
+                        <h3>填写个人信息</h3>
+                        <ol>
+                            <li>输入被构造为 <code>UserGoal.FillPersonalInfo</code>，并带姓名 slot</li>
+                            <li><code>targetPlan.target</code> 变成 <code>WorkflowTarget</code></li>
+                            <li><code>targetPlan.formFields.name</code> 成功合并为“李晨曦”</li>
+                            <li><code>journeyPlan.steps</code> 先到 <code>SecondFragment</code>，再到表单 fragment</li>
+                        </ol>
+                        <p>
+                            对应测试：<code>planFormGoal_routesThroughSecondThenForm()</code>
+                        </p>
+                    </div>
+                    <div class="case-card">
+                        <div class="tag">Case B</div>
+                        <h3>唯一命中详情</h3>
+                        <ol>
+                            <li>输入被构造为 <code>UserGoal.OpenPersonalInfoDetail</code> + <code>personName = 张雨桐</code></li>
+                            <li><code>targetPlan.target</code> 成为 <code>DetailTarget</code></li>
+                            <li><code>journeyPlan.steps</code> 里依次出现列表路径、<code>FocusList</code>、<code>OpenFocusedRecordDetail</code></li>
+                            <li>说明详情不是直接开的，而是先定位再打开</li>
+                        </ol>
+                        <p>
+                            对应测试：<code>planUniqueDetailGoal_routesThroughListBeforeOpeningDetail()</code>
+                        </p>
+                    </div>
+                    <div class="case-card">
+                        <div class="tag">Case C</div>
+                        <h3>详情意图但存在歧义</h3>
+                        <ol>
+                            <li>输入同样是详情意图，但只给出模糊姓名“张”</li>
+                            <li><code>targetPlan.target</code> 不再是 <code>DetailTarget</code>，而是回退为 <code>ListTarget</code></li>
+                            <li><code>targetPlan.fallbackMessage</code> 不为空</li>
+                            <li><code>journeyPlan</code> 最后两步是 <code>ShowFallbackMessage</code> 和 <code>StopAtCurrentScreen</code></li>
+                        </ol>
+                        <p>
+                            对应测试：<code>planAmbiguousDetailGoal_fallsBackToList()</code>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    测试本质上已经把答案写出来了：
+                    <strong>PlanningDecision 不是简单包装对象，而是业务目标解析和路径解析的组合结果。</strong>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <h2>源码定位索引</h2>
+                        <p>如果你要把这份说明和工程源码逐行对照，可以先看这些文件。</p>
+                    </div>
+                    <div class="tag">Index</div>
+                </div>
+                <div class="four-grid">
+                    <div class="mini-card">
+                        <div class="label">调用入口</div>
+                        <p><code>RoutingSessionViewModel.submitUserInput()</code> 负责拿到 <code>PlanningDecision</code> 并回写 UI state。</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="label">总调度</div>
+                        <p><code>RoutePlanner.plan()</code> 负责串联 <code>targetPlanner</code> 与 <code>journeyPlanner</code>。</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="label">目标规划</div>
+                        <p><code>TargetPlanner</code> 与 <code>PersonalInfoRecordResolver</code> 决定 <code>targetPlan</code> 的业务形态。</p>
+                    </div>
+                    <div class="mini-card">
+                        <div class="label">路径规划</div>
+                        <p><code>JourneyPlanner</code> 与 <code>EntryActionRegistry</code> 决定 <code>journeyPlan.steps</code>。</p>
+                    </div>
+                </div>
+                <div class="callout">
+                    <p>
+                        最简一句话总结：
+                        <code>PlanningDecision = TargetPlanner(ParseResult, currentFields) + JourneyPlanner(currentDestinationId, targetPlan)</code>。
+                        前者决定“去哪里”，后者决定“怎么去”。
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JourneyPlanner 类说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.92);
+            --surface-strong: #fff9f2;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.28);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1240px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 820px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.02;
+        }
+
+        .hero .lead {
+            margin-top: 14px;
+            max-width: 800px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.82fr);
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 26px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(249, 243, 234, 0.86) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.5px;
+            line-height: 1.78;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+        }
+
+        .summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .diagram-panel {
+            margin-top: 20px;
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 8px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.72), rgba(244, 236, 227, 0.92));
+            border: 1px solid var(--line);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 1080px;
+            height: auto;
+            display: block;
+        }
+
+        .callout {
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--gold);
+            border-radius: 14px;
+            background: var(--gold-soft);
+            color: #4f3917;
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        .caption {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .io-table {
+            margin-top: 14px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .io-row {
+            display: grid;
+            grid-template-columns: 138px 1fr;
+            border-top: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.42);
+        }
+
+        .io-row:first-child {
+            border-top: none;
+        }
+
+        .io-key,
+        .io-value {
+            padding: 14px 16px;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .io-key {
+            border-right: 1px solid var(--line);
+            color: var(--ink);
+            font-weight: 700;
+            background: rgba(177, 75, 30, 0.06);
+        }
+
+        .io-value {
+            color: var(--muted);
+        }
+
+        @media (max-width: 1040px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding: 18px 0 52px;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 22px;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            .io-row {
+                grid-template-columns: 1fr;
+            }
+
+            .io-key {
+                border-right: none;
+                border-bottom: 1px solid var(--line);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="eyebrow">Routing Workflow · Class Explained</div>
+            <h1><code>JourneyPlanner</code> 类说明与执行流程图</h1>
+            <p class="lead">
+                <code>JourneyPlanner</code> 的核心职责不是识别用户想去哪里，而是在目标已经确定之后，
+                把 <code>TargetPlan</code> 翻译成一组可执行的 <code>JourneyStep</code>。
+                它把“当前页面在哪里”“目标类型是什么”“系统是否存在既定页面路径”这三类信息压缩成一份 <code>JourneyPlan</code>。
+            </p>
+            <div class="meta-list">
+                <div class="meta-item">源码位置：<code>app/src/main/java/com/example/cctest/routing/workflow/JourneyPlanner.kt</code></div>
+                <div class="meta-item">协作对象：<code>RoutePlanner</code>、<code>TargetPlan</code>、<code>EntryActionRegistry</code>、<code>JourneyStep</code></div>
+                <div class="meta-item">适用场景：工作流、列表、详情、家居看板、普通 Nav 跳转</div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">带中文注释的关键代码</h2>
+                        <p class="panel-subtitle">
+                            这里不展开整个文件，而是保留最能体现控制流的片段：入口分发、路径解析、详情和列表的后续步骤追加。
+                        </p>
+                    </div>
+                </div>
+                <div class="code-shell">
+<pre><code>class JourneyPlanner(
+    private val entryActionRegistry: EntryActionRegistry
+) {
+    fun plan(currentDestinationId: Int?, targetPlan: TargetPlan): JourneyPlan? {
+        <span class="comment">// 1. 如果 TargetPlanner 没有产出明确 target，这里不生成任何路线。</span>
+        val target = targetPlan.target ?: return null
+
+        <span class="comment">// 2. 把 Nav destinationId 归一到 AppScreen，未知页面统一按 SECOND 兜底。</span>
+        val entryScreen = normalizeEntryScreen(AppScreen.fromDestinationId(currentDestinationId))
+
+        <span class="comment">// 3. 不同 RouteTarget 对应不同的“补齐步骤”策略。</span>
+        val steps = when (target) {
+            is RouteTarget.WorkflowTarget -&gt; buildWorkflowJourney(entryScreen, targetPlan, target)
+            is RouteTarget.ListTarget -&gt; buildListJourney(entryScreen, targetPlan)
+            is RouteTarget.DetailTarget -&gt; buildDetailJourney(entryScreen, targetPlan, target)
+            is RouteTarget.HouseDashboardTarget -&gt; buildHouseDashboardJourney(entryScreen, targetPlan, target)
+            is RouteTarget.NavTarget -&gt; listOf(
+                JourneyStep.NavigateToFragment(
+                    destinationId = target.destinationId,
+                    args = target.args,
+                    displayLabel = target.displayName
+                )
+            )
+        }
+
+        <span class="comment">// 4. 最后把 entry、target、steps 封成 JourneyPlan，交给后续执行器消费。</span>
+        return JourneyPlan(
+            journeyId = UUID.randomUUID().toString(),
+            entryScreen = entryScreen,
+            target = target,
+            steps = steps,
+            fallbackPolicy = targetPlan.fallbackMessage ?: "stop_on_current_screen",
+            completionCondition = target.displayName
+        )
+    }
+
+    private fun buildListJourney(
+        entryScreen: AppScreen,
+        targetPlan: TargetPlan
+    ): List&lt;JourneyStep&gt; {
+        val steps = resolvePathSteps(
+            entryScreen = entryScreen,
+            targetScreen = AppScreen.PERSONAL_INFO_LIST,
+            targetPlan = targetPlan,
+            directStep = JourneyStep.NavigateToFragment(
+                destinationId = R.id.PersonalInfoListFragment,
+                displayLabel = "打开个人信息列表"
+            )
+        ).toMutableList()
+
+        <span class="comment">// 列表目标除了“到达列表页”，还可能追加“定位记录”“展示回退提示”。</span>
+        targetPlan.listFocusRequest
+            ?.takeIf { it.hasLocator() }
+            ?.let { steps += JourneyStep.FocusList(it) }
+        targetPlan.fallbackMessage?.let { steps += JourneyStep.ShowFallbackMessage(it) }
+
+        <span class="comment">// 列表页是一个可停留终点，所以总会追加 StopAtCurrentScreen。</span>
+        steps += JourneyStep.StopAtCurrentScreen(
+            reason = if (targetPlan.fallbackMessage != null) "fallback_list" else "list_ready"
+        )
+        return steps
+    }
+
+    private fun buildDetailJourney(
+        entryScreen: AppScreen,
+        targetPlan: TargetPlan,
+        target: RouteTarget.DetailTarget
+    ): List&lt;JourneyStep&gt; {
+        val steps = resolvePathSteps(
+            entryScreen = entryScreen,
+            targetScreen = AppScreen.PERSONAL_INFO_LIST,
+            targetPlan = targetPlan,
+            directStep = JourneyStep.NavigateToFragment(
+                destinationId = R.id.PersonalInfoListFragment,
+                displayLabel = "打开个人信息列表"
+            )
+        ).toMutableList()
+
+        <span class="comment">// 详情页并不直接打开，而是先在列表中定位，再打开已聚焦记录的详情。</span>
+        val focusRequest = targetPlan.listFocusRequest ?: ListFocusRequest(
+            recordId = target.recordRef.recordId,
+            queryName = target.recordRef.displayName,
+            queryPhone = target.recordRef.phone,
+            queryCity = target.recordRef.city,
+            matchMode = ListFocusRequest.MATCH_MODE_RECORD_ID
+        )
+        if (focusRequest.hasLocator()) {
+            steps += JourneyStep.FocusList(focusRequest)
+        }
+        steps += JourneyStep.OpenFocusedRecordDetail(target.recordRef)
+        return steps
+    }
+
+    private fun resolvePathSteps(
+        entryScreen: AppScreen,
+        targetScreen: AppScreen,
+        targetPlan: TargetPlan,
+        directStep: JourneyStep
+    ): List&lt;JourneyStep&gt; {
+        <span class="comment">// 已经在目标屏幕上时，不重复导航，由上层补充后续动作即可。</span>
+        if (entryScreen == targetScreen) {
+            return emptyList()
+        }
+
+        <span class="comment">// 优先走系统登记好的页面路径，例如 INTENT_ENTRY -&gt; SECOND -&gt; HOUSE_DASHBOARD。</span>
+        val actions = entryActionRegistry.resolvePath(entryScreen, targetScreen)
+        if (actions.isNotEmpty()) {
+            return actions.flatMap { action -&gt;
+                actionToSteps(action, targetPlan)
+            }
+        }
+
+        <span class="comment">// 如果注册表没有路径，就直接执行 directStep 作为兜底。</span>
+        return listOf(directStep)
+    }
+
+    private fun actionToSteps(
+        action: EntryAction,
+        targetPlan: TargetPlan
+    ): List&lt;JourneyStep&gt; {
+        return when (action.key) {
+            EntryActionKey.GO_TO_SECOND,
+            EntryActionKey.RETURN_TO_SECOND -&gt; listOf(
+                JourneyStep.NavigateToFragment(
+                    destinationId = R.id.SecondFragment,
+                    displayLabel = action.displayLabel
+                )
+            )
+
+            EntryActionKey.OPEN_PERSONAL_INFO_LIST -&gt; listOf(
+                JourneyStep.NavigateToFragment(
+                    destinationId = R.id.PersonalInfoListFragment,
+                    displayLabel = action.displayLabel
+                )
+            )
+
+            <span class="comment">// 这类 action 不只决定“去哪”，还会从 targetPlan 中取补充参数。</span>
+            EntryActionKey.ENTER_PERSONAL_INFO_WORKFLOW -&gt; {
+                val workflowTarget = targetPlan.target as? RouteTarget.WorkflowTarget
+                listOf(
+                    JourneyStep.NavigateToFragment(
+                        destinationId = workflowTarget?.entryDestinationId ?: R.id.personalInfoFormStepFragment,
+                        displayLabel = action.displayLabel
+                    )
+                )
+            }
+
+            EntryActionKey.OPEN_HOUSE_DASHBOARD -&gt; {
+                val houseTarget = targetPlan.target as? RouteTarget.HouseDashboardTarget ?: return emptyList()
+                listOf(
+                    JourneyStep.OpenHouseDashboard(
+                        launchSpec = houseTarget.launchSpec,
+                        displayLabel = action.displayLabel
+                    )
+                )
+            }
+
+            EntryActionKey.OPEN_FOCUSED_DETAIL -&gt; {
+                val detailTarget = targetPlan.target as? RouteTarget.DetailTarget ?: return emptyList()
+                listOf(
+                    JourneyStep.OpenFocusedRecordDetail(
+                        recordRef = detailTarget.recordRef,
+                        displayLabel = action.displayLabel
+                    )
+                )
+            }
+        }
+    }
+}</code></pre>
+                </div>
+                <div class="callout">
+                    这个类最重要的建模点是：它把“路径查找”和“目标特有补充动作”分开了。
+                    <code>resolvePathSteps()</code> 只负责决定怎样抵达目标屏幕，
+                    真正的业务差异则在 <code>buildListJourney()</code> 和 <code>buildDetailJourney()</code> 这种方法里继续追加。
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">阅读抓手</h2>
+                        <p class="panel-subtitle">
+                            先抓角色，再看分支，最后看兜底逻辑，理解这个类会更快。
+                        </p>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <section class="summary-card">
+                        <h3>它在整条链路中的位置</h3>
+                        <p>
+                            <code>RoutePlanner.plan()</code> 先调用 <code>TargetPlanner</code> 识别用户目标，
+                            然后把得到的 <code>TargetPlan</code> 交给 <code>JourneyPlanner.plan()</code>。
+                            所以它是“目标之后、执行之前”的编排层。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>输入和输出</h3>
+                        <p>
+                            输入是当前 Nav 目的地 <code>currentDestinationId</code> 与包含业务上下文的 <code>TargetPlan</code>；
+                            输出是 <code>JourneyPlan</code>，其中最关键的是 <code>steps</code>。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>为什么要先走注册表路径</h3>
+                        <p>
+                            某些目标不能直接从任意入口打开，或者产品希望复用已有页面流。
+                            <code>EntryActionRegistry.resolvePath()</code> 先尝试找一条显式路径，找不到时才直接跳。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>详情目标为什么拆成两步</h3>
+                        <p>
+                            详情页依赖列表中的记录聚焦能力。代码先确保到达列表页，再发出 <code>FocusList</code>，
+                            最后才执行 <code>OpenFocusedRecordDetail</code>，避免“没定位就开详情”。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>列表目标为什么总要停留</h3>
+                        <p>
+                            列表类请求通常是给用户看一个结果集，或让用户自行确认歧义。
+                            所以 <code>buildListJourney()</code> 无论是否有回退提示，都会追加 <code>StopAtCurrentScreen</code>。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>一个值得注意的实现细节</h3>
+                        <p>
+                            <code>fallbackPolicy</code> 目前直接塞入了 <code>fallbackMessage</code> 或默认字符串，
+                            从命名上看它更像“策略”，但现在承载了部分文案语义，后续如果扩展执行器，最好进一步拆分。
+                        </p>
+                    </section>
+                </div>
+
+                <div class="io-table">
+                    <div class="io-row">
+                        <div class="io-key">入口方法</div>
+                        <div class="io-value"><code>plan(currentDestinationId, targetPlan)</code></div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">关键依赖</div>
+                        <div class="io-value"><code>EntryActionRegistry</code> 负责路径搜索，<code>TargetPlan</code> 提供目标和补充参数。</div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">核心输出</div>
+                        <div class="io-value"><code>JourneyPlan.steps</code>，由多个 <code>JourneyStep</code> 组成。</div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">失败分支</div>
+                        <div class="io-value"><code>targetPlan.target == null</code> 时返回 <code>null</code>；部分 action 若 target 类型不匹配则返回空步骤。</div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">聚焦分支：ENTER_PERSONAL_INFO_WORKFLOW</h2>
+                    <p class="panel-subtitle">
+                        上面的总览里提到，这类 action 会从 <code>targetPlan</code> 读取运行时补充参数。
+                        这一节把该分支单独拆开，说明为什么不能只靠 <code>action.key</code>，以及参数是如何生成并被消费的。
+                    </p>
+                </div>
+            </div>
+            <div class="callout">
+                <code>EntryAction</code> 是路径注册表里的静态动作，只表达“从哪个屏幕到哪个屏幕、动作叫什么”。
+                当动作是“进入工作流”时，这些静态字段不足以决定最终该跳到哪个具体步骤页。
+                因此 <code>JourneyPlanner</code> 需要从 <code>targetPlan.target</code> 中取出
+                <code>RouteTarget.WorkflowTarget.entryDestinationId</code>，把抽象动作落成真实导航目标。
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">参数生成与消费链路</h2>
+                        <p class="panel-subtitle">
+                            真正被这条分支消费的补充参数不是一组任意上下文字段，而是工作流入口步骤的 <code>destinationId</code>。
+                        </p>
+                    </div>
+                </div>
+                <div class="code-shell">
+<pre><code><span class="comment">// 片段 1：JourneyPlanner 在 actionToSteps() 中消费运行时入口参数。</span>
+EntryActionKey.ENTER_PERSONAL_INFO_WORKFLOW -&gt; {
+    <span class="comment">// action.key 只能说明“进入工作流”，拿不到当前这次该进入哪个步骤页。</span>
+    val workflowTarget = targetPlan.target as? RouteTarget.WorkflowTarget
+    listOf(
+        JourneyStep.NavigateToFragment(
+            <span class="comment">// 真正被读取的补充参数就是 entryDestinationId。</span>
+            destinationId = workflowTarget?.entryDestinationId ?: R.id.personalInfoFormStepFragment,
+            displayLabel = action.displayLabel
+        )
+    )
+}
+
+<span class="comment">// 片段 2：TargetPlanner 在识别到 FillPersonalInfo 后，先启动工作流并拿到首个 step。</span>
+private fun planPersonalInfoWorkflow(...): TargetPlan {
+    val workflow = workflowRegistry.personalInfoWorkflow()
+    val step = workflowEngine.start(workflow)
+    return TargetPlan(
+        target = RouteTarget.WorkflowTarget(
+            workflowId = workflow.workflowId,
+            <span class="comment">// 这里把“工作流入口页”写进 target，供 JourneyPlanner 后续消费。</span>
+            entryDestinationId = step.destinationId,
+            displayName = contract.screen?.displayName ?: "个人信息工作流"
+        ),
+        workflowId = workflow.workflowId,
+        currentStepId = step.stepId,
+        ...
+    )
+}
+
+<span class="comment">// 片段 3：WorkflowEngine.start() 当前返回工作流的第一个 step。</span>
+class WorkflowEngine {
+    fun start(definition: WorkflowDefinition): WorkflowStep {
+        return definition.steps.first()
+    }
+}
+
+<span class="comment">// personalInfoWorkflow 的第一步现在刚好是表单页，但 JourneyPlanner 不应把它写死在逻辑上。</span>
+WorkflowDefinition(
+    workflowId = PERSONAL_INFO_WORKFLOW_ID,
+    steps = listOf(
+        WorkflowStep(STEP_FORM, R.id.personalInfoFormStepFragment),
+        WorkflowStep(STEP_REVIEW, R.id.reviewSubmitFragment),
+        WorkflowStep(STEP_RESULT, R.id.resultFragment)
+    )
+)</code></pre>
+                </div>
+                <div class="callout">
+                    这段设计把职责切得很清楚：
+                    <code>TargetPlanner</code> 和工作流层负责决定“这次入口在哪里”，
+                    <code>JourneyPlanner</code> 只负责把它翻译成 <code>JourneyStep.NavigateToFragment</code>。
+                    这样一来，工作流入口发生变化时，不需要回头修改路径注册表的抽象 action。
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">为什么、取什么、做什么</h2>
+                        <p class="panel-subtitle">
+                            这个分支可以压缩成三个问题来理解。
+                        </p>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <section class="summary-card">
+                        <h3>为什么必须从 targetPlan 取</h3>
+                        <p>
+                            因为 <code>EntryAction</code> 只有 <code>key / from / to / displayLabel</code>，
+                            它是注册表里的静态路径定义。对于“进入工作流”这种动作，仅凭
+                            <code>action.key</code> 只能知道意图，不能知道这次具体要落到哪个工作流步骤页。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>实际取的是什么参数</h3>
+                        <p>
+                            当前这条分支真正读取的是
+                            <code>(targetPlan.target as? RouteTarget.WorkflowTarget)?.entryDestinationId</code>。
+                            也就是工作流入口页的 <code>destinationId</code>。这段代码并没有直接消费
+                            <code>workflowId</code>、<code>currentStepId</code> 或 <code>formFields</code>。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>这个参数的来源</h3>
+                        <p>
+                            它来自 <code>TargetPlanner.planPersonalInfoWorkflow()</code>。
+                            该方法先调用 <code>workflowEngine.start(workflow)</code> 拿到首个
+                            <code>WorkflowStep</code>，再把 <code>step.destinationId</code> 写进
+                            <code>RouteTarget.WorkflowTarget.entryDestinationId</code>。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>它最终起什么作用</h3>
+                        <p>
+                            它把抽象动作“进入个人信息工作流”落成了实际跳转
+                            <code>JourneyStep.NavigateToFragment(destinationId = ...)</code>，
+                            让执行器最终进入这次工作流真正的入口步骤页。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>为什么不能只写死默认表单页</h3>
+                        <p>
+                            现在第一步刚好是 <code>personalInfoFormStepFragment</code>，
+                            但如果以后工作流入口调整，或者需要按上下文从别的步骤恢复，
+                            硬编码会让路径层直接依赖工作流细节。当前写法把这层变化隔离在目标规划阶段。
+                        </p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>兜底逻辑说明了什么</h3>
+                        <p>
+                            <code>?: R.id.personalInfoFormStepFragment</code> 表示如果
+                            <code>targetPlan.target</code> 不是 <code>WorkflowTarget</code>，
+                            仍然回退到默认表单页，避免步骤完全生成失败。这是一个保守兜底，不是主路径。
+                        </p>
+                    </section>
+                </div>
+
+                <div class="io-table">
+                    <div class="io-row">
+                        <div class="io-key">消费参数</div>
+                        <div class="io-value"><code>entryDestinationId</code></div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">参数载体</div>
+                        <div class="io-value"><code>RouteTarget.WorkflowTarget</code></div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">参数来源</div>
+                        <div class="io-value"><code>WorkflowEngine.start(workflow)</code> 返回的 <code>WorkflowStep.destinationId</code></div>
+                    </div>
+                    <div class="io-row">
+                        <div class="io-key">最终效果</div>
+                        <div class="io-value">生成 <code>JourneyStep.NavigateToFragment</code>，把用户带到这次工作流真正的入口步骤页面。</div>
+                    </div>
+                </div>
+            </aside>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">ENTRY_WORKFLOW 参数流向图</h2>
+                    <p class="panel-subtitle">
+                        这张图只追踪一件事：<code>entryDestinationId</code> 从哪里生成，最后在哪里被 <code>JourneyPlanner</code> 消费。
+                    </p>
+                </div>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1460 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="ENTER_PERSONAL_INFO_WORKFLOW parameter flow">
+                    <defs>
+                        <linearGradient id="paramWarm" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fffaf3"/>
+                            <stop offset="100%" stop-color="#f6eadb"/>
+                        </linearGradient>
+                        <linearGradient id="paramTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#eef8f6"/>
+                            <stop offset="100%" stop-color="#d9efe9"/>
+                        </linearGradient>
+                        <marker id="paramArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+                            <path d="M0,0 L12,6 L0,12 z" fill="#7a5a3d"/>
+                        </marker>
+                    </defs>
+
+                    <rect x="70" y="90" width="250" height="92" rx="24" fill="url(#paramWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="195" y="126" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">UserGoal.FillPersonalInfo</text>
+                    <text x="195" y="154" text-anchor="middle" font-size="16" fill="#675d52">用户目标被识别为进入个人信息工作流</text>
+
+                    <line x1="320" y1="136" x2="430" y2="136" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="430" y="80" width="290" height="112" rx="24" fill="url(#paramWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="575" y="116" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">TargetPlanner.planPersonalInfoWorkflow()</text>
+                    <text x="575" y="145" text-anchor="middle" font-size="16" fill="#675d52">创建 workflow 并调用 workflowEngine.start()</text>
+                    <text x="575" y="168" text-anchor="middle" font-size="16" fill="#675d52">准备 RouteTarget.WorkflowTarget</text>
+
+                    <line x1="720" y1="136" x2="830" y2="136" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="830" y="90" width="240" height="92" rx="24" fill="url(#paramTeal)" stroke="#176b63" stroke-width="2"/>
+                    <text x="950" y="126" text-anchor="middle" font-size="22" font-weight="700" fill="#12473f">WorkflowEngine.start()</text>
+                    <text x="950" y="154" text-anchor="middle" font-size="16" fill="#46625d">返回第一个 WorkflowStep</text>
+
+                    <line x1="950" y1="182" x2="950" y2="280" stroke="#176b63" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="760" y="280" width="380" height="106" rx="24" fill="url(#paramTeal)" stroke="#176b63" stroke-width="2"/>
+                    <text x="950" y="316" text-anchor="middle" font-size="22" font-weight="700" fill="#12473f">step.destinationId</text>
+                    <text x="950" y="344" text-anchor="middle" font-size="16" fill="#46625d">当前工作流第一步是 personalInfoFormStepFragment</text>
+                    <text x="950" y="367" text-anchor="middle" font-size="16" fill="#46625d">但 JourneyPlanner 不直接依赖这个硬编码事实</text>
+
+                    <line x1="760" y1="333" x2="635" y2="333" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="380" y="280" width="255" height="106" rx="24" fill="url(#paramWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="507" y="316" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">WorkflowTarget.entryDestinationId</text>
+                    <text x="507" y="344" text-anchor="middle" font-size="16" fill="#675d52">参数被写入 targetPlan.target</text>
+                    <text x="507" y="367" text-anchor="middle" font-size="16" fill="#675d52">作为后续导航的运行时补充参数</text>
+
+                    <line x1="507" y1="386" x2="507" y2="500" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="290" y="500" width="435" height="120" rx="26" fill="url(#paramWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="507" y="538" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">JourneyPlanner.actionToSteps()</text>
+                    <text x="507" y="568" text-anchor="middle" font-size="16" fill="#675d52">EntryActionKey.ENTER_PERSONAL_INFO_WORKFLOW</text>
+                    <text x="507" y="592" text-anchor="middle" font-size="16" fill="#675d52">读取 workflowTarget?.entryDestinationId</text>
+
+                    <line x1="725" y1="560" x2="855" y2="560" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="855" y="510" width="320" height="100" rx="24" fill="url(#paramWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="1015" y="548" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">JourneyStep.NavigateToFragment</text>
+                    <text x="1015" y="576" text-anchor="middle" font-size="16" fill="#675d52">destinationId = entryDestinationId</text>
+
+                    <line x1="1175" y1="560" x2="1310" y2="560" stroke="#7a5a3d" stroke-width="3" marker-end="url(#paramArrow)"/>
+
+                    <rect x="1310" y="510" width="110" height="100" rx="24" fill="url(#paramTeal)" stroke="#176b63" stroke-width="2"/>
+                    <text x="1365" y="548" text-anchor="middle" font-size="22" font-weight="700" fill="#12473f">真实跳转</text>
+                    <text x="1365" y="576" text-anchor="middle" font-size="16" fill="#46625d">进入入口步骤页</text>
+
+                    <rect x="1040" y="250" width="320" height="120" rx="24" fill="#fff4eb" stroke="#7f6043" stroke-width="2"/>
+                    <text x="1200" y="286" text-anchor="middle" font-size="21" font-weight="700" fill="#201b16">兜底路径</text>
+                    <text x="1200" y="315" text-anchor="middle" font-size="16" fill="#675d52">如果 targetPlan.target 不是 WorkflowTarget</text>
+                    <text x="1200" y="339" text-anchor="middle" font-size="16" fill="#675d52">则回退到 R.id.personalInfoFormStepFragment</text>
+                </svg>
+            </div>
+            <p class="caption">
+                阅读这张图时，可以把 <code>entryDestinationId</code> 看成一根参数接力棒：
+                它先由工作流层算出来，再被塞进 <code>WorkflowTarget</code>，最后由
+                <code>JourneyPlanner.actionToSteps()</code> 消费，转成真实的导航步骤。
+            </p>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">JourneyPlanner 主执行路径</h2>
+                    <p class="panel-subtitle">
+                        这张图按真实代码分支组织，重点展示入口分发、注册表路径查找，以及列表/详情的后续动作追加。
+                    </p>
+                </div>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1400 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="JourneyPlanner execution flow">
+                    <defs>
+                        <linearGradient id="nodeWarm" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fffaf3"/>
+                            <stop offset="100%" stop-color="#f6eadb"/>
+                        </linearGradient>
+                        <linearGradient id="nodeTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#eef8f6"/>
+                            <stop offset="100%" stop-color="#d9efe9"/>
+                        </linearGradient>
+                        <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+                            <path d="M0,0 L12,6 L0,12 z" fill="#7a5a3d"/>
+                        </marker>
+                    </defs>
+
+                    <rect x="560" y="40" width="280" height="78" rx="24" fill="url(#nodeWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="700" y="72" text-anchor="middle" font-size="24" font-weight="700" fill="#201b16">plan(currentDestinationId, targetPlan)</text>
+                    <text x="700" y="98" text-anchor="middle" font-size="16" fill="#675d52">入口方法，产出 JourneyPlan?</text>
+
+                    <line x1="700" y1="118" x2="700" y2="170" stroke="#7a5a3d" stroke-width="3" marker-end="url(#arrow)"/>
+
+                    <polygon points="700,170 840,250 700,330 560,250" fill="#fff4eb" stroke="#7f6043" stroke-width="2"/>
+                    <text x="700" y="242" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">targetPlan.target</text>
+                    <text x="700" y="270" text-anchor="middle" font-size="17" fill="#675d52">是否为空？</text>
+
+                    <line x1="560" y1="250" x2="380" y2="250" stroke="#7a5a3d" stroke-width="3" marker-end="url(#arrow)"/>
+                    <text x="462" y="236" text-anchor="middle" font-size="16" fill="#7a5a3d">是</text>
+                    <rect x="110" y="210" width="220" height="80" rx="22" fill="url(#nodeTeal)" stroke="#176b63" stroke-width="2"/>
+                    <text x="220" y="244" text-anchor="middle" font-size="22" font-weight="700" fill="#12473f">return null</text>
+                    <text x="220" y="270" text-anchor="middle" font-size="16" fill="#46625d">没有明确目标，不生成路线</text>
+
+                    <line x1="700" y1="330" x2="700" y2="390" stroke="#7a5a3d" stroke-width="3" marker-end="url(#arrow)"/>
+                    <text x="740" y="362" text-anchor="start" font-size="16" fill="#7a5a3d">否</text>
+
+                    <rect x="495" y="390" width="410" height="96" rx="24" fill="url(#nodeWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="700" y="425" text-anchor="middle" font-size="23" font-weight="700" fill="#201b16">normalizeEntryScreen</text>
+                    <text x="700" y="454" text-anchor="middle" font-size="16" fill="#675d52">AppScreen.fromDestinationId(currentDestinationId)</text>
+                    <text x="700" y="476" text-anchor="middle" font-size="16" fill="#675d52">UNKNOWN 时兜底成 SECOND</text>
+
+                    <line x1="700" y1="486" x2="700" y2="548" stroke="#7a5a3d" stroke-width="3" marker-end="url(#arrow)"/>
+
+                    <rect x="420" y="548" width="560" height="110" rx="26" fill="url(#nodeWarm)" stroke="#7f6043" stroke-width="2"/>
+                    <text x="700" y="584" text-anchor="middle" font-size="23" font-weight="700" fill="#201b16">when (target)</text>
+                    <text x="700" y="614" text-anchor="middle" font-size="16" fill="#675d52">Workflow / List / Detail / HouseDashboard / Nav</text>
+                    <text x="700" y="638" text-anchor="middle" font-size="16" fill="#675d52">不同 target 决定不同的补齐逻辑</text>
+
+                    <line x1="700" y1="658" x2="700" y2="718" stroke="#7a5a3d" stroke-width="3" marker-end="url(#arrow)"/>
+
+                    <rect x="70" y="720" width="250" height="114" rx="22" fill="#fffaf4" stroke="#7f6043" stroke-width="2"/>
+                    <text x="195" y="754" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">WorkflowTarget</text>
+                    <text x="195" y="784" text-anchor="middle" font-size="16" fill="#675d52">resolvePathSteps(...)</text>
+                    <text x="195" y="808" text-anchor="middle" font-size="16" fill="#675d52">directStep = form entry</text>
+
+                    <rect x="370" y="720" width="250" height="114" rx="22" fill="#fffaf4" stroke="#7f6043" stroke-width="2"/>
+                    <text x="495" y="754" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">ListTarget</text>
+                    <text x="495" y="784" text-anchor="middle" font-size="16" fill="#675d52">到列表页后追加 FocusList</text>
+                    <text x="495" y="808" text-anchor="middle" font-size="16" fill="#675d52">fallbackMessage 与 StopAtCurrentScreen</text>
+
+                    <rect x="670" y="720" width="250" height="114" rx="22" fill="#fffaf4" stroke="#7f6043" stroke-width="2"/>
+                    <text x="795" y="754" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">DetailTarget</text>
+                    <text x="795" y="784" text-anchor="middle" font-size="16" fill="#675d52">先到列表，再 FocusList</text>
+                    <text x="795" y="808" text-anchor="middle" font-size="16" fill="#675d52">最后 OpenFocusedRecordDetail</text>
+
+                    <rect x="970" y="720" width="250" height="114" rx="22" fill="#fffaf4" stroke="#7f6043" stroke-width="2"/>
+                    <text x="1095" y="754" text-anchor="middle" font-size="22" font-weight="700" fill="#201b16">Dashboard / Nav</text>
+                    <text x="1095" y="784" text-anchor="middle" font-size="16" fill="#675d52">一个走 resolvePathSteps</text>
+                    <text x="1095" y="808" text-anchor="middle" font-size="16" fill="#675d52">一个直接生成 NavigateToFragment</text>
+
+                    <line x1="495" y1="720" x2="495" y2="690" stroke="#7a5a3d" stroke-width="2"/>
+                    <line x1="795" y1="720" x2="795" y2="690" stroke="#7a5a3d" stroke-width="2"/>
+                    <line x1="195" y1="720" x2="195" y2="690" stroke="#7a5a3d" stroke-width="2"/>
+                    <line x1="1095" y1="720" x2="1095" y2="690" stroke="#7a5a3d" stroke-width="2"/>
+
+                    <rect x="1010" y="120" width="300" height="204" rx="22" fill="#eef8f6" stroke="#176b63" stroke-width="2"/>
+                    <text x="1160" y="154" text-anchor="middle" font-size="22" font-weight="700" fill="#12473f">resolvePathSteps 内部逻辑</text>
+                    <text x="1040" y="190" font-size="16" fill="#46625d">1. entryScreen == targetScreen</text>
+                    <text x="1040" y="214" font-size="16" fill="#46625d">   返回 emptyList()</text>
+                    <text x="1040" y="244" font-size="16" fill="#46625d">2. 否则调用 EntryActionRegistry.resolvePath()</text>
+                    <text x="1040" y="268" font-size="16" fill="#46625d">   找到路径时，逐个 actionToSteps()</text>
+                    <text x="1040" y="298" font-size="16" fill="#46625d">3. 注册表没有路径时</text>
+                    <text x="1040" y="322" font-size="16" fill="#46625d">   返回 listOf(directStep)</text>
+
+                    <line x1="980" y1="603" x2="1100" y2="324" stroke="#176b63" stroke-width="2.5" stroke-dasharray="8 8" marker-end="url(#arrow)"/>
+                </svg>
+            </div>
+            <p class="caption">
+                阅读这张图时，可以把它拆成两层：上半部分是统一入口和分发逻辑，下半部分是不同目标类型的补充动作。
+                右上角的补充框专门解释 <code>resolvePathSteps()</code>，因为这是整个类最关键的“路径优先、直接跳转兜底”机制。
+            </p>
+        </section>
+    </div>
+</body>
+</html>

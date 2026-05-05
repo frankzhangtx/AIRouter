@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>submitUserInput 函数说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.92);
+            --surface-strong: #fff9f2;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.28);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1240px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 760px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.02;
+        }
+
+        .hero .lead {
+            margin-top: 14px;
+            max-width: 760px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 26px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(249, 243, 234, 0.86) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.5px;
+            line-height: 1.78;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+        }
+
+        .summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .diagram-panel {
+            margin-top: 20px;
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 8px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.72), rgba(244, 236, 227, 0.92));
+            border: 1px solid var(--line);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 1020px;
+            height: auto;
+            display: block;
+        }
+
+        .caption {
+            margin-top: 14px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .callout {
+            margin-top: 16px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--gold);
+            border-radius: 14px;
+            background: var(--gold-soft);
+            color: #4f3917;
+            line-height: 1.72;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1040px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding: 18px 0 52px;
+            }
+
+            .hero,
+            .panel {
+                border-radius: 22px;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            pre {
+                font-size: 12.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="eyebrow">RoutingSessionViewModel</div>
+            <h1><code>submitUserInput</code> 函数说明与流程图</h1>
+            <p class="lead">
+                这个页面收录了 <code>app/src/main/java/com/example/cctest/routing/RoutingSessionViewModel.kt</code>
+                中 <code>submitUserInput</code> 的带注释版本，并用流程图展示从用户输入到最终发出 UI 跳转事件的执行路径。
+            </p>
+            <div class="meta-list">
+                <div class="meta-item">源码位置：<code>RoutingSessionViewModel.kt:58-156</code></div>
+                <div class="meta-item">文档类型：说明性 HTML，不改动业务 Kotlin 源码</div>
+                <div class="meta-item">适用场景：理解输入校验、意图解析、路由规划与 UI Effect 发射流程</div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">带中文注释的函数</h2>
+                        <p class="panel-subtitle">下面的注释是为阅读补充的说明，不会回写到 Kotlin 源文件里。</p>
+                    </div>
+                </div>
+                <div class="code-shell">
+<pre><code>fun submitUserInput(
+    text: String,
+    entrySource: String = "manual_input",
+    currentDestinationId: Int? = null
+) {
+    <span class="comment">// 去掉用户输入两端的空白字符，避免只有空格或换行时也继续往下执行。</span>
+    val trimmedInput = text.trim()
+
+    <span class="comment">// 如果清理后的输入为空，直接发出校验错误提示，并终止这次提交。</span>
+    if (trimmedInput.isBlank()) {
+        emitEffect(UiEffect.ShowValidationError("请输入智能路由指令。"))
+        return
+    }
+
+    <span class="comment">// 进入解析前，先把会话状态切到“解析中”，并清掉上一次错误与提交结果。</span>
+    updateState {
+        it.copy(
+            rawInputText = trimmedInput,
+            parsingStatus = ParsingUiStatus.PARSING,
+            lastErrorSummary = null,
+            submissionStatus = SubmissionUiStatus.IDLE,
+            submissionMessage = null
+        )
+    }
+
+    <span class="comment">// 在 ViewModel 作用域里异步执行后续逻辑，避免阻塞主线程。</span>
+    viewModelScope.launch {
+        <span class="comment">// 根据当前导航页面 id 推断用户此刻所在页面，例如 FIRST、SECOND、PERSONAL_INFO_LIST。</span>
+        val currentScreen = AppScreen.fromDestinationId(currentDestinationId)
+
+        <span class="comment">// 组装解析请求，把输入内容、来源、当前页面和工作流上下文一起交给解析器。</span>
+        val parseRequest = ParseRequest(
+            inputText = trimmedInput,
+            entrySource = entrySource,
+            currentDestination = currentScreen
+                <span class="comment">// 如果当前页面无法识别为 UNKNOWN，就不要把 UNKNOWN 传下去。</span>
+                .takeUnless { it == AppScreen.UNKNOWN }
+                <span class="comment">// 优先传当前页面的展示名，例如“第一页”“个人信息列表”。</span>
+                ?.displayName
+                <span class="comment">// 如果当前页面未知，则退回到当前会话里记录的目标标签。</span>
+                ?: sessionState.value.activeTargetLabel,
+            <span class="comment">// 把当前工作流步骤 id 一并带上，作为解析时的上下文快照。</span>
+            sessionSnapshot = sessionState.value.currentStepId
+        )
+
+        <span class="comment">// 调用意图解析器，结果要么成功，要么失败。</span>
+        when (val parseOutcome = intentParser.parse(parseRequest)) {
+            is ParseOutcome.Failure -> {
+                <span class="comment">// 解析失败时，把状态标记为 FAILED，并记录错误摘要。</span>
+                updateState {
+                    it.copy(
+                        parsingStatus = ParsingUiStatus.FAILED,
+                        lastErrorSummary = parseErrorMessage(parseOutcome.error)
+                    )
+                }
+
+                <span class="comment">// 向界面发出一次性事件，用于展示“解析服务不可用”等提示。</span>
+                emitEffect(UiEffect.ShowParsingUnavailable(parseErrorMessage(parseOutcome.error)))
+            }
+
+            is ParseOutcome.Success -> {
+                <span class="comment">// 先把解析结果做标准化整理，统一字段格式和槽位内容。</span>
+                val normalizedResult = slotNormalizer.normalize(parseOutcome.result)
+
+                <span class="comment">// 再做业务校验，确认解析结果在业务上可用。</span>
+                val validationError = parseResultValidator.validate(normalizedResult)
+
+                <span class="comment">// 如果业务校验失败，则更新失败状态，提示界面，并结束协程。</span>
+                if (validationError != null) {
+                    updateState {
+                        it.copy(
+                            parsingStatus = ParsingUiStatus.FAILED,
+                            lastErrorSummary = parseErrorMessage(validationError)
+                        )
+                    }
+                    emitEffect(UiEffect.ShowValidationError(parseErrorMessage(validationError)))
+                    return@launch
+                }
+
+                <span class="comment">// 解析和校验通过后，交给路由规划器决定“下一步去哪”和“怎么去”。</span>
+                val planningDecision = routePlanner.plan(
+                    result = normalizedResult,
+                    currentDestinationId = currentDestinationId,
+                    currentFields = sessionState.value.formFields
+                )
+                val targetPlan = planningDecision.targetPlan
+
+                <span class="comment">// 把解析结果、命中的目标、工作流信息以及 Journey 状态统一写回 SessionState。</span>
+                updateState {
+                    it.copy(
+                        parsingStatus = ParsingUiStatus.PARSED,
+                        parseResult = normalizedResult,
+                        workflowId = targetPlan.workflowId,
+                        routeIntent = targetPlan.routeIntent,
+                        currentStepId = targetPlan.currentStepId,
+                        activeTargetLabel = targetPlan.activeTargetLabel ?: targetPlan.target?.displayName,
+                        activeRouteTarget = targetPlan.target,
+                        activeJourneyId = planningDecision.journeyPlan?.journeyId,
+                        currentJourneyStepIndex = null,
+                        currentJourneyStepLabel = null,
+                        journeyStatus = if (planningDecision.journeyPlan != null) {
+                            JourneyUiStatus.PLANNED
+                        } else {
+                            JourneyUiStatus.IDLE
+                        },
+                        lastJourneyError = null,
+                        <span class="comment">// 如果这次规划产出了新的表单字段就覆盖，否则沿用旧字段。</span>
+                        formFields = targetPlan.formFields ?: it.formFields,
+                        recordRef = targetPlan.recordRef,
+                        lastErrorSummary = null
+                    )
+                }
+
+                <span class="comment">// 如果规划器附带了说明提示，就发给界面用于展示轻提示。</span>
+                targetPlan.infoMessage?.let { message ->
+                    emitEffect(UiEffect.ShowJourneyStepHint(message))
+                }
+
+                <span class="comment">// 如果规划器附带了兜底说明，也发给界面。</span>
+                targetPlan.fallbackMessage?.let { message ->
+                    emitEffect(UiEffect.ShowRoutingFallback(message))
+                }
+
+                <span class="comment">// 如果规划器生成了多步 Journey，就执行整条 Journey。</span>
+                <span class="comment">// 否则，如果只有一个目标页，就直接发起单次导航。</span>
+                planningDecision.journeyPlan?.let { plan ->
+                    emitEffect(UiEffect.ExecuteJourney(plan))
+                } ?: targetPlan.target?.let { target ->
+                    emitEffect(UiEffect.NavigateTo(target))
+                }
+            }
+        }
+    }
+}</code></pre>
+                </div>
+                <div class="callout">
+                    这个函数本质上分成四段：输入校验、解析请求构建、解析结果校验、规划后发出 UI Effect。真正的导航动作不在这里直接执行，而是通过
+                    <code>emitEffect(...)</code> 发给界面层或协调器去消费。
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">阅读抓手</h2>
+                        <p class="panel-subtitle">先抓住职责，再看细节，读这个函数会快很多。</p>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <section class="summary-card">
+                        <h3>1. 输入守门</h3>
+                        <p>第一段只负责把空输入挡在门外，并把状态切到 <code>PARSING</code>，不给后面的解析器无意义输入。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>2. 解析上下文补全</h3>
+                        <p><code>currentDestinationId</code> 和 <code>currentStepId</code> 会一起放进 <code>ParseRequest</code>，让解析器知道“用户现在在哪一步、从哪发起”。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>3. 解析成功不等于可执行</h3>
+                        <p>代码先 <code>normalize</code> 再 <code>validate</code>，说明解析器返回了结构化结果以后，仍要过一次业务约束检查。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>4. ViewModel 只发命令</h3>
+                        <p>这里不直接操作 <code>NavController</code>。它只更新 <code>SessionState</code> 并发出 <code>UiEffect</code>，让导航和提示由下游统一处理。</p>
+                    </section>
+                </div>
+            </aside>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">执行流程图</h2>
+                    <p class="panel-subtitle">从按钮点击后调用 <code>submitUserInput</code> 开始，到最终发出导航或提示事件为止。</p>
+                </div>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1120 1580" role="img" aria-label="submitUserInput 执行流程图">
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#5d4c3a"></path>
+                        </marker>
+                        <style>
+                            .flow-line { stroke: #5d4c3a; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+                            .flow-text { fill: #201b16; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 20px; font-weight: 600; }
+                            .flow-sub { fill: #675d52; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 16px; }
+                            .box { fill: #fffaf4; stroke: #c9b49e; stroke-width: 2.4; rx: 20; }
+                            .box-accent { fill: #fff2ea; stroke: #d7926f; stroke-width: 2.4; rx: 20; }
+                            .box-teal { fill: #eff9f7; stroke: #6fb3aa; stroke-width: 2.4; rx: 20; }
+                            .box-gold { fill: #fff7ea; stroke: #d0ab65; stroke-width: 2.4; rx: 20; }
+                            .decision { fill: #fffdf8; stroke: #b08c58; stroke-width: 2.6; }
+                            .end { fill: #efe6d8; stroke: #8c745a; stroke-width: 2.6; }
+                        </style>
+                    </defs>
+
+                    <ellipse class="end" cx="560" cy="60" rx="110" ry="34"></ellipse>
+                    <text class="flow-text" x="560" y="67" text-anchor="middle">开始</text>
+
+                    <rect class="box" x="410" y="120" width="300" height="88"></rect>
+                    <text class="flow-text" x="560" y="158" text-anchor="middle">trim 输入文本</text>
+                    <text class="flow-sub" x="560" y="184" text-anchor="middle">val trimmedInput = text.trim()</text>
+
+                    <polygon class="decision" points="560,240 700,316 560,392 420,316"></polygon>
+                    <text class="flow-text" x="560" y="310" text-anchor="middle">trimmedInput</text>
+                    <text class="flow-text" x="560" y="336" text-anchor="middle">是否为空？</text>
+
+                    <rect class="box-accent" x="770" y="266" width="250" height="96"></rect>
+                    <text class="flow-text" x="895" y="304" text-anchor="middle">发出校验错误</text>
+                    <text class="flow-sub" x="895" y="330" text-anchor="middle">ShowValidationError</text>
+                    <text class="flow-sub" x="895" y="352" text-anchor="middle">return</text>
+
+                    <rect class="box" x="382" y="430" width="356" height="94"></rect>
+                    <text class="flow-text" x="560" y="468" text-anchor="middle">updateState(PARSING)</text>
+                    <text class="flow-sub" x="560" y="494" text-anchor="middle">保存输入并清空旧错误 / 旧提交结果</text>
+
+                    <rect class="box-teal" x="362" y="562" width="396" height="112"></rect>
+                    <text class="flow-text" x="560" y="600" text-anchor="middle">launch 协程并构建 ParseRequest</text>
+                    <text class="flow-sub" x="560" y="626" text-anchor="middle">识别 currentScreen，补齐 currentDestination</text>
+                    <text class="flow-sub" x="560" y="650" text-anchor="middle">带上 currentStepId 作为 sessionSnapshot</text>
+
+                    <polygon class="decision" points="560,706 720,790 560,874 400,790"></polygon>
+                    <text class="flow-text" x="560" y="784" text-anchor="middle">intentParser.parse</text>
+                    <text class="flow-text" x="560" y="810" text-anchor="middle">是否成功？</text>
+
+                    <rect class="box-accent" x="812" y="732" width="240" height="116"></rect>
+                    <text class="flow-text" x="932" y="772" text-anchor="middle">解析失败</text>
+                    <text class="flow-sub" x="932" y="798" text-anchor="middle">updateState(FAILED)</text>
+                    <text class="flow-sub" x="932" y="822" text-anchor="middle">ShowParsingUnavailable</text>
+
+                    <rect class="box-teal" x="110" y="748" width="220" height="84"></rect>
+                    <text class="flow-text" x="220" y="784" text-anchor="middle">normalize 结果</text>
+                    <text class="flow-sub" x="220" y="810" text-anchor="middle">slotNormalizer</text>
+
+                    <polygon class="decision" points="220,874 360,946 220,1018 80,946"></polygon>
+                    <text class="flow-text" x="220" y="938" text-anchor="middle">validate</text>
+                    <text class="flow-text" x="220" y="964" text-anchor="middle">有错误吗？</text>
+
+                    <rect class="box-accent" x="390" y="900" width="270" height="94"></rect>
+                    <text class="flow-text" x="525" y="938" text-anchor="middle">业务校验失败</text>
+                    <text class="flow-sub" x="525" y="964" text-anchor="middle">updateState(FAILED)</text>
+                    <text class="flow-sub" x="525" y="986" text-anchor="middle">ShowValidationError</text>
+
+                    <rect class="box-gold" x="720" y="900" width="320" height="116"></rect>
+                    <text class="flow-text" x="880" y="938" text-anchor="middle">routePlanner.plan</text>
+                    <text class="flow-sub" x="880" y="964" text-anchor="middle">决定 targetPlan / journeyPlan</text>
+                    <text class="flow-sub" x="880" y="988" text-anchor="middle">并 updateState(PARSED)</text>
+
+                    <polygon class="decision" points="880,1060 1030,1140 880,1220 730,1140"></polygon>
+                    <text class="flow-text" x="880" y="1134" text-anchor="middle">是否存在</text>
+                    <text class="flow-text" x="880" y="1160" text-anchor="middle">journeyPlan？</text>
+
+                    <rect class="box-teal" x="690" y="1260" width="190" height="90"></rect>
+                    <text class="flow-text" x="785" y="1298" text-anchor="middle">ExecuteJourney</text>
+                    <text class="flow-sub" x="785" y="1324" text-anchor="middle">执行多步路径</text>
+
+                    <polygon class="decision" points="1010,1268 1110,1324 1010,1380 910,1324"></polygon>
+                    <text class="flow-text" x="1010" y="1318" text-anchor="middle">有 target</text>
+                    <text class="flow-text" x="1010" y="1344" text-anchor="middle">吗？</text>
+
+                    <rect class="box" x="930" y="1410" width="180" height="88"></rect>
+                    <text class="flow-text" x="1020" y="1448" text-anchor="middle">NavigateTo</text>
+                    <text class="flow-sub" x="1020" y="1474" text-anchor="middle">单次跳转</text>
+
+                    <ellipse class="end" cx="560" cy="1528" rx="120" ry="36"></ellipse>
+                    <text class="flow-text" x="560" y="1536" text-anchor="middle">结束</text>
+
+                    <path class="flow-line" d="M560 94 L560 120"></path>
+                    <path class="flow-line" d="M560 208 L560 240"></path>
+                    <path class="flow-line" d="M700 316 L770 316"></path>
+                    <text class="flow-sub" x="727" y="300">是</text>
+                    <path class="flow-line" d="M560 392 L560 430"></path>
+                    <text class="flow-sub" x="574" y="418">否</text>
+                    <path class="flow-line" d="M560 524 L560 562"></path>
+                    <path class="flow-line" d="M560 674 L560 706"></path>
+                    <path class="flow-line" d="M720 790 L812 790"></path>
+                    <text class="flow-sub" x="754" y="774">否</text>
+                    <path class="flow-line" d="M400 790 L330 790"></path>
+                    <text class="flow-sub" x="350" y="774">是</text>
+                    <path class="flow-line" d="M220 832 L220 874"></path>
+                    <path class="flow-line" d="M360 946 L390 946"></path>
+                    <text class="flow-sub" x="366" y="930">是</text>
+                    <path class="flow-line" d="M220 1018 L220 1080 L880 1080 L880 900"></path>
+                    <text class="flow-sub" x="236" y="1040">否</text>
+                    <path class="flow-line" d="M880 1016 L880 1060"></path>
+                    <path class="flow-line" d="M880 1220 L880 1260"></path>
+                    <text class="flow-sub" x="894" y="1248">是</text>
+                    <path class="flow-line" d="M1030 1140 L1030 1268"></path>
+                    <text class="flow-sub" x="1042" y="1214">否</text>
+                    <path class="flow-line" d="M1010 1380 L1010 1410"></path>
+                    <text class="flow-sub" x="1022" y="1398">是</text>
+
+                    <path class="flow-line" d="M895 362 L895 440 L680 440 L680 1492 L560 1492"></path>
+                    <path class="flow-line" d="M932 848 L932 1492 L560 1492"></path>
+                    <path class="flow-line" d="M525 994 L525 1492 L560 1492"></path>
+                    <path class="flow-line" d="M785 1350 L785 1492 L560 1492"></path>
+                    <path class="flow-line" d="M1020 1498 L1020 1528 L680 1528"></path>
+                </svg>
+            </div>
+            <p class="caption">
+                流程图里用菱形表示判断节点，用圆角矩形表示处理步骤。右侧的失败支路和底部的执行支路都汇聚到“结束”，对应这次
+                <code>submitUserInput</code> 调用生命周期的结束。
+            </p>
+        </section>
+    </div>
+</body>
+</html>

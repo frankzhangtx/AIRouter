@@ -1,0 +1,3 @@
+display_name: First Skill Test
+short_description: Create one folder in the current project from a provided name.
+default_prompt: Use $firstskilltest to create a folder in the current project based on the name I provide.

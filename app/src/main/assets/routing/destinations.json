@@ -1,0 +1,137 @@
+{
+  "defaultEntryScreenKey": "second",
+  "goalMappings": [
+    {
+      "goal": "FillPersonalInfo",
+      "destinationKey": "personal_info_form"
+    },
+    {
+      "goal": "BrowsePersonalInfoList",
+      "destinationKey": "personal_info_list"
+    },
+    {
+      "goal": "OpenPersonalInfoDetail",
+      "destinationKey": "personal_info_detail"
+    },
+    {
+      "goal": "OpenHouseDashboard",
+      "destinationKey": "house_dashboard"
+    }
+  ],
+  "screens": [
+    {
+      "key": "first",
+      "displayName": "第一页",
+      "destinationIdName": "FirstFragment"
+    },
+    {
+      "key": "second",
+      "displayName": "第二页",
+      "destinationIdName": "SecondFragment"
+    },
+    {
+      "key": "intent_entry",
+      "displayName": "智能路由入口",
+      "destinationIdName": "intentEntryFragment"
+    },
+    {
+      "key": "personal_info_form",
+      "displayName": "个人信息工作流",
+      "destinationIdName": "personalInfoFormStepFragment"
+    },
+    {
+      "key": "review_submit",
+      "displayName": "审核确认",
+      "destinationIdName": "reviewSubmitFragment"
+    },
+    {
+      "key": "result",
+      "displayName": "提交结果",
+      "destinationIdName": "resultFragment"
+    },
+    {
+      "key": "personal_info_list",
+      "displayName": "个人信息列表",
+      "destinationIdName": "PersonalInfoListFragment"
+    },
+    {
+      "key": "personal_info_detail",
+      "displayName": "个人信息详情"
+    },
+    {
+      "key": "house_dashboard",
+      "displayName": "家居看板"
+    }
+  ],
+  "destinations": [
+    {
+      "key": "intent_entry",
+      "pageType": "ENTRY",
+      "plannerProfile": "NAV_ONLY",
+      "screenKey": "intent_entry",
+      "displayName": "智能路由入口",
+      "defaultExecutorKey": "open_intent_entry",
+      "supportsContinue": true
+    },
+    {
+      "key": "personal_info_form",
+      "pageType": "FORM",
+      "plannerProfile": "WORKFLOW_ENTRY",
+      "screenKey": "personal_info_form",
+      "displayName": "个人信息工作流",
+      "defaultExecutorKey": "open_personal_info_form",
+      "workflowId": "personal_info_workflow",
+      "supportsAutofill": true,
+      "supportsContinue": true
+    },
+    {
+      "key": "review_submit",
+      "pageType": "REVIEW",
+      "plannerProfile": "NAV_ONLY",
+      "screenKey": "review_submit",
+      "displayName": "审核确认",
+      "defaultExecutorKey": "open_review_submit",
+      "supportsContinue": true,
+      "supportsSubmit": true
+    },
+    {
+      "key": "result",
+      "pageType": "RESULT",
+      "plannerProfile": "NAV_ONLY",
+      "screenKey": "result",
+      "displayName": "提交结果",
+      "defaultExecutorKey": "open_result"
+    },
+    {
+      "key": "personal_info_list",
+      "pageType": "LOOKUP_LIST",
+      "plannerProfile": "LOOKUP_LIST",
+      "screenKey": "personal_info_list",
+      "displayName": "个人信息列表",
+      "defaultExecutorKey": "open_personal_info_list",
+      "focusExecutorKey": "focus_personal_info_list",
+      "messageExecutorKey": "show_fallback_message",
+      "stopExecutorKey": "stop_current_screen",
+      "supportsListFocus": true,
+      "supportsDetailDisplay": true
+    },
+    {
+      "key": "personal_info_detail",
+      "pageType": "DETAIL_READ_ONLY",
+      "plannerProfile": "DETAIL_VIA_GRAPH",
+      "screenKey": "personal_info_detail",
+      "displayName": "个人信息详情",
+      "defaultExecutorKey": "open_personal_info_detail",
+      "focusExecutorKey": "focus_personal_info_list",
+      "supportsDetailDisplay": true
+    },
+    {
+      "key": "house_dashboard",
+      "pageType": "TERMINAL_ACTIVITY",
+      "plannerProfile": "TERMINAL_ACTIVITY",
+      "screenKey": "house_dashboard",
+      "displayName": "家居看板",
+      "defaultExecutorKey": "open_house_dashboard"
+    }
+  ]
+}

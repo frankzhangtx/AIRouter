@@ -1,0 +1,145 @@
+{
+  "actions": [
+    {
+      "key": "go_to_second",
+      "fromScreenKey": "first",
+      "toScreenKey": "second",
+      "displayLabel": "前往第二页",
+      "executorKey": "go_to_second"
+    },
+    {
+      "key": "return_to_second_from_intent_entry",
+      "fromScreenKey": "intent_entry",
+      "toScreenKey": "second",
+      "displayLabel": "返回第二页",
+      "executorKey": "return_to_second"
+    },
+    {
+      "key": "return_to_second_from_personal_info_list",
+      "fromScreenKey": "personal_info_list",
+      "toScreenKey": "second",
+      "displayLabel": "返回第二页",
+      "executorKey": "return_to_second"
+    },
+    {
+      "key": "return_to_second_from_personal_info_form",
+      "fromScreenKey": "personal_info_form",
+      "toScreenKey": "second",
+      "displayLabel": "返回第二页",
+      "executorKey": "return_to_second"
+    },
+    {
+      "key": "return_to_second_from_review_submit",
+      "fromScreenKey": "review_submit",
+      "toScreenKey": "second",
+      "displayLabel": "返回第二页",
+      "executorKey": "return_to_second"
+    },
+    {
+      "key": "return_to_second_from_result",
+      "fromScreenKey": "result",
+      "toScreenKey": "second",
+      "displayLabel": "返回第二页",
+      "executorKey": "return_to_second"
+    },
+    {
+      "key": "open_personal_info_list",
+      "fromScreenKey": "second",
+      "toScreenKey": "personal_info_list",
+      "displayLabel": "打开个人信息列表",
+      "executorKey": "open_personal_info_list"
+    },
+    {
+      "key": "enter_personal_info_workflow",
+      "fromScreenKey": "second",
+      "toScreenKey": "personal_info_form",
+      "displayLabel": "进入个人信息工作流",
+      "executorKey": "open_personal_info_form"
+    },
+    {
+      "key": "open_house_dashboard",
+      "fromScreenKey": "second",
+      "toScreenKey": "house_dashboard",
+      "displayLabel": "打开家居看板",
+      "executorKey": "open_house_dashboard"
+    },
+    {
+      "key": "open_focused_detail",
+      "fromScreenKey": "personal_info_list",
+      "toScreenKey": "personal_info_detail",
+      "displayLabel": "打开已定位详情",
+      "executorKey": "open_personal_info_detail"
+    }
+  ],
+  "executors": [
+    {
+      "key": "go_to_second",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "second"
+      }
+    },
+    {
+      "key": "return_to_second",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "second"
+      }
+    },
+    {
+      "key": "open_intent_entry",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "intent_entry"
+      }
+    },
+    {
+      "key": "open_personal_info_form",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "personal_info_form"
+      }
+    },
+    {
+      "key": "open_review_submit",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "review_submit"
+      }
+    },
+    {
+      "key": "open_result",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "result"
+      }
+    },
+    {
+      "key": "open_personal_info_list",
+      "type": "navigate",
+      "params": {
+        "destinationKey": "personal_info_list"
+      }
+    },
+    {
+      "key": "open_house_dashboard",
+      "type": "open_house_dashboard"
+    },
+    {
+      "key": "open_personal_info_detail",
+      "type": "open_record_detail"
+    },
+    {
+      "key": "focus_personal_info_list",
+      "type": "focus_list"
+    },
+    {
+      "key": "show_fallback_message",
+      "type": "show_message"
+    },
+    {
+      "key": "stop_current_screen",
+      "type": "stop"
+    }
+  ]
+}

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TargetPlanner 类说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.92);
+            --surface-strong: #fff9f2;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.28);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1260px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 780px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.02;
+        }
+
+        .hero .lead {
+            margin-top: 14px;
+            max-width: 860px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.16fr) minmax(340px, 0.84fr);
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 26px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(249, 243, 234, 0.86) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.4px;
+            line-height: 1.78;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+        }
+
+        .summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .diagram-panel {
+            margin-top: 20px;
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 8px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.72), rgba(244, 236, 227, 0.92));
+            border: 1px solid var(--line);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 1080px;
+            height: auto;
+        }
+
+        .callout,
+        .caption {
+            margin-top: 16px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero,
+            .panel {
+                padding: 20px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            pre {
+                font-size: 12.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <div class="eyebrow">routing / workflow</div>
+            <h1><code>TargetPlanner</code> 类说明与流程图</h1>
+            <p class="lead">
+                这个页面收录了 <code>app/src/main/java/com/example/cctest/routing/workflow/TargetPlanner.kt</code>
+                中 <code>TargetPlanner</code> 的带注释版本，并把 <code>plan(result, currentFields)</code> 的真实决策流展开成流程图。
+                重点不是“怎么跳页面”，而是解释它怎样把解析器给出的 <code>ParseResult</code> 收敛成统一的 <code>TargetPlan</code>。
+            </p>
+            <div class="meta-list">
+                <div class="meta-item">源码位置：<code>TargetPlanner.kt:15-172</code></div>
+                <div class="meta-item">验证依据：<code>RoutePlannerTest.kt:38-90</code> 覆盖填表、唯一详情、歧义详情三条关键路径</div>
+                <div class="meta-item">文档类型：说明性 HTML，不改动业务 Kotlin 源码</div>
+                <div class="meta-item">适用场景：理解 <code>TargetPlan</code> 的生成逻辑与回退策略</div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <article class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">带中文注释的类代码</h2>
+                        <p class="panel-subtitle">下面的注释是为阅读补充的说明，不会回写到 Kotlin 源文件里。</p>
+                    </div>
+                </div>
+                <div class="code-shell">
+<pre><code><span class="comment">// TargetPlan 是 TargetPlanner 的统一输出结构。</span>
+<span class="comment">// 这里把“最终去哪儿”“当前工作流状态”“需要聚焦哪条记录”“给用户什么提示”全部打包。</span>
+data class TargetPlan(
+    val target: RouteTarget? = null,
+    val workflowId: String? = null,
+    val currentStepId: String? = null,
+    val routeIntent: UserGoal = UserGoal.Unknown,
+    val activeTargetLabel: String? = null,
+    val formFields: PersonalInfoFields? = null,
+    val recordRef: RecordRef? = null,
+    val listFocusRequest: ListFocusRequest? = null,
+    val infoMessage: String? = null,
+    val fallbackMessage: String? = null
+)
+
+class TargetPlanner(
+    private val destinationContractRegistry: DestinationContractRegistry,
+    private val recordResolver: PersonalInfoRecordResolver,
+    private val workflowRegistry: WorkflowRegistry,
+    private val workflowEngine: WorkflowEngine
+) {
+    <span class="comment">// plan() 本身只做一层“语义分发”。</span>
+    <span class="comment">// 它只看 userGoal，然后把请求交给对应业务分支，不在这里做路径规划。</span>
+    fun plan(result: ParseResult, currentFields: PersonalInfoFields): TargetPlan {
+        return when (result.userGoal) {
+            UserGoal.FillPersonalInfo -&gt; planPersonalInfoWorkflow(result, currentFields)
+            UserGoal.BrowsePersonalInfoList -&gt; planListTarget(result)
+            UserGoal.OpenPersonalInfoDetail -&gt; planDetailTarget(result)
+            UserGoal.OpenHouseDashboard -&gt; planHouseDashboard(result)
+            UserGoal.Unknown -&gt; TargetPlan(
+                routeIntent = UserGoal.Unknown,
+                fallbackMessage = "暂时无法识别这句请求，建议换成“查看第 12 条记录”或“打开家居看板”。"
+            )
+        }
+    }
+
+    <span class="comment">// 填表分支：把语义目标转换成“进入工作流起点”。</span>
+    <span class="comment">// 这里会读取表单 contract、拿个人信息 workflow、取第一步，并把已有字段与解析字段合并。</span>
+    private fun planPersonalInfoWorkflow(
+        result: ParseResult,
+        currentFields: PersonalInfoFields
+    ): TargetPlan {
+        val contract = destinationContractRegistry.require(DestinationKey.PERSONAL_INFO_FORM)
+        val workflow = workflowRegistry.personalInfoWorkflow()
+        val step = workflowEngine.start(workflow)
+        val mergedFields = currentFields.mergeFrom(result.slots.personalInfoFields)
+        return TargetPlan(
+            target = RouteTarget.WorkflowTarget(
+                workflowId = workflow.workflowId,
+                entryDestinationId = step.destinationId,
+                displayName = contract.screen?.displayName ?: "个人信息工作流"
+            ),
+            workflowId = workflow.workflowId,
+            currentStepId = step.stepId,
+            routeIntent = result.userGoal,
+            activeTargetLabel = contract.screen?.displayName ?: contract.pageType.name,
+            formFields = mergedFields,
+            infoMessage = if (result.slots.personalInfoFields.hasAnyValue()) {
+                "已带入解析出的个人信息字段。"
+            } else {
+                "已进入个人信息工作流。"
+            }
+        )
+    }
+
+    <span class="comment">// 列表分支：目标一定是列表页，但列表页可能需要“聚焦某条记录”。</span>
+    <span class="comment">// 所以这里先交给 recordResolver 解析，再决定 focusRequest 是唯一命中、序号命中、模糊查询还是空请求。</span>
+    private fun planListTarget(result: ParseResult): TargetPlan {
+        val contract = destinationContractRegistry.require(DestinationKey.PERSONAL_INFO_LIST)
+        val resolution = recordResolver.resolveFromSlots(result.slots)
+        val focusRequest = when {
+            resolution.isUnique -&gt; resolution.toListFocusRequest(autoOpenDetail = false)
+            result.slots.listPosition != null -&gt; ListFocusRequest(
+                position = result.slots.listPosition,
+                matchMode = ListFocusRequest.MATCH_MODE_POSITION,
+                autoOpenDetail = false
+            )
+
+            !result.slots.personName.isNullOrBlank() ||
+                !result.slots.phone.isNullOrBlank() ||
+                !result.slots.city.isNullOrBlank() -&gt; {
+                if (resolution.candidates.isNotEmpty()) {
+                    resolution.toListFocusRequest(autoOpenDetail = false)
+                } else {
+                    ListFocusRequest(
+                        queryName = result.slots.personName,
+                        queryPhone = result.slots.phone,
+                        queryCity = result.slots.city,
+                        matchMode = ListFocusRequest.MATCH_MODE_NONE
+                    )
+                }
+            }
+
+            else -&gt; ListFocusRequest()
+        }
+        return TargetPlan(
+            target = RouteTarget.ListTarget(focusRequest),
+            routeIntent = result.userGoal,
+            activeTargetLabel = contract.screen?.displayName ?: contract.pageType.name,
+            recordRef = resolution.toRecordRef(),
+            listFocusRequest = focusRequest.takeIf { it.hasLocator() },
+            infoMessage = if (focusRequest.position != null || focusRequest.recordId != null) {
+                "已生成列表定位请求。"
+            } else {
+                "已准备进入个人信息列表。"
+            }
+        )
+    }
+
+    <span class="comment">// 详情分支：先尝试唯一命中。</span>
+    <span class="comment">// 命中唯一记录时，返回 DetailTarget；否则不强跳详情，而是回退成 ListTarget，并附带 fallbackMessage。</span>
+    private fun planDetailTarget(result: ParseResult): TargetPlan {
+        val resolution = recordResolver.resolveFromSlots(result.slots)
+        return if (resolution.isUnique) {
+            val contract = destinationContractRegistry.require(DestinationKey.PERSONAL_INFO_DETAIL)
+            val recordRef = resolution.toRecordRef() ?: RecordRef(
+                displayName = result.slots.personName,
+                phone = result.slots.phone,
+                city = result.slots.city
+            )
+            TargetPlan(
+                target = RouteTarget.DetailTarget(recordRef),
+                routeIntent = result.userGoal,
+                activeTargetLabel = contract.screen?.displayName ?: contract.pageType.name,
+                recordRef = recordRef,
+                listFocusRequest = resolution.toListFocusRequest(autoOpenDetail = false),
+                infoMessage = "已唯一命中详情目标，将先在列表定位再打开详情。"
+            )
+        } else {
+            val contract = destinationContractRegistry.require(DestinationKey.PERSONAL_INFO_LIST)
+            val fallbackRequest = if (resolution.candidates.isNotEmpty()) {
+                resolution.toListFocusRequest(autoOpenDetail = false)
+            } else {
+                ListFocusRequest(
+                    queryName = result.slots.personName,
+                    queryPhone = result.slots.phone,
+                    queryCity = result.slots.city,
+                    matchMode = ListFocusRequest.MATCH_MODE_NONE
+                )
+            }
+            TargetPlan(
+                target = RouteTarget.ListTarget(fallbackRequest),
+                routeIntent = result.userGoal,
+                activeTargetLabel = contract.screen?.displayName ?: contract.pageType.name,
+                recordRef = resolution.toRecordRef(),
+                listFocusRequest = fallbackRequest.takeIf { it.hasLocator() },
+                fallbackMessage = if (resolution.candidates.isNotEmpty()) {
+                    "详情目标存在歧义，已回退到列表页供你确认。"
+                } else {
+                    "未直接命中详情记录，已回退到列表页。"
+                }
+            )
+        }
+    }
+
+    <span class="comment">// 看板分支：只负责把 dashboardTab 包装成 launchSpec。</span>
+    <span class="comment">// 真正“从当前页面怎么走到看板”是 JourneyPlanner 的事，不在这里处理。</span>
+    private fun planHouseDashboard(result: ParseResult): TargetPlan {
+        val contract = destinationContractRegistry.require(DestinationKey.HOUSE_DASHBOARD)
+        val launchSpec = HouseDashboardLaunchSpec(
+            initialTab = result.slots.dashboardTab ?: HouseDashboardTab.HOME,
+            entrySource = "intelligent-routing"
+        )
+        return TargetPlan(
+            target = RouteTarget.HouseDashboardTarget(launchSpec),
+            routeIntent = result.userGoal,
+            activeTargetLabel = contract.screen?.displayName ?: contract.pageType.name,
+            infoMessage = "已命中家居看板目标，将按既有页面路径打开。"
+        )
+    }
+}</code></pre>
+                </div>
+                <div class="callout">
+                    <code>TargetPlanner</code> 可以理解成“业务目标编译器”。
+                    它把自然语言解析结果翻译成统一的 <code>TargetPlan</code>，供后面的 <code>JourneyPlanner</code>
+                    再去解决“从当前页如何一步步到达目标”。所以这个类的核心价值不是导航，而是把目标语义、记录定位、回退提示和工作流状态收口到一个地方。
+                </div>
+            </article>
+
+            <aside class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="panel-title">阅读抓手</h2>
+                        <p class="panel-subtitle">先抓职责边界，再看每个分支里如何组装 TargetPlan。</p>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <section class="summary-card">
+                        <h3>1. 它定终点，不定路径</h3>
+                        <p><code>plan()</code> 的产物是 <code>TargetPlan</code>，不是导航动作。真正的页面路径要等 <code>JourneyPlanner</code> 再根据当前页面补出来。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>2. FillPersonalInfo 会把语义升级成工作流</h3>
+                        <p>这个分支不是直接返回某个静态 Fragment，而是通过 <code>WorkflowRegistry</code> 和 <code>WorkflowEngine</code> 找到工作流首步，并把解析到的字段 merge 进当前表单状态。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>3. 列表与详情都依赖 RecordResolver</h3>
+                        <p>姓名、手机号、城市、第 N 条记录都先交给 <code>PersonalInfoRecordResolver</code> 做命中解析，TargetPlanner 再决定要输出 <code>ListTarget</code>、<code>DetailTarget</code> 还是模糊查询型列表请求。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>4. 详情分支内建回退策略</h3>
+                        <p>如果详情目标不唯一或根本没命中，代码不会硬跳详情，而是回退成 <code>ListTarget</code>，同时写入 <code>fallbackMessage</code>，这就是测试里“歧义时停在列表页”的来源。</p>
+                    </section>
+                    <section class="summary-card">
+                        <h3>5. Unknown 的效果是 target 为空</h3>
+                        <p>当 <code>userGoal</code> 是 <code>Unknown</code> 时，<code>TargetPlan.target</code> 为 <code>null</code>。这意味着下游不会继续规划 Journey，只会把失败提示回给用户。</p>
+                    </section>
+                </div>
+            </aside>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">执行流程图</h2>
+                    <p class="panel-subtitle">从 <code>RoutePlanner</code> 调用 <code>TargetPlanner.plan()</code> 开始，到返回不同形态的 <code>TargetPlan</code> 为止。</p>
+                </div>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1200 1500" role="img" aria-label="TargetPlanner plan 执行流程图">
+                    <defs>
+                        <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#5d4c3a"></path>
+                        </marker>
+                        <style>
+                            .flow-line { stroke: #5d4c3a; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+                            .flow-text { fill: #201b16; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 20px; font-weight: 600; }
+                            .flow-sub { fill: #675d52; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 16px; }
+                            .box { fill: #fffaf4; stroke: #c9b49e; stroke-width: 2.4; rx: 20; }
+                            .box-accent { fill: #fff2ea; stroke: #d7926f; stroke-width: 2.4; rx: 20; }
+                            .box-teal { fill: #eff9f7; stroke: #6fb3aa; stroke-width: 2.4; rx: 20; }
+                            .box-gold { fill: #fff7ea; stroke: #d0ab65; stroke-width: 2.4; rx: 20; }
+                            .decision { fill: #fffdf8; stroke: #b08c58; stroke-width: 2.6; }
+                            .end { fill: #efe6d8; stroke: #8c745a; stroke-width: 2.6; }
+                        </style>
+                    </defs>
+
+                    <ellipse class="end" cx="600" cy="60" rx="120" ry="34"></ellipse>
+                    <text class="flow-text" x="600" y="67" text-anchor="middle">开始</text>
+
+                    <rect class="box" x="390" y="120" width="420" height="92"></rect>
+                    <text class="flow-text" x="600" y="158" text-anchor="middle">接收 ParseResult 与 currentFields</text>
+                    <text class="flow-sub" x="600" y="184" text-anchor="middle">TargetPlanner.plan(result, currentFields)</text>
+
+                    <polygon class="decision" points="600,260 760,340 600,420 440,340"></polygon>
+                    <text class="flow-text" x="600" y="332" text-anchor="middle">when</text>
+                    <text class="flow-text" x="600" y="358" text-anchor="middle">(result.userGoal)</text>
+
+                    <rect class="box-accent" x="40" y="500" width="480" height="140"></rect>
+                    <text class="flow-text" x="280" y="538" text-anchor="middle">FillPersonalInfo</text>
+                    <text class="flow-sub" x="280" y="566" text-anchor="middle">读取 PERSONAL_INFO_FORM contract</text>
+                    <text class="flow-sub" x="280" y="590" text-anchor="middle">workflowRegistry.personalInfoWorkflow()</text>
+                    <text class="flow-sub" x="280" y="614" text-anchor="middle">workflowEngine.start() + merge currentFields</text>
+
+                    <rect class="box-teal" x="680" y="500" width="480" height="160"></rect>
+                    <text class="flow-text" x="920" y="538" text-anchor="middle">BrowsePersonalInfoList</text>
+                    <text class="flow-sub" x="920" y="566" text-anchor="middle">recordResolver.resolveFromSlots(slots)</text>
+                    <text class="flow-sub" x="920" y="590" text-anchor="middle">唯一命中：ListFocusRequest(recordId / position)</text>
+                    <text class="flow-sub" x="920" y="614" text-anchor="middle">有查询词但未命中：生成 queryName / phone / city 请求</text>
+                    <text class="flow-sub" x="920" y="638" text-anchor="middle">输出 RouteTarget.ListTarget</text>
+
+                    <rect class="box-gold" x="40" y="730" width="480" height="160"></rect>
+                    <text class="flow-text" x="280" y="768" text-anchor="middle">OpenPersonalInfoDetail</text>
+                    <text class="flow-sub" x="280" y="796" text-anchor="middle">recordResolver.resolveFromSlots(slots)</text>
+                    <text class="flow-sub" x="280" y="820" text-anchor="middle">唯一命中：DetailTarget + listFocusRequest</text>
+                    <text class="flow-sub" x="280" y="844" text-anchor="middle">非唯一：回退为 ListTarget + fallbackMessage</text>
+                    <text class="flow-sub" x="280" y="868" text-anchor="middle">详情目标先被“解释清楚”，再交给下游规划路径</text>
+
+                    <rect class="box-teal" x="680" y="760" width="480" height="130"></rect>
+                    <text class="flow-text" x="920" y="798" text-anchor="middle">OpenHouseDashboard</text>
+                    <text class="flow-sub" x="920" y="826" text-anchor="middle">dashboardTab ?: HOME</text>
+                    <text class="flow-sub" x="920" y="850" text-anchor="middle">构造 HouseDashboardLaunchSpec 后输出 HouseDashboardTarget</text>
+
+                    <rect class="box-accent" x="360" y="1040" width="480" height="140"></rect>
+                    <text class="flow-text" x="600" y="1078" text-anchor="middle">Unknown</text>
+                    <text class="flow-sub" x="600" y="1106" text-anchor="middle">target = null</text>
+                    <text class="flow-sub" x="600" y="1130" text-anchor="middle">只保留 routeIntent = Unknown 与 fallbackMessage</text>
+                    <text class="flow-sub" x="600" y="1154" text-anchor="middle">下游不会继续调用 JourneyPlanner</text>
+
+                    <ellipse class="end" cx="600" cy="1390" rx="150" ry="36"></ellipse>
+                    <text class="flow-text" x="600" y="1398" text-anchor="middle">返回 TargetPlan</text>
+
+                    <path class="flow-line" d="M600 94 L600 120"></path>
+                    <path class="flow-line" d="M600 212 L600 260"></path>
+
+                    <path class="flow-line" d="M440 340 L280 500"></path>
+                    <text class="flow-sub" x="256" y="430">FillPersonalInfo</text>
+
+                    <path class="flow-line" d="M760 340 L920 500"></path>
+                    <text class="flow-sub" x="896" y="430">BrowsePersonalInfoList</text>
+
+                    <path class="flow-line" d="M440 340 L130 340 L130 730 L280 730"></path>
+                    <text class="flow-sub" x="52" y="360">OpenPersonalInfoDetail</text>
+
+                    <path class="flow-line" d="M760 340 L1070 340 L1070 760 L920 760"></path>
+                    <text class="flow-sub" x="936" y="360">OpenHouseDashboard</text>
+
+                    <path class="flow-line" d="M600 420 L600 1040"></path>
+                    <text class="flow-sub" x="614" y="724">Unknown</text>
+
+                    <path class="flow-line" d="M280 640 L280 1320 L470 1320"></path>
+                    <path class="flow-line" d="M920 660 L920 1320 L730 1320"></path>
+                    <path class="flow-line" d="M280 890 L280 1280 L470 1280"></path>
+                    <path class="flow-line" d="M920 890 L920 1280 L730 1280"></path>
+                    <path class="flow-line" d="M600 1180 L600 1354"></path>
+                </svg>
+            </div>
+            <p class="caption">
+                这张图把 <code>TargetPlanner</code> 看成一个“按语义选分支”的目标编译器。
+                菱形表示 <code>userGoal</code> 的分发节点，彩色卡片表示不同业务分支内部最关键的组装动作。
+                注意：图里所有分支最终都只是返回 <code>TargetPlan</code>，并没有直接执行导航。
+            </p>
+        </section>
+
+        <section class="panel diagram-panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">补充：<code>resolvePath()</code> 为什么通常不会选错路</h2>
+                    <p class="panel-subtitle">
+                        对应 <code>EntryActionRegistry.resolvePath(from, to)</code> 与
+                        <code>JourneyPlanner.resolvePathSteps(...)</code> 的配合关系。
+                    </p>
+                </div>
+            </div>
+            <div class="summary-grid" style="margin-bottom: 16px;">
+                <section class="summary-card">
+                    <h3>先定目标页，再算图上路径</h3>
+                    <p><code>JourneyPlanner</code> 先决定这一次应该到哪个 <code>targetScreen</code>，然后才把 <code>from</code> 和 <code>to</code> 交给 <code>resolvePath()</code>。所以“用户真正想去哪儿”主要由上层决定，不是由 BFS 自己猜。</p>
+                </section>
+                <section class="summary-card">
+                    <h3><code>resolvePath()</code> 只保证图谱内合法最短路</h3>
+                    <p>它只会沿着 <code>actions</code> 这张显式声明的动作图前进，并用 BFS 在第一次到达终点时返回，因此保证的是“动作数最短且每一步合法”。</p>
+                </section>
+                <section class="summary-card">
+                    <h3>当前工程的动作图几乎是单解</h3>
+                    <p>从 <code>FIRST</code>、<code>SECOND</code>、<code>PERSONAL_INFO_LIST</code> 到目标页的边很少，竞争路径几乎不存在，所以结果通常稳定地等于业务想要的那条路。</p>
+                </section>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1120 620" role="img" aria-label="resolvePath 选择路径的小流程图">
+                    <defs>
+                        <marker id="arrow-small" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#5d4c3a"></path>
+                        </marker>
+                        <style>
+                            .s-line { stroke: #5d4c3a; stroke-width: 3; fill: none; marker-end: url(#arrow-small); }
+                            .s-box { fill: #fffaf4; stroke: #c9b49e; stroke-width: 2.4; rx: 20; }
+                            .s-box-accent { fill: #fff2ea; stroke: #d7926f; stroke-width: 2.4; rx: 20; }
+                            .s-box-teal { fill: #eff9f7; stroke: #6fb3aa; stroke-width: 2.4; rx: 20; }
+                            .s-box-gold { fill: #fff7ea; stroke: #d0ab65; stroke-width: 2.4; rx: 20; }
+                            .s-text { fill: #201b16; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 20px; font-weight: 600; }
+                            .s-sub { fill: #675d52; font-family: 'Avenir Next', 'PingFang SC', 'Noto Sans SC', sans-serif; font-size: 15px; }
+                            .s-end { fill: #efe6d8; stroke: #8c745a; stroke-width: 2.6; }
+                        </style>
+                    </defs>
+
+                    <rect class="s-box-accent" x="40" y="70" width="250" height="120"></rect>
+                    <text class="s-text" x="165" y="112" text-anchor="middle">TargetPlanner / JourneyPlanner</text>
+                    <text class="s-sub" x="165" y="140" text-anchor="middle">先决定这次真正的</text>
+                    <text class="s-sub" x="165" y="164" text-anchor="middle">targetScreen 是谁</text>
+
+                    <rect class="s-box" x="430" y="70" width="260" height="120"></rect>
+                    <text class="s-text" x="560" y="112" text-anchor="middle">调用 resolvePath</text>
+                    <text class="s-sub" x="560" y="140" text-anchor="middle">输入 from / to</text>
+                    <text class="s-sub" x="560" y="164" text-anchor="middle">不负责猜用户意图</text>
+
+                    <rect class="s-box-teal" x="830" y="50" width="250" height="160"></rect>
+                    <text class="s-text" x="955" y="92" text-anchor="middle">BFS 只走 actions 图谱</text>
+                    <text class="s-sub" x="955" y="120" text-anchor="middle">visited 防止绕圈</text>
+                    <text class="s-sub" x="955" y="144" text-anchor="middle">第一次到达 to 就返回</text>
+                    <text class="s-sub" x="955" y="168" text-anchor="middle">因此得到合法最短路径</text>
+
+                    <rect class="s-box-gold" x="250" y="350" width="280" height="130"></rect>
+                    <text class="s-text" x="390" y="392" text-anchor="middle">如果图谱是单解</text>
+                    <text class="s-sub" x="390" y="420" text-anchor="middle">当前工程大多如此</text>
+                    <text class="s-sub" x="390" y="444" text-anchor="middle">返回路径通常就等于</text>
+                    <text class="s-sub" x="390" y="468" text-anchor="middle">业务期望路径</text>
+
+                    <rect class="s-box-accent" x="620" y="350" width="280" height="130"></rect>
+                    <text class="s-text" x="760" y="392" text-anchor="middle">如果出现多条同长路径</text>
+                    <text class="s-sub" x="760" y="420" text-anchor="middle">它会按 actions 列表顺序</text>
+                    <text class="s-sub" x="760" y="444" text-anchor="middle">选先遇到的那条</text>
+                    <text class="s-sub" x="760" y="468" text-anchor="middle">并没有额外“用户偏好”逻辑</text>
+
+                    <ellipse class="s-end" cx="560" cy="560" rx="170" ry="34"></ellipse>
+                    <text class="s-text" x="560" y="568" text-anchor="middle">结论：合法最短路，不单独负责“懂用户”</text>
+
+                    <path class="s-line" d="M290 130 L430 130"></path>
+                    <path class="s-line" d="M690 130 L830 130"></path>
+                    <path class="s-line" d="M955 210 L955 270 L390 270 L390 350"></path>
+                    <path class="s-line" d="M955 210 L955 350 L760 350"></path>
+                    <path class="s-line" d="M390 480 L390 560 L390 560"></path>
+                    <path class="s-line" d="M760 480 L760 560 L730 560"></path>
+                    <path class="s-line" d="M390 560 L390 560 L390 560 L390 560"></path>
+                    <path class="s-line" d="M390 560 L560 560"></path>
+                </svg>
+            </div>
+            <p class="caption">
+                这张小图对应的判断顺序是：上层先把目标页定对，<code>resolvePath()</code> 再在动作图里找一条合法最短路。
+                所以它不是“理解用户意图”的地方，而是“把已确定的页面目标翻译成一串 EntryAction”的地方。
+                真正可能影响选路偏好的，是 <code>actions</code> 图谱设计和动作声明顺序。
+            </p>
+        </section>
+    </div>
+</body>
+</html>

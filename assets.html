@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cctest Project Asset Map</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f6efe5;
+            --bg-strong: #f1e3d2;
+            --surface: rgba(255, 251, 246, 0.8);
+            --surface-strong: #fffaf2;
+            --ink: #1f1b18;
+            --muted: #6d6257;
+            --line: rgba(94, 74, 55, 0.18);
+            --accent: #c45c2b;
+            --accent-deep: #7d3114;
+            --teal: #0f766e;
+            --gold: #b7791f;
+            --shadow: 0 24px 80px rgba(74, 51, 35, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1180px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Helvetica Neue", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(196, 92, 43, 0.16), transparent 32%),
+                radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 30%),
+                linear-gradient(180deg, #fbf6ef 0%, var(--bg) 48%, #f4ecdf 100%);
+        }
+
+        a {
+            color: inherit;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 32px 0 64px;
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 32px;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: linear-gradient(145deg, rgba(255, 250, 242, 0.94), rgba(248, 239, 226, 0.9));
+            box-shadow: var(--shadow);
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -80px -80px auto;
+            width: 240px;
+            height: 240px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(196, 92, 43, 0.22), transparent 68%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent-deep);
+            background: rgba(196, 92, 43, 0.1);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        h1 {
+            margin-top: 18px;
+            max-width: 9.5em;
+            font-size: clamp(2.3rem, 4vw, 4.6rem);
+            line-height: 0.96;
+            letter-spacing: -0.05em;
+        }
+
+        .hero-copy {
+            margin-top: 18px;
+            max-width: 760px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--muted);
+        }
+
+        .hero-grid,
+        .section-grid,
+        .summary-grid,
+        .flow-grid,
+        .legend-grid,
+        .catalog-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-grid {
+            margin-top: 28px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 6px 10px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-deep);
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .stat {
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(125, 49, 20, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .stat span {
+            display: block;
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        section {
+            margin-top: 28px;
+        }
+
+        .section-grid {
+            grid-template-columns: 1.05fr 0.95fr;
+            align-items: start;
+        }
+
+        .card {
+            padding: 24px;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--line);
+            background: var(--surface);
+            box-shadow: 0 18px 48px rgba(50, 33, 21, 0.08);
+            backdrop-filter: blur(14px);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            line-height: 1.2;
+        }
+
+        .card > p {
+            margin-top: 12px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .summary-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .summary-item {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid var(--line);
+        }
+
+        .summary-item h3 {
+            font-size: 0.98rem;
+        }
+
+        .summary-item p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 0.94rem;
+        }
+
+        .diagram {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .node {
+            position: relative;
+            min-height: 164px;
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(253, 248, 242, 0.9));
+        }
+
+        .node::before {
+            content: attr(data-step);
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: rgba(31, 27, 24, 0.45);
+        }
+
+        .node h3 {
+            margin-top: 18px;
+            font-size: 1.1rem;
+        }
+
+        .node p {
+            margin-top: 10px;
+            color: var(--muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .files {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .files code {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            color: #3d3026;
+            background: rgba(241, 227, 210, 0.9);
+            border: 1px solid rgba(125, 49, 20, 0.1);
+        }
+
+        .arrow-note {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-left: 4px solid var(--accent);
+            border-radius: 12px;
+            background: rgba(196, 92, 43, 0.08);
+            color: #5f4130;
+            line-height: 1.6;
+        }
+
+        .legend-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .legend {
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.68);
+        }
+
+        .legend strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .legend p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 0.9rem;
+        }
+
+        .catalog-grid {
+            margin-top: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .catalog {
+            padding: 18px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.75);
+        }
+
+        .catalog h3 {
+            font-size: 1.02rem;
+        }
+
+        .catalog ul {
+            margin: 14px 0 0;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .catalog li + li {
+            margin-top: 6px;
+        }
+
+        .timeline {
+            margin-top: 18px;
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            border: 1px dashed rgba(15, 118, 110, 0.32);
+            background: rgba(15, 118, 110, 0.05);
+        }
+
+        .timeline p + p {
+            margin-top: 12px;
+        }
+
+        .timeline strong {
+            color: var(--teal);
+        }
+
+        .footer-note {
+            margin-top: 28px;
+            padding: 18px 20px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        @media (max-width: 980px) {
+            .hero-grid,
+            .legend-grid,
+            .catalog-grid,
+            .section-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .summary-grid,
+            .flow-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding-top: 20px;
+            }
+
+            .hero,
+            .card {
+                padding: 20px;
+            }
+
+            .hero-grid,
+            .legend-grid,
+            .catalog-grid,
+            .section-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="hero">
+            <span class="eyebrow">Project Relationship Guide</span>
+            <h1>How files in <br>cctest fit together</h1>
+            <p class="hero-copy">
+                This Android project is a single Gradle app module. Kotlin screens, XML layouts, navigation,
+                manifest declarations, resources, tests, and generated binding classes all play different roles.
+                The page below shows the important connections so you can understand the project as a system,
+                not just a folder tree.
+            </p>
+            <div class="hero-grid">
+                <div class="stat">
+                    <span class="pill">Module Shape</span>
+                    <strong>1 app</strong>
+                    <span>`settings.gradle.kts` includes only `:app`, so everything ships from one Android application module.</span>
+                </div>
+                <div class="stat">
+                    <span class="pill">Entry Point</span>
+                    <strong>MainActivity</strong>
+                    <span>The launcher activity hosts the navigation graph and starts the app experience.</span>
+                </div>
+                <div class="stat">
+                    <span class="pill">UI Style</span>
+                    <strong>View Binding</strong>
+                    <span>`app/build.gradle.kts` enables view binding, so XML layouts generate strongly typed binding classes.</span>
+                </div>
+                <div class="stat">
+                    <span class="pill">Navigation</span>
+                    <strong>Fragments + Activities</strong>
+                    <span>The app mixes fragment-based flow inside `MainActivity` with standalone demo/detail activities.</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="section-grid">
+            <article class="card">
+                <h2>Project layers</h2>
+                <p>
+                    The repository is easiest to read in layers. Build files define the module. The manifest declares
+                    app entry points. Kotlin classes control behavior. XML resources describe layouts, navigation,
+                    strings, themes, and drawables. Gradle then generates binding classes and compiled output from
+                    those source assets.
+                </p>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h3>Build and module setup</h3>
+                        <p>`settings.gradle.kts`, root `build.gradle.kts`, and `app/build.gradle.kts` decide what module exists and which Android features are enabled.</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>App declaration</h3>
+                        <p>`AndroidManifest.xml` registers `MainActivity`, `PersonalInfoDetailActivity`, `HouseDashboardActivity`, and `InsuranceMallActivity`.</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>UI behavior</h3>
+                        <p>Kotlin files under `app/src/main/java/com/example/cctest/` inflate bindings, wire buttons, navigate, and launch activities.</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>UI assets</h3>
+                        <p>Layouts, strings, colors, themes, drawables, menus, and the navigation graph live under `app/src/main/res/`.</p>
+                    </div>
+                </div>
+            </article>
+
+            <aside class="card diagram">
+                <h2>Core relationship map</h2>
+                <p>The most important dependency chain in this repo looks like this:</p>
+                <div class="timeline">
+                    <p><strong>Gradle config</strong> enables Android + Kotlin + View Binding.</p>
+                    <p><strong>Manifest</strong> tells Android which activities exist and which one launches first.</p>
+                    <p><strong>MainActivity</strong> loads `activity_main.xml`, attaches a NavController, and uses `nav_graph.xml`.</p>
+                    <p><strong>Fragments</strong> load their own XML layouts and navigate between destinations declared in the graph.</p>
+                    <p><strong>Standalone activities</strong> load separate layouts directly and do not depend on the navigation graph.</p>
+                    <p><strong>Resources</strong> feed both Kotlin and XML through `R.*` references and generated binding classes.</p>
+                </div>
+                <div class="arrow-note">
+                    Source files point inward to generated outputs. You edit Kotlin/XML/resources; Gradle produces the binding and compiled artifacts in `app/build/`.
+                </div>
+            </aside>
+        </section>
+
+        <section class="card">
+            <h2>Screen flow in this project</h2>
+            <p>
+                This is the concrete UI flow defined by the current code. Fragment navigation stays inside
+                `MainActivity`, while two activity demos and one detail screen branch out as separate destinations.
+            </p>
+            <div class="flow-grid">
+                <div class="node" data-step="01">
+                    <h3>Main launcher</h3>
+                    <p>`AndroidManifest.xml` marks `MainActivity` as the launcher. `MainActivity.kt` inflates `ActivityMainBinding`, which is generated from `activity_main.xml`.</p>
+                    <div class="files">
+                        <code>app/src/main/AndroidManifest.xml</code>
+                        <code>app/src/main/java/com/example/cctest/MainActivity.kt</code>
+                        <code>app/src/main/res/layout/activity_main.xml</code>
+                    </div>
+                </div>
+                <div class="node" data-step="02">
+                    <h3>Fragment navigation host</h3>
+                    <p>`MainActivity` finds `nav_host_fragment_content_main` and connects it to `nav_graph.xml`, which starts at `FirstFragment`.</p>
+                    <div class="files">
+                        <code>app/src/main/res/navigation/nav_graph.xml</code>
+                        <code>app/src/main/res/layout/content_main.xml</code>
+                        <code>FirstFragment.kt</code>
+                    </div>
+                </div>
+                <div class="node" data-step="03">
+                    <h3>Second fragment branches</h3>
+                    <p>`SecondFragment` navigates back to `FirstFragment`, opens `PersonalInfoFragment`, opens `PersonalInfoListFragment`, or launches two standalone activities with intents.</p>
+                    <div class="files">
+                        <code>SecondFragment.kt</code>
+                        <code>fragment_second.xml</code>
+                        <code>HouseDashboardActivity.kt</code>
+                        <code>InsuranceMallActivity.kt</code>
+                    </div>
+                </div>
+                <div class="node" data-step="04">
+                    <h3>List to detail activity</h3>
+                    <p>`PersonalInfoListFragment` builds mock data, shows it in a `ListView`, then starts `PersonalInfoDetailActivity` with extras such as name, age, job, city, and phone.</p>
+                    <div class="files">
+                        <code>PersonalInfoListFragment.kt</code>
+                        <code>PersonalInfoDetailActivity.kt</code>
+                        <code>activity_personal_info_detail.xml</code>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>What each file category is responsible for</h2>
+            <p>
+                Android projects look crowded because one feature usually spans several file types. That split is
+                deliberate: behavior, structure, content, styling, and registration each live in different places.
+            </p>
+            <div class="legend-grid">
+                <div class="legend">
+                    <strong>Kotlin source</strong>
+                    <p>Owns behavior: button clicks, navigation, intents, toasts, data formatting, and lifecycle handling.</p>
+                </div>
+                <div class="legend">
+                    <strong>Layout XML</strong>
+                    <p>Owns screen structure: toolbars, text fields, lists, buttons, nav hosts, and visual arrangement.</p>
+                </div>
+                <div class="legend">
+                    <strong>Value resources</strong>
+                    <p>Own shared text and styling primitives: `strings.xml`, `colors.xml`, `themes.xml`, and dimensions.</p>
+                </div>
+                <div class="legend">
+                    <strong>Generated/build output</strong>
+                    <p>Owns derived artifacts under `app/build/`, including binding classes, compiled classes, dex files, and reports.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>File catalog with examples from this repo</h2>
+            <p>These examples show the real cross-file patterns already present in `cctest`.</p>
+            <div class="catalog-grid">
+                <div class="catalog">
+                    <h3>Build and wiring</h3>
+                    <ul>
+                        <li>`settings.gradle.kts` names the root project and includes `:app`.</li>
+                        <li>`app/build.gradle.kts` sets SDK levels, dependencies, and `viewBinding = true`.</li>
+                        <li>`AndroidManifest.xml` is the app-level registry of activities and launcher settings.</li>
+                    </ul>
+                </div>
+                <div class="catalog">
+                    <h3>Feature screens</h3>
+                    <ul>
+                        <li>`MainActivity.kt` + `activity_main.xml` + `content_main.xml` form the fragment host shell.</li>
+                        <li>`PersonalInfoFragment.kt` + `fragment_personal_info.xml` make an input-and-summary screen.</li>
+                        <li>`HouseDashboardActivity.kt` + `activity_house_dashboard.xml` form a standalone activity flow.</li>
+                    </ul>
+                </div>
+                <div class="catalog">
+                    <h3>Shared resources</h3>
+                    <ul>
+                        <li>`values/strings.xml` supplies button labels, summaries, titles, and placeholder text.</li>
+                        <li>`drawable/` contains icon and background assets used by the insurance and house screens.</li>
+                        <li>`navigation/nav_graph.xml` centralizes fragment destinations and actions.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-grid">
+            <article class="card">
+                <h2>Why View Binding matters here</h2>
+                <p>
+                    This project uses view binding instead of `findViewById`. That means each layout file creates a
+                    generated binding class, and Kotlin code inflates or references views through that type-safe class.
+                </p>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h3>Example</h3>
+                        <p>`activity_main.xml` generates `ActivityMainBinding`, which `MainActivity.kt` uses to access `toolbar` and `fab` safely.</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Fragment pattern</h3>
+                        <p>`FragmentFirstBinding`, `FragmentSecondBinding`, and others are created from fragment layouts and cleared in `onDestroyView`.</p>
+                    </div>
+                </div>
+            </article>
+
+            <article class="card">
+                <h2>Tests and generated output</h2>
+                <p>
+                    Not everything in the repo is hand-written source. Some directories exist to verify code, while
+                    others are products of the Android build.
+                </p>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h3>Tests</h3>
+                        <p>`app/src/test/` holds local JVM tests and `app/src/androidTest/` holds device or emulator tests.</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Build output</h3>
+                        <p>`app/build/` contains compiled classes, generated bindings, dex archives, and merge reports. These reflect source relationships but are not the source of truth.</p>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <div class="footer-note">
+            The simplest mental model is: <strong>Gradle defines the app</strong>, <strong>the manifest exposes entry points</strong>,
+            <strong>Kotlin controls behavior</strong>, <strong>XML resources describe UI and shared values</strong>, and
+            <strong>`app/build/` is generated from all of that source</strong>. If you add a new feature, you will usually touch
+            one Kotlin class, one or more XML resources, and sometimes the manifest or navigation graph.
+        </div>
+    </div>
+</body>
+</html>

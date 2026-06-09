@@ -364,7 +364,7 @@ class VoiceRecordPanel : FrameLayout {
 
     private class VoiceRecordCanvasView(context: Context) : View(context) {
 
-        private val areaPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val areaPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG)
         private val fingerPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -513,51 +513,107 @@ class VoiceRecordPanel : FrameLayout {
         private fun drawRecordArea(canvas: Canvas) {
             areaPaint.shader = null
             areaPaint.color = currentAreaColor
-            buildInsetRecordPath(solidRecordPath, arcFadeDistance)
+            val solidInset = (
+                arcFadeDistance -
+                    resources.displayMetrics.density * ARC_SOLID_UNDERLAP_DP
+                ).coerceAtLeast(0f)
+            buildInsetRecordPath(solidRecordPath, solidInset)
             canvas.drawPath(solidRecordPath, areaPaint)
-            drawArcFadeBand(canvas)
-            areaPaint.shader = null
-
+            val highlightRadius = if (fingerActiveAmount > 0.01f) {
+                fingerRadius * (0.72f + 0.28f * fingerActiveAmount)
+            } else {
+                null
+            }
             if (fingerActiveAmount > 0.01f) {
                 canvas.save()
                 canvas.clipPath(solidRecordPath)
-                fingerPaint.shader = RadialGradient(
-                    fingerX,
-                    fingerY,
-                    fingerRadius * (0.72f + 0.28f * fingerActiveAmount),
-                    intArrayOf(
-                        withAlpha(currentDeepColor, (150 * fingerActiveAmount).toInt()),
-                        withAlpha(currentDeepColor, (60 * fingerActiveAmount).toInt()),
-                        withAlpha(currentDeepColor, 0)
-                    ),
-                    floatArrayOf(0f, 0.56f, 1f),
-                    Shader.TileMode.CLAMP
+                drawFingerHighlightCircle(
+                    canvas = canvas,
+                    radius = highlightRadius ?: fingerRadius,
+                    highlightColor = currentDeepColor,
+                    alphaScale = 1f
                 )
-                canvas.drawCircle(fingerX, fingerY, fingerRadius, fingerPaint)
-                fingerPaint.shader = null
                 canvas.restore()
             }
+            drawArcFadeBand(canvas, highlightRadius)
+            areaPaint.shader = null
         }
 
-        private fun drawArcFadeBand(canvas: Canvas) {
+        private fun drawFingerHighlightCircle(
+            canvas: Canvas,
+            radius: Float,
+            highlightColor: Int,
+            alphaScale: Float,
+        ) {
+            fingerPaint.shader = RadialGradient(
+                fingerX,
+                fingerY,
+                radius,
+                intArrayOf(
+                    withAlpha(highlightColor, (150 * fingerActiveAmount * alphaScale).toInt()),
+                    withAlpha(highlightColor, (60 * fingerActiveAmount * alphaScale).toInt()),
+                    withAlpha(highlightColor, 0)
+                ),
+                floatArrayOf(0f, 0.56f, 1f),
+                Shader.TileMode.CLAMP
+            )
+            canvas.drawCircle(fingerX, fingerY, radius, fingerPaint)
+            fingerPaint.shader = null
+        }
+
+        private fun drawArcFadeBand(canvas: Canvas, highlightRadius: Float?) {
             val segmentCount = ARC_FADE_BAND_SEGMENT_COUNT
+            val bandOverlap = resources.displayMetrics.density * ARC_FADE_BAND_OVERLAP_DP
             for (segment in 0 until segmentCount) {
-                val startOffset = arcFadeDistance * segment / segmentCount
-                val endOffset = arcFadeDistance * (segment + 1) / segmentCount
-                val progress = if (segmentCount <= 1) {
+                val rawStartOffset = arcFadeDistance * segment / segmentCount
+                val rawEndOffset = arcFadeDistance * (segment + 1) / segmentCount
+                val startOffset = (rawStartOffset - bandOverlap).coerceAtLeast(0f)
+                val endOffset = rawEndOffset + bandOverlap
+                val progress = if (segmentCount <= 0) {
                     1f
                 } else {
-                    segment / (segmentCount - 1).toFloat()
+                    ((segment + 0.5f) / segmentCount).coerceIn(0f, 1f)
                 }
-                val easedProgress = progress * progress
+                val easedProgress = smoothStep(progress)
+                val layerAlpha = if (segment == segmentCount - 1) {
+                    255
+                } else {
+                    (255 * easedProgress).toInt()
+                }
                 val color = lighten(
                     currentAreaColor,
                     ARC_FADE_LIGHTEN_AMOUNT * (1f - easedProgress)
                 )
-                areaPaint.color = withAlpha(color, (255 * easedProgress).toInt())
                 buildArcFadeBandPath(startOffset, endOffset)
+                canvas.save()
+                canvas.clipPath(arcFadeBandPath)
+                canvas.saveLayerAlpha(
+                    0f,
+                    0f,
+                    width.toFloat(),
+                    height.toFloat(),
+                    layerAlpha
+                )
+                areaPaint.color = color
                 canvas.drawPath(arcFadeBandPath, areaPaint)
+                highlightRadius?.let { radius ->
+                    drawFingerHighlightCircle(
+                        canvas = canvas,
+                        radius = radius,
+                        highlightColor = lighten(
+                            currentDeepColor,
+                            ARC_FADE_HIGHLIGHT_LIGHTEN_AMOUNT * (1f - easedProgress)
+                        ),
+                        alphaScale = 1f
+                    )
+                }
+                canvas.restore()
+                canvas.restore()
             }
+        }
+
+        private fun smoothStep(progress: Float): Float {
+            return progress * progress * (3f - 2f * progress)
         }
 
         private fun drawPrompt(canvas: Canvas) {
@@ -803,8 +859,11 @@ class VoiceRecordPanel : FrameLayout {
         private const val VISUALIZER_HORIZONTAL_PADDING_RATIO = 0.18f
         private const val MIN_AREA_HEIGHT_RATIO = 0.34f
         private const val MAX_AREA_HEIGHT_RATIO = 0.76f
-        private const val ARC_DRAW_SEGMENT_COUNT = 48
-        private const val ARC_FADE_BAND_SEGMENT_COUNT = 40
+        private const val ARC_DRAW_SEGMENT_COUNT = 96
+        private const val ARC_FADE_BAND_SEGMENT_COUNT = 160
+        private const val ARC_FADE_BAND_OVERLAP_DP = 0.75f
+        private const val ARC_SOLID_UNDERLAP_DP = 4f
         private const val ARC_FADE_LIGHTEN_AMOUNT = 0.42f
+        private const val ARC_FADE_HIGHLIGHT_LIGHTEN_AMOUNT = 0.58f
     }
 }

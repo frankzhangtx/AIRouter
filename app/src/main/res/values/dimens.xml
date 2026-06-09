@@ -6,7 +6,7 @@
     <dimen name="voice_record_area_max_height">520dp</dimen>
     <dimen name="voice_record_area_top_arc_depth">48dp</dimen>
     <dimen name="voice_record_arc_fade_distance">150dp</dimen>
-    <dimen name="voice_record_default_arc_above_visualizer">290dp</dimen>
+    <dimen name="voice_record_default_arc_above_visualizer">100dp</dimen>
     <dimen name="voice_record_prompt_bottom_offset">132dp</dimen>
     <dimen name="voice_record_prompt_text_size">16sp</dimen>
     <dimen name="voice_record_visualizer_bottom_offset">64dp</dimen>

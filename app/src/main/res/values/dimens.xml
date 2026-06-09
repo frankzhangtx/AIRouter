@@ -1,4 +1,20 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="main_voice_fab_bottom_margin">75dp</dimen>
     <dimen name="house_dashboard_selected_stroke">2dp</dimen>
+    <dimen name="voice_record_area_min_height">210dp</dimen>
+    <dimen name="voice_record_area_max_height">520dp</dimen>
+    <dimen name="voice_record_area_top_arc_depth">48dp</dimen>
+    <dimen name="voice_record_arc_fade_distance">150dp</dimen>
+    <dimen name="voice_record_default_arc_above_visualizer">290dp</dimen>
+    <dimen name="voice_record_prompt_bottom_offset">132dp</dimen>
+    <dimen name="voice_record_prompt_text_size">16sp</dimen>
+    <dimen name="voice_record_visualizer_bottom_offset">64dp</dimen>
+    <dimen name="voice_record_visualizer_max_width">260dp</dimen>
+    <dimen name="voice_record_visualizer_bar_width">4dp</dimen>
+    <dimen name="voice_record_visualizer_bar_gap">5dp</dimen>
+    <dimen name="voice_record_visualizer_min_bar_height">6dp</dimen>
+    <dimen name="voice_record_visualizer_max_bar_height">42dp</dimen>
+    <dimen name="voice_record_visualizer_bar_radius">3dp</dimen>
+    <dimen name="voice_record_finger_radius">86dp</dimen>
 </resources>

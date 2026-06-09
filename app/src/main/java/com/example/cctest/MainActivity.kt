@@ -18,12 +18,15 @@ import com.example.cctest.navigation.JourneyExecutor
 import com.example.cctest.routing.AppContainer
 import com.example.cctest.routing.RoutingSessionViewModel
 import com.example.cctest.routing.model.UiEffect
+import com.example.cctest.voice.VoiceRecordCallback
+import com.example.cctest.voice.VoiceRecordPanel
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private lateinit var voiceRecordPanel: VoiceRecordPanel
     private val routingViewModel: RoutingSessionViewModel by lazy {
         ViewModelProvider(this, AppContainer.routingViewModelFactory())[RoutingSessionViewModel::class.java]
     }
@@ -33,6 +36,19 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        voiceRecordPanel = VoiceRecordPanel(this).apply {
+            setCallback(object : VoiceRecordCallback {
+                override fun onStart() = Unit
+
+                override fun onCancel() {
+                    showMessage(getString(R.string.voice_record_cancelled_message))
+                }
+
+                override fun onFinish() {
+                    showMessage(getString(R.string.voice_record_finished_message))
+                }
+            })
+        }
 
         setSupportActionBar(binding.toolbar)
 
@@ -56,11 +72,7 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-        binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, getString(R.string.snackbar_placeholder_message), Snackbar.LENGTH_LONG)
-                .setAction(getString(R.string.snackbar_placeholder_action), null)
-                .setAnchorView(R.id.fab).show()
-        }
+        voiceRecordPanel.bindToHoldTrigger(binding.fab)
 
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {

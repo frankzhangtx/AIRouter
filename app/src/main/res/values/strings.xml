@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">测试应用</string>
     <string name="action_settings">设置</string>
-    <string name="main_fab_content_description">打开快捷操作</string>
+    <string name="main_fab_content_description">按住录音</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>
@@ -108,6 +108,10 @@
     <string name="insurance_mall_latest_news_action">Read article</string>
     <string name="snackbar_placeholder_message">请替换为你自己的操作</string>
     <string name="snackbar_placeholder_action">操作</string>
+    <string name="voice_record_hint_send">松手发送，上移取消</string>
+    <string name="voice_record_hint_cancel">松手取消</string>
+    <string name="voice_record_finished_message">语音录制已完成</string>
+    <string name="voice_record_cancelled_message">语音录制已取消</string>
     <string name="routing_entry_fragment_label">智能路由入口</string>
     <string name="routing_form_fragment_label">个人信息工作流</string>
     <string name="routing_review_fragment_label">审核确认</string>

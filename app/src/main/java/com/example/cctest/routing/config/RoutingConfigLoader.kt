@@ -2,14 +2,10 @@ package com.example.cctest.routing.config
 
 import android.content.Context
 import com.example.cctest.navigation.AppScreen
-import com.example.cctest.navigation.DestinationContract
 import com.example.cctest.navigation.DestinationContractRegistry
+import com.example.cctest.navigation.DestinationKey
 import com.example.cctest.navigation.DestinationPageType
-import com.example.cctest.navigation.DestinationPlannerProfile
-import com.example.cctest.navigation.EntryAction
 import com.example.cctest.navigation.EntryActionRegistry
-import com.example.cctest.navigation.StepExecutorDefinition
-import com.example.cctest.navigation.StepExecutorRegistry
 import com.example.cctest.routing.parser.UserGoal
 import org.json.JSONArray
 import org.json.JSONObject
@@ -17,7 +13,13 @@ import org.json.JSONObject
 data class RoutingRegistryBundle(
     val destinationContractRegistry: DestinationContractRegistry,
     val entryActionRegistry: EntryActionRegistry,
-    val stepExecutorRegistry: StepExecutorRegistry
+    val executorDefinitions: Map<String, RoutingExecutorDefinition>
+)
+
+data class RoutingExecutorDefinition(
+    val key: String,
+    val type: String,
+    val params: Map<String, String> = emptyMap()
 )
 
 interface RoutingTextSource {
@@ -69,131 +71,158 @@ class JsonRoutingConfigLoader(
     private val resourceIdResolver: ResourceIdResolver
 ) {
     fun load(): RoutingRegistryBundle {
+        val destinationRegistry = DestinationContractRegistry()
+        val entryActionRegistry = EntryActionRegistry()
+
         val destinationsRoot = JSONObject(textSource.readText(DESTINATIONS_PATH))
-        val screens = parseScreens(destinationsRoot.getJSONArray("screens"))
-        val destinationRegistry = DestinationContractRegistry(
-            screens = screens.associateBy { it.key },
-            destinations = parseDestinations(
-                destinationsArray = destinationsRoot.getJSONArray("destinations"),
-                screens = screens.associateBy { it.key }
-            ),
-            goalMappings = parseGoalMappings(destinationsRoot.getJSONArray("goalMappings")),
-            defaultEntryScreenKey = destinationsRoot.getString("defaultEntryScreenKey")
-        )
+        validateDestinationsConfig(destinationsRoot, destinationRegistry)
+
         val graphRoot = JSONObject(textSource.readText(JOURNEY_GRAPH_PATH))
+        val executorDefinitions = parseExecutors(graphRoot.getJSONArray("executors"))
+        validateJourneyGraph(graphRoot)
+
         return RoutingRegistryBundle(
             destinationContractRegistry = destinationRegistry,
-            entryActionRegistry = EntryActionRegistry(
-                actions = parseEntryActions(
-                    actionsArray = graphRoot.getJSONArray("actions"),
-                    screens = screens.associateBy { it.key }
-                )
-            ),
-            stepExecutorRegistry = StepExecutorRegistry(
-                executors = parseExecutors(graphRoot.getJSONArray("executors"))
-            )
+            entryActionRegistry = entryActionRegistry,
+            executorDefinitions = executorDefinitions
         )
     }
 
-    private fun parseGoalMappings(goalMappingsArray: JSONArray): Map<UserGoal, String> {
-        return buildMap {
-            for (index in 0 until goalMappingsArray.length()) {
-                val item = goalMappingsArray.getJSONObject(index)
-                put(
-                    UserGoal.valueOf(item.getString("goal")),
-                    item.getString("destinationKey")
-                )
-            }
+    private fun validateDestinationsConfig(
+        destinationsRoot: JSONObject,
+        destinationRegistry: DestinationContractRegistry
+    ) {
+        val screens = parseScreens(destinationsRoot.getJSONArray("screens"))
+        parseScreenKey(destinationsRoot.getString("defaultEntryScreenKey"))
+        validateGoalMappings(destinationsRoot.getJSONArray("goalMappings"), destinationRegistry)
+        validateDestinations(
+            destinationsArray = destinationsRoot.getJSONArray("destinations"),
+            screens = screens,
+            destinationRegistry = destinationRegistry
+        )
+    }
+
+    private fun validateGoalMappings(
+        goalMappingsArray: JSONArray,
+        destinationRegistry: DestinationContractRegistry
+    ) {
+        for (index in 0 until goalMappingsArray.length()) {
+            val item = goalMappingsArray.getJSONObject(index)
+            UserGoal.valueOf(item.getString("goal"))
+            destinationRegistry.require(parseDestinationKey(item.getString("destinationKey")))
         }
     }
 
-    private fun parseScreens(screensArray: JSONArray): List<AppScreen> {
-        return buildList {
+    private fun parseScreens(screensArray: JSONArray): Map<String, AppScreen> {
+        return buildMap {
             for (index in 0 until screensArray.length()) {
                 val item = screensArray.getJSONObject(index)
-                add(
-                    AppScreen(
-                        key = item.getString("key"),
-                        destinationId = item.optStringOrNull("destinationIdName")
-                            ?.let(resourceIdResolver::resolveId),
-                        displayName = item.getString("displayName")
-                    )
-                )
+                val screenKey = item.getString("key")
+                val screen = parseScreenKey(screenKey)
+                val expectedDestinationId = item.optStringOrNull("destinationIdName")
+                    ?.let(resourceIdResolver::resolveId)
+
+                require(screen.destinationId == expectedDestinationId) {
+                    "Screen $screenKey destinationId mismatch. " +
+                        "Expected ${screen.destinationId}, config defines $expectedDestinationId."
+                }
+
+                put(screenKey, screen)
             }
         }
     }
 
-    private fun parseDestinations(
+    private fun validateDestinations(
         destinationsArray: JSONArray,
-        screens: Map<String, AppScreen>
-    ): Map<String, DestinationContract> {
-        return buildMap {
-            for (index in 0 until destinationsArray.length()) {
-                val item = destinationsArray.getJSONObject(index)
-                val screenKey = item.optStringOrNull("screenKey")
-                val key = item.getString("key")
-                put(
-                    key,
-                    DestinationContract(
-                        key = key,
-                        pageType = DestinationPageType.valueOf(item.getString("pageType")),
-                        plannerProfile = DestinationPlannerProfile.valueOf(item.getString("plannerProfile")),
-                        screen = screenKey?.let { requireNotNull(screens[it]) { "Missing screen for $it" } },
-                        displayName = item.getString("displayName"),
-                        defaultExecutorKey = item.getString("defaultExecutorKey"),
-                        workflowId = item.optStringOrNull("workflowId"),
-                        focusExecutorKey = item.optStringOrNull("focusExecutorKey"),
-                        messageExecutorKey = item.optStringOrNull("messageExecutorKey"),
-                        stopExecutorKey = item.optStringOrNull("stopExecutorKey"),
-                        supportsAutofill = item.optBoolean("supportsAutofill"),
-                        supportsContinue = item.optBoolean("supportsContinue"),
-                        supportsSubmit = item.optBoolean("supportsSubmit"),
-                        supportsListFocus = item.optBoolean("supportsListFocus"),
-                        supportsDetailDisplay = item.optBoolean("supportsDetailDisplay")
-                    )
-                )
+        screens: Map<String, AppScreen>,
+        destinationRegistry: DestinationContractRegistry
+    ) {
+        for (index in 0 until destinationsArray.length()) {
+            val item = destinationsArray.getJSONObject(index)
+            val destinationKey = parseDestinationKey(item.getString("key"))
+            val contract = destinationRegistry.require(destinationKey)
+            val screen = item.optStringOrNull("screenKey")?.let { key ->
+                requireNotNull(screens[key]) { "Missing screen for $key" }
+            }
+
+            require(contract.pageType == DestinationPageType.valueOf(item.getString("pageType"))) {
+                "Destination ${item.getString("key")} pageType mismatch."
+            }
+            require(contract.screen == screen) {
+                "Destination ${item.getString("key")} screen mismatch."
+            }
+            require(contract.supportsAutofill == item.optBoolean("supportsAutofill")) {
+                "Destination ${item.getString("key")} supportsAutofill mismatch."
+            }
+            require(contract.supportsContinue == item.optBoolean("supportsContinue")) {
+                "Destination ${item.getString("key")} supportsContinue mismatch."
+            }
+            require(contract.supportsSubmit == item.optBoolean("supportsSubmit")) {
+                "Destination ${item.getString("key")} supportsSubmit mismatch."
+            }
+            require(contract.supportsListFocus == item.optBoolean("supportsListFocus")) {
+                "Destination ${item.getString("key")} supportsListFocus mismatch."
+            }
+            require(contract.supportsDetailDisplay == item.optBoolean("supportsDetailDisplay")) {
+                "Destination ${item.getString("key")} supportsDetailDisplay mismatch."
             }
         }
     }
 
-    private fun parseEntryActions(
-        actionsArray: JSONArray,
-        screens: Map<String, AppScreen>
-    ): List<EntryAction> {
-        return buildList {
-            for (index in 0 until actionsArray.length()) {
-                val item = actionsArray.getJSONObject(index)
-                add(
-                    EntryAction(
-                        key = item.getString("key"),
-                        from = requireNotNull(screens[item.getString("fromScreenKey")]) {
-                            "Missing source screen for action ${item.getString("key")}"
-                        },
-                        to = requireNotNull(screens[item.getString("toScreenKey")]) {
-                            "Missing target screen for action ${item.getString("key")}"
-                        },
-                        displayLabel = item.getString("displayLabel"),
-                        executorKey = item.getString("executorKey")
-                    )
-                )
+    private fun validateJourneyGraph(graphRoot: JSONObject) {
+        val actionsArray = graphRoot.getJSONArray("actions")
+        for (index in 0 until actionsArray.length()) {
+            val item = actionsArray.getJSONObject(index)
+            parseScreenKey(item.getString("fromScreenKey"))
+            parseScreenKey(item.getString("toScreenKey"))
+            require(item.getString("executorKey").isNotBlank()) {
+                "Action ${item.optString("key")} is missing executorKey."
             }
         }
     }
 
-    private fun parseExecutors(executorsArray: JSONArray): Map<String, StepExecutorDefinition> {
+    private fun parseExecutors(executorsArray: JSONArray): Map<String, RoutingExecutorDefinition> {
         return buildMap {
             for (index in 0 until executorsArray.length()) {
                 val item = executorsArray.getJSONObject(index)
                 val key = item.getString("key")
                 put(
                     key,
-                    StepExecutorDefinition(
+                    RoutingExecutorDefinition(
                         key = key,
                         type = item.getString("type"),
                         params = item.optJSONObject("params").toStringMap()
                     )
                 )
             }
+        }
+    }
+
+    private fun parseScreenKey(key: String): AppScreen {
+        return when (key) {
+            "first" -> AppScreen.FIRST
+            "second" -> AppScreen.SECOND
+            "intent_entry" -> AppScreen.INTENT_ENTRY
+            "personal_info_form" -> AppScreen.PERSONAL_INFO_FORM
+            "review_submit" -> AppScreen.REVIEW_SUBMIT
+            "result" -> AppScreen.RESULT
+            "personal_info_list" -> AppScreen.PERSONAL_INFO_LIST
+            "personal_info_detail" -> AppScreen.PERSONAL_INFO_DETAIL
+            "house_dashboard" -> AppScreen.HOUSE_DASHBOARD
+            else -> error("Unsupported screen key: $key")
+        }
+    }
+
+    private fun parseDestinationKey(key: String): DestinationKey {
+        return when (key) {
+            "intent_entry" -> DestinationKey.INTENT_ENTRY
+            "personal_info_form" -> DestinationKey.PERSONAL_INFO_FORM
+            "review_submit" -> DestinationKey.REVIEW_SUBMIT
+            "result" -> DestinationKey.RESULT
+            "personal_info_list" -> DestinationKey.PERSONAL_INFO_LIST
+            "personal_info_detail" -> DestinationKey.PERSONAL_INFO_DETAIL
+            "house_dashboard" -> DestinationKey.HOUSE_DASHBOARD
+            else -> error("Unsupported destination key: $key")
         }
     }
 

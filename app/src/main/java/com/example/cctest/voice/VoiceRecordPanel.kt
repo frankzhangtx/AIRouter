@@ -643,9 +643,11 @@ class VoiceRecordPanel : FrameLayout {
                 val envelope = (1f - distanceFromCenter * 0.72f).coerceIn(0.24f, 1f)
                 val wave = ((sin((wavePhase * FULL_CIRCLE) + index * BAR_PHASE_STEP) + 1f) / 2f)
                     .toFloat()
+                val amplifiedVolumeRatio = (volumeRatio * VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER)
+                    .coerceIn(0f, 1f)
                 val activeHeight = visualizerMinBarHeight +
                     (visualizerMaxBarHeight - visualizerMinBarHeight) *
-                    (0.12f + volumeRatio * (0.28f + 0.72f * wave) * envelope)
+                    (0.12f + amplifiedVolumeRatio * (0.28f + 0.72f * wave) * envelope)
                 val x = startX + index * slotWidth
                 val top = baselineY - activeHeight / 2f
                 val bottom = baselineY + activeHeight / 2f
@@ -854,7 +856,8 @@ class VoiceRecordPanel : FrameLayout {
         private const val MIN_BAR_COUNT = 24
         private const val FULL_CIRCLE = (PI * 2).toFloat()
         private const val BAR_PHASE_STEP = 0.42f
-        private const val VOLUME_EASING = 0.18f
+        private const val VOLUME_EASING = 0.54f
+        private const val VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER = 2f
         private const val FINGER_EASING = 0.22f
         private const val VISUALIZER_HORIZONTAL_PADDING_RATIO = 0.18f
         private const val MIN_AREA_HEIGHT_RATIO = 0.34f

@@ -8,4 +8,10 @@
     <color name="voice_record_area_deep">#1748D4</color>
     <color name="voice_record_cancel_area">#F14B4B</color>
     <color name="voice_record_cancel_area_deep">#C92D2D</color>
+    <color name="pic_voice_record_panel">#061BFF</color>
+    <color name="pic_voice_record_panel_center">#1436FF</color>
+    <color name="pic_voice_record_cancel_panel">#F4574F</color>
+    <color name="pic_voice_record_cancel_panel_center">#FA685F</color>
+    <color name="pic_voice_record_prompt">#2F3237</color>
+    <color name="pic_voice_record_cancel_prompt">#F4574F</color>
 </resources>

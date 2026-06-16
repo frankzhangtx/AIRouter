@@ -110,6 +110,7 @@
     <string name="snackbar_placeholder_action">操作</string>
     <string name="voice_record_hint_send">松手发送，上移取消</string>
     <string name="voice_record_hint_cancel">松手取消</string>
+    <string name="pic_voice_record_hint_send">松手发送 上移取消</string>
     <string name="voice_record_finished_message">语音录制已完成</string>
     <string name="voice_record_cancelled_message">语音录制已取消</string>
     <string name="routing_entry_fragment_label">智能路由入口</string>

@@ -18,15 +18,15 @@ import com.example.cctest.navigation.JourneyExecutor
 import com.example.cctest.routing.AppContainer
 import com.example.cctest.routing.RoutingSessionViewModel
 import com.example.cctest.routing.model.UiEffect
+import com.example.cctest.voice.PicVoiceRecordPanel
 import com.example.cctest.voice.VoiceRecordCallback
-import com.example.cctest.voice.VoiceRecordPanel
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var voiceRecordPanel: VoiceRecordPanel
+    private lateinit var voiceRecordPanel: PicVoiceRecordPanel
     private val routingViewModel: RoutingSessionViewModel by lazy {
         ViewModelProvider(this, AppContainer.routingViewModelFactory())[RoutingSessionViewModel::class.java]
     }
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        voiceRecordPanel = VoiceRecordPanel(this).apply {
+        voiceRecordPanel = PicVoiceRecordPanel(this).apply {
             setCallback(object : VoiceRecordCallback {
                 override fun onStart() = Unit
 

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <WebView
+            android:id="@+id/web_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="@dimen/baidu_web_input_reserved_bottom_space" />
+
+        <LinearLayout
+            android:id="@+id/bottom_input_bar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/baidu_web_input_height"
+            android:layout_gravity="bottom"
+            android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
+            android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
+            android:layout_marginBottom="@dimen/baidu_web_input_bottom_margin"
+            android:background="@drawable/bg_baidu_web_input_bar"
+            android:elevation="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <ImageButton
+                android:id="@+id/button_voice_input"
+                android:layout_width="@dimen/baidu_web_input_icon_size"
+                android:layout_height="@dimen/baidu_web_input_icon_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/baidu_web_voice_content_description"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="@dimen/baidu_web_input_icon_padding"
+                android:scaleType="center"
+                android:src="@drawable/ic_baidu_web_voice" />
+
+            <EditText
+                android:id="@+id/edit_text_consult_content"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:gravity="center_vertical"
+                android:hint="@string/baidu_web_input_hint"
+                android:imeOptions="actionSend"
+                android:includeFontPadding="false"
+                android:inputType="text"
+                android:maxLines="1"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:singleLine="true"
+                android:textColor="@color/black"
+                android:textColorHint="@color/baidu_web_input_hint"
+                android:textSize="@dimen/baidu_web_input_text_size" />
+
+            <ImageButton
+                android:id="@+id/button_add_content"
+                android:layout_width="@dimen/baidu_web_input_icon_size"
+                android:layout_height="@dimen/baidu_web_input_icon_size"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/baidu_web_plus_content_description"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="@dimen/baidu_web_input_icon_padding"
+                android:scaleType="center"
+                android:src="@drawable/ic_baidu_web_plus" />
+        </LinearLayout>
+    </FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

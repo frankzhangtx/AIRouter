@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="32dp"
+    android:height="32dp"
+    android:viewportWidth="32"
+    android:viewportHeight="32">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M16,4C9.4,4 4,9.4 4,16C4,22.6 9.4,28 16,28C22.6,28 28,22.6 28,16C28,9.4 22.6,4 16,4Z"
+        android:strokeColor="@color/baidu_web_input_icon"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.4" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M11.2,18.4H9.4V13.6H11.2L14.6,10.7V21.3L11.2,18.4Z"
+        android:strokeColor="@color/baidu_web_input_icon"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M17.4,13.1C18.2,13.9 18.7,14.9 18.7,16C18.7,17.1 18.2,18.1 17.4,18.9"
+        android:strokeColor="@color/baidu_web_input_icon"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.2" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M20.2,10.8C21.6,12.2 22.4,14.1 22.4,16C22.4,17.9 21.6,19.8 20.2,21.2"
+        android:strokeColor="@color/baidu_web_input_icon"
+        android:strokeLineCap="round"
+        android:strokeWidth="2.2" />
+</vector>

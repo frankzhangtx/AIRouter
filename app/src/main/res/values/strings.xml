@@ -1,7 +1,11 @@
 <resources>
     <string name="app_name">测试应用</string>
     <string name="action_settings">设置</string>
-    <string name="main_fab_content_description">按住录音</string>
+    <string name="main_fab_content_description">点击打开网页，按住录音</string>
+    <string name="baidu_web_view_title">百度</string>
+    <string name="baidu_web_input_hint">请输入您要咨询的内容</string>
+    <string name="baidu_web_voice_content_description">语音输入</string>
+    <string name="baidu_web_plus_content_description">添加内容</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>

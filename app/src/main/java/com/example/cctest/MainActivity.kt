@@ -1,5 +1,6 @@
 package com.example.cctest
 
+import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -73,6 +74,9 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         voiceRecordPanel.bindToHoldTrigger(binding.fab)
+        binding.fab.setOnClickListener {
+            startActivity(Intent(this, BaiduWebViewActivity::class.java))
+        }
 
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {

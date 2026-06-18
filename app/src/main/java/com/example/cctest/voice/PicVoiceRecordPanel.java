@@ -13,8 +13,11 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -82,7 +85,16 @@ public class PicVoiceRecordPanel extends FrameLayout {
         trigger.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
-                return handleHoldTriggerTouch(view, event);
+                return handleHoldTriggerTouch(view, event, true);
+            }
+        });
+    }
+
+    public void bindToHoldTriggerPreservingClick(View trigger) {
+        trigger.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                return handleHoldTriggerTouch(view, event, false);
             }
         });
     }
@@ -120,8 +132,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_POINTER_DOWN:
-            case MotionEvent.ACTION_MOVE:
                 updateFinger(event.getX(), event.getY(), insideRecordArea);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                updateFinger(event.getX(), event.getY(), insideRecordArea, true);
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
@@ -276,9 +290,14 @@ public class PicVoiceRecordPanel extends FrameLayout {
         canvasView.reset();
     }
 
-    private boolean handleHoldTriggerTouch(View view, MotionEvent event) {
+    private boolean handleHoldTriggerTouch(
+        View view,
+        MotionEvent event,
+        boolean consumeTouchBeforeHold
+    ) {
         pendingStartRawX = event.getRawX();
         pendingStartRawY = event.getRawY();
+        boolean wasHoldGesture = recording || holdTriggered;
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 holdPointerDown = true;
@@ -289,11 +308,12 @@ public class PicVoiceRecordPanel extends FrameLayout {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (recording) {
-                    updateFingerFromScreen(event.getRawX(), event.getRawY());
+                    updateFingerFromScreen(event.getRawX(), event.getRawY(), true);
                 }
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
+                wasHoldGesture = recording || holdTriggered;
                 boolean shouldCancel = recording ? !updateFingerFromScreen(event.getRawX(), event.getRawY()) : true;
                 cancelHoldStart();
                 view.setPressed(false);
@@ -301,13 +321,14 @@ public class PicVoiceRecordPanel extends FrameLayout {
                 holdPointerDown = false;
                 if (recording) {
                     finishRecording(shouldCancel);
-                } else if (!holdTriggered) {
+                } else if (!holdTriggered && consumeTouchBeforeHold) {
                     pendingShowAfterPermission = false;
                     view.performClick();
                 }
                 holdTriggered = false;
                 break;
             case MotionEvent.ACTION_CANCEL:
+                wasHoldGesture = recording || holdTriggered;
                 cancelHoldStart();
                 view.setPressed(false);
                 requestDisallowParentIntercept(view, false);
@@ -322,7 +343,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
             default:
                 break;
         }
-        return true;
+        return consumeTouchBeforeHold || wasHoldGesture;
     }
 
     private void requestDisallowParentIntercept(View view, boolean disallow) {
@@ -357,17 +378,43 @@ public class PicVoiceRecordPanel extends FrameLayout {
     }
 
     private void updateFinger(float x, float y, boolean active) {
+        updateFinger(x, y, active, false);
+    }
+
+    private void updateFinger(float x, float y, boolean active, boolean vibrateOnModeChange) {
         canvasView.updateFinger(x, y, active);
-        canvasView.setCancelMode(!active);
+        boolean cancelModeChanged = canvasView.setCancelMode(!active);
+        if (vibrateOnModeChange && cancelModeChanged) {
+            vibrateForModeChange();
+        }
     }
 
     private boolean updateFingerFromScreen(float rawX, float rawY) {
+        return updateFingerFromScreen(rawX, rawY, false);
+    }
+
+    private boolean updateFingerFromScreen(float rawX, float rawY, boolean vibrateOnModeChange) {
         getLocationOnScreen(panelLocationOnScreen);
         float panelX = rawX - panelLocationOnScreen[0];
         float panelY = rawY - panelLocationOnScreen[1];
         boolean insideRecordArea = canvasView.isPointInsideRecordArea(panelX, panelY);
-        updateFinger(panelX, panelY, insideRecordArea);
+        updateFinger(panelX, panelY, insideRecordArea, vibrateOnModeChange);
         return insideRecordArea;
+    }
+
+    private void vibrateForModeChange() {
+        Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator == null || !vibrator.hasVibrator()) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createOneShot(
+                MODE_CHANGE_VIBRATION_DURATION_MS,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            ));
+        } else {
+            vibrator.vibrate(MODE_CHANGE_VIBRATION_DURATION_MS);
+        }
     }
 
     private boolean hasRecordPermission() {
@@ -553,9 +600,9 @@ public class PicVoiceRecordPanel extends FrameLayout {
             }
         }
 
-        void setCancelMode(boolean cancel) {
+        boolean setCancelMode(boolean cancel) {
             if (cancelMode == cancel) {
-                return;
+                return false;
             }
             cancelMode = cancel;
             promptText = cancel ? hintCancel : hintSend;
@@ -564,6 +611,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
                 cancel ? cancelPanelCenterColor : normalPanelCenterColor,
                 cancel ? cancelPromptColor : normalPromptColor
             );
+            return true;
         }
 
         boolean isPointInsideRecordArea(float x, float y) {
@@ -852,6 +900,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
     private static final long SAMPLE_INTERVAL_MS = 60L;
     private static final long WAVE_DURATION_MS = 1100L;
     private static final long COLOR_ANIMATION_DURATION_MS = 180L;
+    private static final long MODE_CHANGE_VIBRATION_DURATION_MS = 20L;
     private static final int AUDIO_BIT_RATE = 64000;
     private static final int AUDIO_SAMPLE_RATE = 44100;
     private static final String RECORD_FILE_PREFIX = "pic_voice_record_";

@@ -96,6 +96,7 @@
                     android:imeOptions="actionSend"
                     android:includeFontPadding="false"
                     android:inputType="textMultiLine|textCapSentences"
+                    android:minHeight="@dimen/baidu_web_input_icon_size"
                     android:maxLines="4"
                     android:minLines="1"
                     android:overScrollMode="never"

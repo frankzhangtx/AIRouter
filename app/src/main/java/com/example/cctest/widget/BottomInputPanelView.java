@@ -291,7 +291,7 @@ public class BottomInputPanelView extends LinearLayout {
                 }
             }
         });
-        bindTextInputHoldTrigger();
+        bindTextInputHoldTrigger(consultInput);
     }
 
     private void configureVoiceInputToggle() {
@@ -452,12 +452,12 @@ public class BottomInputPanelView extends LinearLayout {
         }
     }
 
-    private void bindTextInputHoldTrigger() {
-        if (voiceRecordPanel == null || consultInput == null) {
+    private void bindTextInputHoldTrigger(View trigger) {
+        if (voiceRecordPanel == null || trigger == null) {
             return;
         }
         voiceRecordPanel.bindToHoldTriggerPreservingClickWhen(
-            consultInput,
+            trigger,
             () -> !keyboardVisible && !hasTextInputContent()
         );
     }
@@ -468,8 +468,15 @@ public class BottomInputPanelView extends LinearLayout {
         }
         if (voiceInputMode) {
             voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
+            if (bottomInputBar != null) {
+                voiceRecordPanel.bindToImmediateHoldTrigger(bottomInputBar);
+            }
         } else {
-            bindTextInputHoldTrigger();
+            bindTextInputHoldTrigger(consultInput);
+            if (bottomInputBar != null) {
+                bindTextInputHoldTrigger(bottomInputBar);
+                bottomInputBar.setOnClickListener(view -> focusTextInput());
+            }
         }
     }
 
@@ -633,6 +640,21 @@ public class BottomInputPanelView extends LinearLayout {
         if (inputMethodManager != null) {
             inputMethodManager.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
         }
+    }
+
+    private void focusTextInput() {
+        if (consultInput == null || voiceInputMode) {
+            return;
+        }
+        consultInput.requestFocus();
+        consultInput.setSelection(consultInput.getText().length());
+        consultInput.post(() -> {
+            InputMethodManager inputMethodManager =
+                (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (inputMethodManager != null) {
+                inputMethodManager.showSoftInput(consultInput, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
     }
 
     private void detachKeyboardAvoidance() {

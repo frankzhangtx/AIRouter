@@ -63,7 +63,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
-                        android:background="@color/baidu_web_input_background" />
+                        android:background="@color/baidu_web_input_container_background" />
                 </LinearLayout>
 
                 <LinearLayout

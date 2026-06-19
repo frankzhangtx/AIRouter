@@ -4,5 +4,5 @@
     <gradient
         android:angle="270"
         android:startColor="#00FFFFFF"
-        android:endColor="@color/baidu_web_input_background" />
+        android:endColor="@color/baidu_web_input_container_background" />
 </shape>

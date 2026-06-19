@@ -28,8 +28,7 @@
         <WebView
             android:id="@+id/web_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginBottom="@dimen/baidu_web_input_reserved_bottom_space" />
+            android:layout_height="match_parent" />
 
         <LinearLayout
             android:id="@+id/bottom_input_container"
@@ -44,6 +43,7 @@
                 android:id="@+id/input_bar_surface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/baidu_web_input_container_background"
                 android:clipChildren="false"
                 android:clipToPadding="false">
 
@@ -133,12 +133,14 @@
             <View
                 android:id="@+id/input_bottom_fill"
                 android:layout_width="match_parent"
-                android:layout_height="@dimen/baidu_web_input_bottom_margin" />
+                android:layout_height="@dimen/baidu_web_input_bottom_margin"
+                android:background="@color/baidu_web_input_container_background" />
 
             <LinearLayout
                 android:id="@+id/input_attachment_panel"
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/baidu_web_attachment_panel_height"
+                android:background="@color/baidu_web_input_container_background"
                 android:gravity="top|start"
                 android:orientation="horizontal"
                 android:paddingTop="@dimen/baidu_web_attachment_panel_top_padding"

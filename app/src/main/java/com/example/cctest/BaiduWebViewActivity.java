@@ -52,8 +52,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private int textInputOriginalGravity;
     private Typeface textInputOriginalTypeface;
     private int inputBarBaseBottomMargin;
-    private int webViewBaseBottomMargin;
-    private int webViewInputBarSpacing;
     private int keyboardVisibilityThreshold;
     private int inputBarKeyboardBottomMargin;
     private int currentKeyboardHeight;
@@ -133,19 +131,11 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void configureKeyboardAvoidance() {
-        if (contentRoot == null || bottomInputContainer == null || webView == null) {
+        if (contentRoot == null || bottomInputContainer == null) {
             return;
         }
 
         inputBarBaseBottomMargin = getBottomMargin(bottomInputContainer);
-        webViewBaseBottomMargin = getBottomMargin(webView);
-        webViewInputBarSpacing = Math.max(
-            0,
-            webViewBaseBottomMargin
-                - inputBarBaseBottomMargin
-                - getResources().getDimensionPixelSize(R.dimen.baidu_web_input_height)
-                - getResources().getDimensionPixelSize(R.dimen.baidu_web_input_bottom_margin)
-        );
         keyboardVisibilityThreshold = dpToPx(80);
         inputBarKeyboardBottomMargin = dpToPx(10);
         final Rect visibleFrame = new Rect();
@@ -397,7 +387,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void updateContentInsetsForInputBar() {
-        if (bottomInputContainer == null || webView == null) {
+        if (bottomInputContainer == null) {
             return;
         }
         boolean attachmentPanelVisible = attachmentPanel != null
@@ -410,13 +400,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             ? currentKeyboardHeight
             : inputBarBaseBottomMargin;
         setBottomMargin(bottomInputContainer, inputBarBottomMargin);
-
-        int inputBarHeight = bottomInputContainer.getHeight();
-        if (inputBarHeight == 0) {
-            inputBarHeight = getResources().getDimensionPixelSize(R.dimen.baidu_web_input_height);
-        }
-        int webViewBottomMargin = inputBarBottomMargin + inputBarHeight + webViewInputBarSpacing;
-        setBottomMargin(webView, webViewBottomMargin);
     }
 
     private void setInputBottomFillVisible(boolean visible, int height) {

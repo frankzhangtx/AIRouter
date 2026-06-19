@@ -372,7 +372,7 @@ public class BottomInputPanelView extends LinearLayout {
             hideKeyboard();
             setAttachmentPanelVisible(false);
             consultInput.clearFocus();
-            voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
+            bindActiveHoldTrigger();
             buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_keyboard);
             buttonVoiceInput.setContentDescription(
                 getResources().getString(R.string.baidu_web_keyboard_content_description)
@@ -392,7 +392,7 @@ public class BottomInputPanelView extends LinearLayout {
             updateTextInputActionState();
             updateContentInsetsForInputBar();
         } else {
-            bindTextInputHoldTrigger();
+            bindActiveHoldTrigger();
             buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_voice);
             buttonVoiceInput.setContentDescription(
                 getResources().getString(R.string.baidu_web_voice_content_description)
@@ -459,6 +459,17 @@ public class BottomInputPanelView extends LinearLayout {
         );
     }
 
+    private void bindActiveHoldTrigger() {
+        if (voiceRecordPanel == null || consultInput == null) {
+            return;
+        }
+        if (voiceInputMode && !isAttachmentPanelVisible()) {
+            voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
+        } else {
+            bindTextInputHoldTrigger();
+        }
+    }
+
     private void handleTrailingActionClick() {
         if (isSendActionVisible()) {
             setAttachmentPanelVisible(false);
@@ -489,7 +500,9 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     private boolean isPlusActionVisible() {
-        return !voiceInputMode && !hasTextInputContent() && !keyboardVisible;
+        return manualModeEnabled
+            && !keyboardVisible
+            && (voiceInputMode || !hasTextInputContent());
     }
 
     private boolean isAiGridActionVisible() {
@@ -519,6 +532,7 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
         attachmentPanel.setVisibility(targetVisibility);
+        bindActiveHoldTrigger();
         updateContentInsetsForInputBar();
     }
 

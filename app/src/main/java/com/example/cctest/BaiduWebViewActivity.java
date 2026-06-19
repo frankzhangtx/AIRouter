@@ -402,9 +402,12 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         boolean attachmentPanelVisible = attachmentPanel != null
             && attachmentPanel.getVisibility() == View.VISIBLE;
-        setInputBottomFillVisible(!keyboardVisible && !attachmentPanelVisible);
+        int inputBottomFillHeight = keyboardVisible
+            ? inputBarKeyboardBottomMargin
+            : getResources().getDimensionPixelSize(R.dimen.baidu_web_input_bottom_margin);
+        setInputBottomFillVisible(!attachmentPanelVisible, inputBottomFillHeight);
         int inputBarBottomMargin = keyboardVisible
-            ? currentKeyboardHeight + inputBarKeyboardBottomMargin
+            ? currentKeyboardHeight
             : inputBarBaseBottomMargin;
         setBottomMargin(bottomInputContainer, inputBarBottomMargin);
 
@@ -416,9 +419,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         setBottomMargin(webView, webViewBottomMargin);
     }
 
-    private void setInputBottomFillVisible(boolean visible) {
+    private void setInputBottomFillVisible(boolean visible, int height) {
         if (inputBottomFill == null) {
             return;
+        }
+        ViewGroup.LayoutParams layoutParams = inputBottomFill.getLayoutParams();
+        if (layoutParams != null && layoutParams.height != height) {
+            layoutParams.height = height;
+            inputBottomFill.setLayoutParams(layoutParams);
         }
         int targetVisibility = visible ? View.VISIBLE : View.GONE;
         if (inputBottomFill.getVisibility() != targetVisibility) {

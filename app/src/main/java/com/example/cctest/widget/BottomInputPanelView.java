@@ -34,16 +34,19 @@ public class BottomInputPanelView extends LinearLayout {
     private View attachmentPanel;
     private View optionAttachImage;
     private View optionSendProduct;
+    private View aiAvatarButton;
     private ImageButton buttonVoiceInput;
     private ImageButton buttonAddContent;
     private EditText consultInput;
     private PicVoiceRecordPanel voiceRecordPanel;
     private VoiceRecordCallback voiceRecordCallback;
     private ActionListener actionListener;
+    private ModeChangeListener modeChangeListener;
     private View contentRoot;
     private ViewTreeObserver.OnGlobalLayoutListener keyboardLayoutListener;
     private OnLayoutChangeListener inputBarLayoutChangeListener;
     private TextWatcher inputTextWatcher;
+    private boolean manualModeEnabled = true;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
     private String textInputDraft = "";
@@ -77,6 +80,18 @@ public class BottomInputPanelView extends LinearLayout {
 
     public void setVoiceRecordCallback(VoiceRecordCallback voiceRecordCallback) {
         this.voiceRecordCallback = voiceRecordCallback;
+    }
+
+    public void setModeChangeListener(ModeChangeListener modeChangeListener) {
+        this.modeChangeListener = modeChangeListener;
+    }
+
+    public void setManualModeEnabled(boolean enabled) {
+        setManualModeEnabled(enabled, true);
+    }
+
+    public boolean isManualModeEnabled() {
+        return manualModeEnabled;
     }
 
     public String getInputText() {
@@ -123,6 +138,7 @@ public class BottomInputPanelView extends LinearLayout {
             voiceRecordPanel.dismiss();
         }
         actionListener = null;
+        modeChangeListener = null;
         voiceRecordCallback = null;
     }
 
@@ -152,14 +168,24 @@ public class BottomInputPanelView extends LinearLayout {
         attachmentPanel = findViewById(R.id.input_attachment_panel);
         optionAttachImage = findViewById(R.id.option_attach_image);
         optionSendProduct = findViewById(R.id.option_send_product);
+        aiAvatarButton = findViewById(R.id.button_ai_avatar);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
         buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
 
+        configureManualModeToggle();
         configureTextInputWrapping();
         configureVoiceRecordPanel(context);
         configureVoiceInputToggle();
         configureAttachmentOptions();
+        updateManualModeUi();
+    }
+
+    private void configureManualModeToggle() {
+        if (aiAvatarButton == null) {
+            return;
+        }
+        aiAvatarButton.setOnClickListener(view -> setManualModeEnabled(true));
     }
 
     private void configureTextInputWrapping() {
@@ -300,6 +326,27 @@ public class BottomInputPanelView extends LinearLayout {
                     actionListener.onProductRequested();
                 }
             });
+        }
+    }
+
+    private void setManualModeEnabled(boolean enabled, boolean notifyListener) {
+        if (manualModeEnabled == enabled) {
+            updateManualModeUi();
+            return;
+        }
+        manualModeEnabled = enabled;
+        if (manualModeEnabled) {
+            closeAttachmentPanel();
+        }
+        updateManualModeUi();
+        if (notifyListener && modeChangeListener != null) {
+            modeChangeListener.onManualModeChanged(manualModeEnabled);
+        }
+    }
+
+    private void updateManualModeUi() {
+        if (aiAvatarButton != null) {
+            aiAvatarButton.setVisibility(manualModeEnabled ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -638,5 +685,9 @@ public class BottomInputPanelView extends LinearLayout {
         default void onProductRequested() {
             // Optional override.
         }
+    }
+
+    public interface ModeChangeListener {
+        void onManualModeChanged(boolean manualModeEnabled);
     }
 }

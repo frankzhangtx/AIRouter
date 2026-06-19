@@ -30,6 +30,26 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/button_toggle_manual"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="@dimen/baidu_web_manual_toggle_top_margin"
+            android:elevation="6dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:text="@string/baidu_web_toggle_manual_enter"
+            android:textAllCaps="false"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            app:backgroundTint="@color/baidu_web_input_background"
+            app:cornerRadius="20dp"
+            app:strokeColor="@color/baidu_web_input_stroke"
+            app:strokeWidth="1dp" />
+
         <com.example.cctest.widget.BottomInputPanelView
             android:id="@+id/bottom_input_container"
             android:layout_width="match_parent"

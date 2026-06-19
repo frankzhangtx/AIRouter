@@ -9,13 +9,17 @@ import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
 
 public class BaiduWebViewActivity extends AppCompatActivity {
 
     private static final String BAIDU_URL = "https://www.baidu.com";
+    private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
+    private MaterialButton manualToggleButton;
+    private boolean manualModeEnabled;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +29,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         webView = findViewById(R.id.web_view);
         bottomInputPanel = findViewById(R.id.bottom_input_container);
+        manualToggleButton = findViewById(R.id.button_toggle_manual);
+        manualModeEnabled = savedInstanceState != null
+            && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -34,6 +41,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(view -> finish());
 
         configureWebView(webView);
+        configureManualToggleButton();
         if (savedInstanceState == null) {
             webView.loadUrl(BAIDU_URL);
         } else {
@@ -49,6 +57,38 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient());
     }
 
+    private void configureManualToggleButton() {
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setModeChangeListener(enabled -> {
+                manualModeEnabled = enabled;
+                updateManualToggleButtonText();
+            });
+            bottomInputPanel.setManualModeEnabled(manualModeEnabled);
+        }
+        if (manualToggleButton == null) {
+            return;
+        }
+        manualToggleButton.setOnClickListener(view -> {
+            manualModeEnabled = !manualModeEnabled;
+            if (bottomInputPanel != null) {
+                bottomInputPanel.setManualModeEnabled(manualModeEnabled);
+            }
+            updateManualToggleButtonText();
+        });
+        updateManualToggleButtonText();
+    }
+
+    private void updateManualToggleButtonText() {
+        if (manualToggleButton == null) {
+            return;
+        }
+        manualToggleButton.setText(
+            manualModeEnabled
+                ? R.string.baidu_web_toggle_manual_exit
+                : R.string.baidu_web_toggle_manual_enter
+        );
+    }
+
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -61,6 +101,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
         if (webView != null) {
             webView.saveState(outState);
         }
@@ -72,6 +113,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel.release();
             bottomInputPanel = null;
         }
+        manualToggleButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

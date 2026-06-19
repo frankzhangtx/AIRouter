@@ -85,7 +85,17 @@ public class PicVoiceRecordPanel extends FrameLayout {
         trigger.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
-                return handleHoldTriggerTouch(view, event, true);
+                return handleHoldTriggerTouch(view, event, true, false);
+            }
+        });
+    }
+
+    public void bindToImmediateHoldTrigger(View trigger) {
+        trigger.setOnClickListener(null);
+        trigger.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                return handleHoldTriggerTouch(view, event, true, true);
             }
         });
     }
@@ -94,7 +104,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         trigger.setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
-                return handleHoldTriggerTouch(view, event, false);
+                return handleHoldTriggerTouch(view, event, false, false);
             }
         });
     }
@@ -293,7 +303,8 @@ public class PicVoiceRecordPanel extends FrameLayout {
     private boolean handleHoldTriggerTouch(
         View view,
         MotionEvent event,
-        boolean consumeTouchBeforeHold
+        boolean consumeTouchBeforeHold,
+        boolean startImmediately
     ) {
         pendingStartRawX = event.getRawX();
         pendingStartRawY = event.getRawY();
@@ -304,7 +315,12 @@ public class PicVoiceRecordPanel extends FrameLayout {
                 holdTriggered = false;
                 view.setPressed(true);
                 requestDisallowParentIntercept(view, true);
-                scheduleHoldStart();
+                if (startImmediately) {
+                    holdTriggered = true;
+                    show();
+                } else {
+                    scheduleHoldStart();
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (recording) {

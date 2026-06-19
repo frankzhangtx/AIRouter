@@ -30,7 +30,7 @@
         <LinearLayout
             android:id="@+id/bottom_input_bar"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/baidu_web_input_height"
+            android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
             android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
@@ -38,8 +38,11 @@
             android:background="@drawable/bg_baidu_web_input_bar"
             android:elevation="8dp"
             android:gravity="center_vertical"
+            android:minHeight="@dimen/baidu_web_input_height"
             android:orientation="horizontal"
+            android:paddingTop="8dp"
             android:paddingStart="12dp"
+            android:paddingBottom="8dp"
             android:paddingEnd="12dp">
 
             <ImageButton
@@ -57,18 +60,21 @@
             <EditText
                 android:id="@+id/edit_text_consult_content"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
-                android:gravity="center_vertical"
+                android:gravity="start|center_vertical"
                 android:hint="@string/baidu_web_input_hint"
                 android:imeOptions="actionSend"
                 android:includeFontPadding="false"
-                android:inputType="text"
-                android:maxLines="1"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLines="4"
+                android:minLines="1"
+                android:overScrollMode="never"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp"
-                android:singleLine="true"
+                android:scrollbars="none"
+                android:singleLine="false"
                 android:textColor="@color/black"
                 android:textColorHint="@color/baidu_web_input_hint"
                 android:textSize="@dimen/baidu_web_input_text_size" />

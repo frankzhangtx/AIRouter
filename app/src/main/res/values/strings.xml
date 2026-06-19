@@ -4,7 +4,9 @@
     <string name="main_fab_content_description">点击打开网页，按住录音</string>
     <string name="baidu_web_view_title">百度</string>
     <string name="baidu_web_input_hint">请输入您要咨询的内容</string>
+    <string name="baidu_web_hold_to_talk">按住 说话</string>
     <string name="baidu_web_voice_content_description">语音输入</string>
+    <string name="baidu_web_keyboard_content_description">键盘输入</string>
     <string name="baidu_web_plus_content_description">添加内容</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>

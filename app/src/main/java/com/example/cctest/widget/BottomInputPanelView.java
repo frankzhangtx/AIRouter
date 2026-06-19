@@ -458,7 +458,7 @@ public class BottomInputPanelView extends LinearLayout {
         }
         voiceRecordPanel.bindToHoldTriggerPreservingClickWhen(
             consultInput,
-            () -> !keyboardVisible && !hasTextInputContent() && !isAttachmentPanelVisible()
+            () -> !keyboardVisible && !hasTextInputContent()
         );
     }
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <path
+        android:fillColor="@color/baidu_web_send_background"
+        android:pathData="M20,4C11.16,4 4,11.16 4,20C4,28.84 11.16,36 20,36C28.84,36 36,28.84 36,20C36,11.16 28.84,4 20,4Z" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M20,29V12"
+        android:strokeColor="@color/white"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.4" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M12.8,19.4L20,12L27.2,19.4"
+        android:strokeColor="@color/white"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="3.4" />
+</vector>

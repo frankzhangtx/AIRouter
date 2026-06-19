@@ -35,6 +35,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private View contentRoot;
     private View bottomInputBar;
     private ImageButton buttonVoiceInput;
+    private ImageButton buttonAddContent;
     private EditText consultInput;
     private PicVoiceRecordPanel voiceRecordPanel;
     private ViewTreeObserver.OnGlobalLayoutListener keyboardLayoutListener;
@@ -65,6 +66,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         webView = findViewById(R.id.web_view);
         bottomInputBar = findViewById(R.id.bottom_input_bar);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
+        buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
         contentRoot = findViewById(android.R.id.content);
 
@@ -117,6 +119,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             @Override
             public void afterTextChanged(Editable text) {
                 keepTextInputCursorOnBottomLine();
+                updateTextInputActionState();
                 updateContentInsetsForInputBar();
             }
         };
@@ -184,7 +187,12 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void configureVoiceInputToggle() {
-        if (buttonVoiceInput == null || consultInput == null || voiceRecordPanel == null) {
+        if (
+            buttonVoiceInput == null
+                || buttonAddContent == null
+                || consultInput == null
+                || voiceRecordPanel == null
+        ) {
             return;
         }
 
@@ -194,10 +202,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         textInputOriginalTypeface = consultInput.getTypeface();
         buttonVoiceInput.setOnClickListener(view -> setVoiceInputMode(!voiceInputMode));
         setVoiceInputMode(false);
+        updateTextInputActionState();
     }
 
     private void setVoiceInputMode(boolean enabled) {
-        if (buttonVoiceInput == null || consultInput == null || voiceRecordPanel == null) {
+        if (
+            buttonVoiceInput == null
+                || buttonAddContent == null
+                || consultInput == null
+                || voiceRecordPanel == null
+        ) {
             return;
         }
 
@@ -226,6 +240,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             consultInput.setGravity(Gravity.CENTER);
             consultInput.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
             consultInput.setText(R.string.baidu_web_hold_to_talk);
+            updateTextInputActionState();
             updateContentInsetsForInputBar();
         } else {
             voiceRecordPanel.bindToHoldTriggerPreservingClick(consultInput);
@@ -246,7 +261,36 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             consultInput.setText(textInputDraft);
             consultInput.setSelection(consultInput.getText().length());
             keepTextInputCursorOnBottomLine();
+            updateTextInputActionState();
             updateContentInsetsForInputBar();
+        }
+    }
+
+    private void updateTextInputActionState() {
+        if (buttonVoiceInput == null || buttonAddContent == null || consultInput == null) {
+            return;
+        }
+
+        boolean hasInputText = !voiceInputMode
+            && consultInput.getText() != null
+            && consultInput.getText().toString().trim().length() > 0;
+
+        buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
+        if (hasInputText) {
+            buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
+            buttonAddContent.setContentDescription(
+                getString(R.string.baidu_web_send_content_description)
+            );
+            buttonAddContent.setPadding(0, 0, 0, 0);
+        } else {
+            buttonAddContent.setImageResource(R.drawable.ic_baidu_web_plus);
+            buttonAddContent.setContentDescription(
+                getString(R.string.baidu_web_plus_content_description)
+            );
+            int iconPadding = getResources().getDimensionPixelSize(
+                R.dimen.baidu_web_input_icon_padding
+            );
+            buttonAddContent.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
         }
     }
 
@@ -397,6 +441,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             voiceRecordPanel = null;
         }
         consultInput = null;
+        buttonAddContent = null;
         buttonVoiceInput = null;
         bottomInputBar = null;
         contentRoot = null;

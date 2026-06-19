@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/baidu_web_input_background" />
-    <corners android:radius="@dimen/baidu_web_input_corner_radius" />
+    <solid android:color="@color/baidu_web_attachment_panel_background" />
 </shape>

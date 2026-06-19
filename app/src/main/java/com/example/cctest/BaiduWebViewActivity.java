@@ -33,7 +33,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
     private WebView webView;
     private View contentRoot;
+    private View bottomInputContainer;
     private View bottomInputBar;
+    private View inputBottomFill;
+    private View attachmentPanel;
     private ImageButton buttonVoiceInput;
     private ImageButton buttonAddContent;
     private EditText consultInput;
@@ -64,7 +67,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         webView = findViewById(R.id.web_view);
+        bottomInputContainer = findViewById(R.id.bottom_input_container);
         bottomInputBar = findViewById(R.id.bottom_input_bar);
+        inputBottomFill = findViewById(R.id.input_bottom_fill);
+        attachmentPanel = findViewById(R.id.input_attachment_panel);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
         buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
@@ -127,17 +133,18 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void configureKeyboardAvoidance() {
-        if (contentRoot == null || bottomInputBar == null || webView == null) {
+        if (contentRoot == null || bottomInputContainer == null || webView == null) {
             return;
         }
 
-        inputBarBaseBottomMargin = getBottomMargin(bottomInputBar);
+        inputBarBaseBottomMargin = getBottomMargin(bottomInputContainer);
         webViewBaseBottomMargin = getBottomMargin(webView);
         webViewInputBarSpacing = Math.max(
             0,
             webViewBaseBottomMargin
                 - inputBarBaseBottomMargin
                 - getResources().getDimensionPixelSize(R.dimen.baidu_web_input_height)
+                - getResources().getDimensionPixelSize(R.dimen.baidu_web_input_bottom_margin)
         );
         keyboardVisibilityThreshold = dpToPx(80);
         inputBarKeyboardBottomMargin = dpToPx(10);
@@ -151,13 +158,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             int visibleBottomInRoot = visibleFrame.bottom - rootLocation[1];
             currentKeyboardHeight = Math.max(0, contentRoot.getHeight() - visibleBottomInRoot);
             keyboardVisible = currentKeyboardHeight >= keyboardVisibilityThreshold;
+            updateTextInputActionState();
             updateContentInsetsForInputBar();
         };
         contentRoot.getViewTreeObserver().addOnGlobalLayoutListener(keyboardLayoutListener);
         inputBarLayoutChangeListener = (view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) ->
             updateContentInsetsForInputBar();
-        bottomInputBar.addOnLayoutChangeListener(inputBarLayoutChangeListener);
-        bottomInputBar.post(this::updateContentInsetsForInputBar);
+        bottomInputContainer.addOnLayoutChangeListener(inputBarLayoutChangeListener);
+        bottomInputContainer.post(this::updateContentInsetsForInputBar);
     }
 
     private void configureVoiceRecordPanel() {
@@ -201,6 +209,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         textInputOriginalGravity = consultInput.getGravity();
         textInputOriginalTypeface = consultInput.getTypeface();
         buttonVoiceInput.setOnClickListener(view -> setVoiceInputMode(!voiceInputMode));
+        buttonAddContent.setOnClickListener(view -> handleTrailingActionClick());
         setVoiceInputMode(false);
         updateTextInputActionState();
     }
@@ -222,6 +231,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
         if (enabled) {
             hideKeyboard();
+            setAttachmentPanelVisible(false);
             consultInput.clearFocus();
             voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
             buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_keyboard);
@@ -271,12 +281,12 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             return;
         }
 
-        boolean hasInputText = !voiceInputMode
-            && consultInput.getText() != null
-            && consultInput.getText().toString().trim().length() > 0;
+        boolean hasInputText = !voiceInputMode && hasTextInputContent();
+        boolean showSendAction = !voiceInputMode && (hasInputText || keyboardVisible);
 
         buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
-        if (hasInputText) {
+        if (showSendAction) {
+            setAttachmentPanelVisible(false);
             buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
             buttonAddContent.setContentDescription(
                 getString(R.string.baidu_web_send_content_description)
@@ -292,6 +302,39 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             );
             buttonAddContent.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
         }
+    }
+
+    private void handleTrailingActionClick() {
+        if (!isPlusActionVisible()) {
+            setAttachmentPanelVisible(false);
+            return;
+        }
+
+        boolean shouldShowPanel = attachmentPanel == null
+            || attachmentPanel.getVisibility() != View.VISIBLE;
+        setAttachmentPanelVisible(shouldShowPanel);
+    }
+
+    private boolean isPlusActionVisible() {
+        return !voiceInputMode && !hasTextInputContent() && !keyboardVisible;
+    }
+
+    private boolean hasTextInputContent() {
+        return consultInput != null
+            && consultInput.getText() != null
+            && consultInput.getText().toString().trim().length() > 0;
+    }
+
+    private void setAttachmentPanelVisible(boolean visible) {
+        if (attachmentPanel == null) {
+            return;
+        }
+        int targetVisibility = visible ? View.VISIBLE : View.GONE;
+        if (attachmentPanel.getVisibility() == targetVisibility) {
+            return;
+        }
+        attachmentPanel.setVisibility(targetVisibility);
+        updateContentInsetsForInputBar();
     }
 
     private void applyTextInputWrapping() {
@@ -344,20 +387,33 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void updateContentInsetsForInputBar() {
-        if (bottomInputBar == null || webView == null) {
+        if (bottomInputContainer == null || webView == null) {
             return;
         }
+        boolean attachmentPanelVisible = attachmentPanel != null
+            && attachmentPanel.getVisibility() == View.VISIBLE;
+        setInputBottomFillVisible(!keyboardVisible && !attachmentPanelVisible);
         int inputBarBottomMargin = keyboardVisible
             ? currentKeyboardHeight + inputBarKeyboardBottomMargin
             : inputBarBaseBottomMargin;
-        setBottomMargin(bottomInputBar, inputBarBottomMargin);
+        setBottomMargin(bottomInputContainer, inputBarBottomMargin);
 
-        int inputBarHeight = bottomInputBar.getHeight();
+        int inputBarHeight = bottomInputContainer.getHeight();
         if (inputBarHeight == 0) {
             inputBarHeight = getResources().getDimensionPixelSize(R.dimen.baidu_web_input_height);
         }
         int webViewBottomMargin = inputBarBottomMargin + inputBarHeight + webViewInputBarSpacing;
         setBottomMargin(webView, webViewBottomMargin);
+    }
+
+    private void setInputBottomFillVisible(boolean visible) {
+        if (inputBottomFill == null) {
+            return;
+        }
+        int targetVisibility = visible ? View.VISIBLE : View.GONE;
+        if (inputBottomFill.getVisibility() != targetVisibility) {
+            inputBottomFill.setVisibility(targetVisibility);
+        }
     }
 
     private void hideKeyboard() {
@@ -424,8 +480,8 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             contentRoot.getViewTreeObserver().removeOnGlobalLayoutListener(keyboardLayoutListener);
             keyboardLayoutListener = null;
         }
-        if (bottomInputBar != null && inputBarLayoutChangeListener != null) {
-            bottomInputBar.removeOnLayoutChangeListener(inputBarLayoutChangeListener);
+        if (bottomInputContainer != null && inputBarLayoutChangeListener != null) {
+            bottomInputContainer.removeOnLayoutChangeListener(inputBarLayoutChangeListener);
             inputBarLayoutChangeListener = null;
         }
         if (consultInput != null && inputTextWatcher != null) {
@@ -443,7 +499,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         consultInput = null;
         buttonAddContent = null;
         buttonVoiceInput = null;
+        attachmentPanel = null;
+        inputBottomFill = null;
         bottomInputBar = null;
+        bottomInputContainer = null;
         contentRoot = null;
         super.onDestroy();
     }

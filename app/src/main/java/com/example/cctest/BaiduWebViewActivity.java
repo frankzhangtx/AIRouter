@@ -191,7 +191,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 // No-op. Recording completion is handled by the panel lifecycle.
             }
         });
-        voiceRecordPanel.bindToHoldTriggerPreservingClick(consultInput);
+        bindTextInputHoldTrigger();
     }
 
     private void configureVoiceInputToggle() {
@@ -253,7 +253,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             updateTextInputActionState();
             updateContentInsetsForInputBar();
         } else {
-            voiceRecordPanel.bindToHoldTriggerPreservingClick(consultInput);
+            bindTextInputHoldTrigger();
             buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_voice);
             buttonVoiceInput.setContentDescription(
                 getString(R.string.baidu_web_voice_content_description)
@@ -302,6 +302,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             );
             buttonAddContent.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
         }
+    }
+
+    private void bindTextInputHoldTrigger() {
+        if (voiceRecordPanel == null || consultInput == null) {
+            return;
+        }
+        voiceRecordPanel.bindToHoldTriggerPreservingClickWhen(
+            consultInput,
+            () -> !keyboardVisible && !hasTextInputContent()
+        );
     }
 
     private void handleTrailingActionClick() {

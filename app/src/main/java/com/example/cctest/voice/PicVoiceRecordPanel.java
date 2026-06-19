@@ -109,6 +109,24 @@ public class PicVoiceRecordPanel extends FrameLayout {
         });
     }
 
+    public void bindToHoldTriggerPreservingClickWhen(
+        View trigger,
+        HoldTriggerCondition condition
+    ) {
+        trigger.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent event) {
+                boolean alreadyHandlingHold = recording || holdTriggered;
+                if (!alreadyHandlingHold
+                    && condition != null
+                    && !condition.shouldEnableHoldTrigger()) {
+                    return false;
+                }
+                return handleHoldTriggerTouch(view, event, false, false);
+            }
+        });
+    }
+
     public void show() {
         if (getParent() != null || recording || ending) {
             return;
@@ -477,6 +495,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
 
     private interface VolumeChangedListener {
         void onVolumeChanged(int volume);
+    }
+
+    public interface HoldTriggerCondition {
+        boolean shouldEnableHoldTrigger();
     }
 
     private static class PicVoiceRecordCanvasView extends View {

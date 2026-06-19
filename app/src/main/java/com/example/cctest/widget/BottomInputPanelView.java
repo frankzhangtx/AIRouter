@@ -399,7 +399,7 @@ public class BottomInputPanelView extends LinearLayout {
         }
         voiceRecordPanel.bindToHoldTriggerPreservingClickWhen(
             consultInput,
-            () -> !keyboardVisible && !hasTextInputContent()
+            () -> !keyboardVisible && !hasTextInputContent() && !isAttachmentPanelVisible()
         );
     }
 
@@ -428,6 +428,10 @@ public class BottomInputPanelView extends LinearLayout {
 
     private boolean isSendActionVisible() {
         return !voiceInputMode && (hasTextInputContent() || keyboardVisible);
+    }
+
+    private boolean isAttachmentPanelVisible() {
+        return attachmentPanel != null && attachmentPanel.getVisibility() == View.VISIBLE;
     }
 
     private boolean hasTextInputContent() {

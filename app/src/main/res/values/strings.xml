@@ -8,6 +8,8 @@
     <string name="baidu_web_voice_content_description">语音输入</string>
     <string name="baidu_web_keyboard_content_description">键盘输入</string>
     <string name="baidu_web_plus_content_description">添加内容</string>
+    <string name="baidu_web_ai_grid_content_description">更多功能</string>
+    <string name="baidu_web_more_products">更多产品</string>
     <string name="baidu_web_send_content_description">发送</string>
     <string name="baidu_web_attachment_image">图片</string>
     <string name="baidu_web_attachment_product">发送产品</string>

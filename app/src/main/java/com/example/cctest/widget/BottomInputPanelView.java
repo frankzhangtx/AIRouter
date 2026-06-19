@@ -21,6 +21,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 import androidx.activity.ComponentActivity;
 import com.example.cctest.R;
 import com.example.cctest.voice.PicVoiceRecordPanel;
@@ -332,6 +333,7 @@ public class BottomInputPanelView extends LinearLayout {
     private void setManualModeEnabled(boolean enabled, boolean notifyListener) {
         if (manualModeEnabled == enabled) {
             updateManualModeUi();
+            updateTextInputActionState();
             return;
         }
         manualModeEnabled = enabled;
@@ -339,6 +341,7 @@ public class BottomInputPanelView extends LinearLayout {
             closeAttachmentPanel();
         }
         updateManualModeUi();
+        updateTextInputActionState();
         if (notifyListener && modeChangeListener != null) {
             modeChangeListener.onManualModeChanged(manualModeEnabled);
         }
@@ -429,9 +432,15 @@ public class BottomInputPanelView extends LinearLayout {
             );
             buttonAddContent.setPadding(0, 0, 0, 0);
         } else {
-            buttonAddContent.setImageResource(R.drawable.ic_baidu_web_plus);
+            int iconResource = manualModeEnabled
+                ? R.drawable.ic_baidu_web_plus
+                : R.drawable.ic_baidu_web_ai_grid;
+            int contentDescriptionResource = manualModeEnabled
+                ? R.string.baidu_web_plus_content_description
+                : R.string.baidu_web_ai_grid_content_description;
+            buttonAddContent.setImageResource(iconResource);
             buttonAddContent.setContentDescription(
-                getResources().getString(R.string.baidu_web_plus_content_description)
+                getResources().getString(contentDescriptionResource)
             );
             int iconPadding = getResources().getDimensionPixelSize(
                 R.dimen.baidu_web_input_icon_padding
@@ -459,6 +468,16 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
 
+        if (isAiGridActionVisible()) {
+            setAttachmentPanelVisible(false);
+            Toast.makeText(
+                getContext(),
+                R.string.baidu_web_more_products,
+                Toast.LENGTH_SHORT
+            ).show();
+            return;
+        }
+
         if (!isPlusActionVisible()) {
             setAttachmentPanelVisible(false);
             return;
@@ -471,6 +490,10 @@ public class BottomInputPanelView extends LinearLayout {
 
     private boolean isPlusActionVisible() {
         return !voiceInputMode && !hasTextInputContent() && !keyboardVisible;
+    }
+
+    private boolean isAiGridActionVisible() {
+        return !manualModeEnabled && !isSendActionVisible();
     }
 
     private boolean isSendActionVisible() {

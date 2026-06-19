@@ -68,13 +68,19 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         if (manualToggleButton == null) {
             return;
         }
-        manualToggleButton.setOnClickListener(view -> {
-            manualModeEnabled = !manualModeEnabled;
-            if (bottomInputPanel != null) {
-                bottomInputPanel.setManualModeEnabled(manualModeEnabled);
-            }
-            updateManualToggleButtonText();
-        });
+        manualToggleButton.setOnClickListener(view -> handleManualToggleButtonClick());
+        updateManualToggleButtonText();
+    }
+
+    private void handleManualToggleButtonClick() {
+        setManualModeEnabledFromActivity(!manualModeEnabled);
+    }
+
+    private void setManualModeEnabledFromActivity(boolean enabled) {
+        manualModeEnabled = enabled;
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setManualModeEnabled(manualModeEnabled);
+        }
         updateManualToggleButtonText();
     }
 

@@ -111,7 +111,7 @@
                     android:id="@+id/button_add_content"
                     android:layout_width="@dimen/baidu_web_input_icon_size"
                     android:layout_height="@dimen/baidu_web_input_icon_size"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:background="@android:color/transparent"
                     android:contentDescription="@string/baidu_web_plus_content_description"
                     android:minWidth="0dp"
                     android:minHeight="0dp"

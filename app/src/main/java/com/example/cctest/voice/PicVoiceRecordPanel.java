@@ -80,6 +80,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
         this.callback = callback;
     }
 
+    public void setRecordPanelAnchorView(View anchorView) {
+        canvasView.setPanelAnchorView(anchorView);
+    }
+
     public void bindToHoldTrigger(View trigger) {
         trigger.setOnClickListener(null);
         trigger.setOnTouchListener(new OnTouchListener() {
@@ -508,6 +512,8 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF panelRect = new RectF();
         private final RectF barRect = new RectF();
+        private final int[] anchorLocationOnScreen = new int[2];
+        private final int[] canvasLocationOnScreen = new int[2];
         private final int normalPanelColor;
         private final int normalPanelCenterColor;
         private final int cancelPanelColor;
@@ -542,6 +548,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private float targetFingerY;
         private ValueAnimator pulseAnimator;
         private ValueAnimator colorAnimator;
+        private View panelAnchorView;
 
         PicVoiceRecordCanvasView(Context context) {
             super(context);
@@ -572,6 +579,11 @@ public class PicVoiceRecordPanel extends FrameLayout {
             currentPanelCenterColor = normalPanelCenterColor;
             currentPromptColor = normalPromptColor;
             promptText = hintSend;
+        }
+
+        void setPanelAnchorView(View panelAnchorView) {
+            this.panelAnchorView = panelAnchorView;
+            invalidate();
         }
 
         void reset() {
@@ -681,9 +693,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
         }
 
         private void drawPrompt(Canvas canvas) {
-            float promptBaseline = getHeight() - promptBottomOffset;
+            float promptCenterY = panelRect.bottom
+                - (promptBottomOffset - panelBottomOffset);
             Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-            float centeredBaseline = promptBaseline - (fontMetrics.ascent + fontMetrics.descent) / 2f;
+            float centeredBaseline = promptCenterY - (fontMetrics.ascent + fontMetrics.descent) / 2f;
             textPaint.setColor(currentPromptColor);
             canvas.drawText(promptText, getWidth() / 2f, centeredBaseline, textPaint);
         }
@@ -783,9 +796,27 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private void updatePanelBounds() {
             float left = panelHorizontalMargin;
             float right = getWidth() - panelHorizontalMargin;
-            float bottom = getHeight() - panelBottomOffset;
+            float bottom = resolvePanelBottom();
             float top = bottom - panelHeight;
             panelRect.set(left, top, right, bottom);
+        }
+
+        private float resolvePanelBottom() {
+            View anchorView = panelAnchorView;
+            if (anchorView == null
+                || anchorView.getWidth() <= 0
+                || anchorView.getHeight() <= 0
+                || getHeight() <= 0) {
+                return getHeight() - panelBottomOffset;
+            }
+            anchorView.getLocationOnScreen(anchorLocationOnScreen);
+            getLocationOnScreen(canvasLocationOnScreen);
+            float anchorCenterY = anchorLocationOnScreen[1]
+                - canvasLocationOnScreen[1]
+                + anchorView.getHeight() / 2f;
+            float top = anchorCenterY - panelHeight / 2f;
+            float clampedTop = coerceIn(top, 0f, Math.max(0f, getHeight() - panelHeight));
+            return clampedTop + panelHeight;
         }
 
         private boolean isPointInsideRoundedRect(float x, float y) {

@@ -36,6 +36,7 @@ public class BottomInputPanelView extends LinearLayout {
     private View optionAttachImage;
     private View optionSendProduct;
     private View aiAvatarButton;
+    private View bottomInputBar;
     private ImageButton buttonVoiceInput;
     private ImageButton buttonAddContent;
     private EditText consultInput;
@@ -170,6 +171,7 @@ public class BottomInputPanelView extends LinearLayout {
         optionAttachImage = findViewById(R.id.option_attach_image);
         optionSendProduct = findViewById(R.id.option_send_product);
         aiAvatarButton = findViewById(R.id.button_ai_avatar);
+        bottomInputBar = findViewById(R.id.bottom_input_bar);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
         buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
@@ -264,6 +266,7 @@ public class BottomInputPanelView extends LinearLayout {
         }
         consultInput.setLongClickable(false);
         voiceRecordPanel = createVoiceRecordPanel(context);
+        voiceRecordPanel.setRecordPanelAnchorView(bottomInputBar);
         voiceRecordPanel.setCallback(new VoiceRecordCallback() {
             @Override
             public void onStart() {
@@ -463,7 +466,7 @@ public class BottomInputPanelView extends LinearLayout {
         if (voiceRecordPanel == null || consultInput == null) {
             return;
         }
-        if (voiceInputMode && !isAttachmentPanelVisible()) {
+        if (voiceInputMode) {
             voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
         } else {
             bindTextInputHoldTrigger();

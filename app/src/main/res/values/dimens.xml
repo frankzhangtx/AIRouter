@@ -37,6 +37,9 @@
     <dimen name="baidu_web_input_icon_size">40dp</dimen>
     <dimen name="baidu_web_input_icon_padding">6dp</dimen>
     <dimen name="baidu_web_input_text_size">16sp</dimen>
+    <dimen name="baidu_web_input_top_extension_height">15dp</dimen>
+    <dimen name="baidu_web_input_top_extension_fade_height">5dp</dimen>
+    <dimen name="baidu_web_input_top_extension_solid_height">10dp</dimen>
     <dimen name="baidu_web_attachment_panel_height">170dp</dimen>
     <dimen name="baidu_web_attachment_panel_top_padding">24dp</dimen>
     <dimen name="baidu_web_attachment_panel_bottom_padding">24dp</dimen>

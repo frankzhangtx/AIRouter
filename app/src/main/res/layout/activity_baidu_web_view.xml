@@ -3,6 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -19,6 +21,8 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <WebView
@@ -32,24 +36,51 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
+            android:clipChildren="false"
             android:clipToPadding="false"
             android:orientation="vertical">
 
-            <LinearLayout
-                android:id="@+id/bottom_input_bar"
+            <FrameLayout
+                android:id="@+id/input_bar_surface"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
-                android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
-                android:background="@drawable/bg_baidu_web_input_bar"
-                android:elevation="8dp"
-                android:gravity="center_vertical"
-                android:minHeight="@dimen/baidu_web_input_height"
-                android:orientation="horizontal"
-                android:paddingTop="8dp"
-                android:paddingStart="12dp"
-                android:paddingBottom="8dp"
-                android:paddingEnd="12dp">
+                android:clipChildren="false"
+                android:clipToPadding="false">
+
+                <LinearLayout
+                    android:id="@+id/input_top_extension"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/baidu_web_input_top_extension_height"
+                    android:importantForAccessibility="no"
+                    android:orientation="vertical"
+                    android:translationY="-15dp">
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/baidu_web_input_top_extension_fade_height"
+                        android:background="@drawable/bg_baidu_web_input_top_extension" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
+                        android:background="@color/baidu_web_input_background" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bottom_input_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
+                    android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
+                    android:background="@drawable/bg_baidu_web_input_bar"
+                    android:elevation="8dp"
+                    android:gravity="center_vertical"
+                    android:minHeight="@dimen/baidu_web_input_height"
+                    android:orientation="horizontal"
+                    android:paddingTop="8dp"
+                    android:paddingStart="12dp"
+                    android:paddingBottom="8dp"
+                    android:paddingEnd="12dp">
 
                 <ImageButton
                     android:id="@+id/button_voice_input"
@@ -96,7 +127,8 @@
                     android:padding="@dimen/baidu_web_input_icon_padding"
                     android:scaleType="center"
                     android:src="@drawable/ic_baidu_web_plus" />
-            </LinearLayout>
+                </LinearLayout>
+            </FrameLayout>
 
             <View
                 android:id="@+id/input_bottom_fill"

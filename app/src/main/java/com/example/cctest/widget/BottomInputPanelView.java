@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -139,7 +140,12 @@ public class BottomInputPanelView extends LinearLayout {
     public void setHorizontalSuggestionListVisible(boolean visible) {
         horizontalSuggestionListVisible = visible;
         if (suggestionListView != null) {
+            boolean shouldAnimateEntrance = visible
+                && suggestionListView.getVisibility() != View.VISIBLE;
             suggestionListView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            if (shouldAnimateEntrance) {
+                suggestionListView.scheduleLayoutAnimation();
+            }
         }
         updateContentInsetsForInputBar();
     }
@@ -253,6 +259,12 @@ public class BottomInputPanelView extends LinearLayout {
         suggestionAdapter = new HorizontalSuggestionAdapter(createDefaultHorizontalSuggestions());
         suggestionListView.setLayoutManager(
             new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        );
+        suggestionListView.setLayoutAnimation(
+            AnimationUtils.loadLayoutAnimation(
+                context,
+                R.anim.layout_baidu_web_suggestion_enter
+            )
         );
         suggestionListView.setItemAnimator(null);
         suggestionListView.setAdapter(suggestionAdapter);

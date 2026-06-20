@@ -25,7 +25,7 @@
                 android:overScrollMode="never"
                 android:paddingStart="@dimen/baidu_web_input_horizontal_margin"
                 android:paddingEnd="@dimen/baidu_web_input_horizontal_margin"
-                android:paddingBottom="@dimen/baidu_web_input_top_extension_height"
+                android:paddingBottom="@dimen/baidu_web_suggestion_list_bottom_padding"
                 android:scrollbars="none"
                 android:visibility="gone" />
 

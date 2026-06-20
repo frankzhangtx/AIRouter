@@ -1076,6 +1076,11 @@ public class BottomInputPanelView extends LinearLayout {
             iconView.setImageResource(item.iconResource);
             textView.setText(item.textResource);
             itemView.setContentDescription(textView.getText());
+            itemView.setOnClickListener(view -> Toast.makeText(
+                view.getContext(),
+                textView.getText(),
+                Toast.LENGTH_SHORT
+            ).show());
         }
     }
 

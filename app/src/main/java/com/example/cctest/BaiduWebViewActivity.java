@@ -11,6 +11,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -33,6 +34,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private MaterialButton suggestionListToggleButton;
     private MaterialButton replaceSuggestionItemsButton;
     private MaterialButton bottomOverlayToggleButton;
+    private MaterialButton bottomPanelHeightButton;
     private boolean bottomOverlayVisible;
 
     @Override
@@ -51,6 +53,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         suggestionListToggleButton = findViewById(R.id.button_toggle_suggestion_list);
         replaceSuggestionItemsButton = findViewById(R.id.button_replace_suggestion_items);
         bottomOverlayToggleButton = findViewById(R.id.button_toggle_bottom_overlay);
+        bottomPanelHeightButton = findViewById(R.id.button_get_bottom_panel_height);
         bottomOverlayVisible = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_BOTTOM_OVERLAY_VISIBLE);
         manualModeManager = new BaiduWebManualModeManager(
@@ -129,6 +132,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         if (bottomOverlayToggleButton != null) {
             bottomOverlayToggleButton.setOnClickListener(view -> toggleBottomOverlay());
+        }
+        if (bottomPanelHeightButton != null) {
+            bottomPanelHeightButton.setOnClickListener(view -> showBottomPanelHeight());
         }
         updateManualControlTexts();
     }
@@ -240,6 +246,18 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         return 0;
     }
 
+    private void showBottomPanelHeight() {
+        if (bottomInputPanel == null) {
+            return;
+        }
+        int visualHeightPx = bottomInputPanel.getVisualHeightForOverlay();
+        Toast.makeText(
+            this,
+            getString(R.string.baidu_web_bottom_panel_height_toast, visualHeightPx),
+            Toast.LENGTH_SHORT
+        ).show();
+    }
+
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -283,6 +301,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         suggestionListToggleButton = null;
         replaceSuggestionItemsButton = null;
         bottomOverlayToggleButton = null;
+        bottomPanelHeightButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

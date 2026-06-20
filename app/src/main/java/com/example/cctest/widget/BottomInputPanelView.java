@@ -49,6 +49,7 @@ public class BottomInputPanelView extends LinearLayout {
     private OnLayoutChangeListener inputBarLayoutChangeListener;
     private TextWatcher inputTextWatcher;
     private boolean manualModeEnabled = true;
+    private boolean manualAgentOnline = true;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
     private String textInputDraft = "";
@@ -94,6 +95,19 @@ public class BottomInputPanelView extends LinearLayout {
 
     public boolean isManualModeEnabled() {
         return manualModeEnabled;
+    }
+
+    public void setManualAgentOnline(boolean online) {
+        if (manualAgentOnline == online) {
+            updateManualModeUi();
+            return;
+        }
+        manualAgentOnline = online;
+        updateManualModeUi();
+    }
+
+    public boolean isManualAgentOnline() {
+        return manualAgentOnline;
     }
 
     public String getInputText() {
@@ -352,7 +366,9 @@ public class BottomInputPanelView extends LinearLayout {
 
     private void updateManualModeUi() {
         if (aiAvatarButton != null) {
-            aiAvatarButton.setVisibility(manualModeEnabled ? View.GONE : View.VISIBLE);
+            aiAvatarButton.setVisibility(
+                !manualModeEnabled && manualAgentOnline ? View.VISIBLE : View.GONE
+            );
         }
     }
 

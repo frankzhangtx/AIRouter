@@ -15,11 +15,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
     private static final String BAIDU_URL = "https://www.baidu.com";
     private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
+    private static final String KEY_MANUAL_AGENT_ONLINE = "manual_agent_online";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
     private MaterialButton manualToggleButton;
+    private MaterialButton manualOnlineToggleButton;
     private boolean manualModeEnabled;
+    private boolean manualAgentOnline = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +33,11 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         webView = findViewById(R.id.web_view);
         bottomInputPanel = findViewById(R.id.bottom_input_container);
         manualToggleButton = findViewById(R.id.button_toggle_manual);
+        manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualModeEnabled = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
+        manualAgentOnline = savedInstanceState == null
+            || savedInstanceState.getBoolean(KEY_MANUAL_AGENT_ONLINE, true);
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -64,12 +70,17 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 updateManualToggleButtonText();
             });
             bottomInputPanel.setManualModeEnabled(manualModeEnabled);
+            bottomInputPanel.setManualAgentOnline(manualAgentOnline);
         }
         if (manualToggleButton == null) {
             return;
         }
         manualToggleButton.setOnClickListener(view -> handleManualToggleButtonClick());
+        if (manualOnlineToggleButton != null) {
+            manualOnlineToggleButton.setOnClickListener(view -> handleManualOnlineToggleClick());
+        }
         updateManualToggleButtonText();
+        updateManualOnlineToggleButtonText();
     }
 
     private void handleManualToggleButtonClick() {
@@ -84,6 +95,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         updateManualToggleButtonText();
     }
 
+    private void handleManualOnlineToggleClick() {
+        manualAgentOnline = !manualAgentOnline;
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setManualAgentOnline(manualAgentOnline);
+        }
+        updateManualOnlineToggleButtonText();
+    }
+
     private void updateManualToggleButtonText() {
         if (manualToggleButton == null) {
             return;
@@ -92,6 +111,17 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             manualModeEnabled
                 ? R.string.baidu_web_toggle_manual_exit
                 : R.string.baidu_web_toggle_manual_enter
+        );
+    }
+
+    private void updateManualOnlineToggleButtonText() {
+        if (manualOnlineToggleButton == null) {
+            return;
+        }
+        manualOnlineToggleButton.setText(
+            manualAgentOnline
+                ? R.string.baidu_web_manual_online
+                : R.string.baidu_web_manual_offline
         );
     }
 
@@ -108,6 +138,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
+        outState.putBoolean(KEY_MANUAL_AGENT_ONLINE, manualAgentOnline);
         if (webView != null) {
             webView.saveState(outState);
         }
@@ -120,6 +151,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel = null;
         }
         manualToggleButton = null;
+        manualOnlineToggleButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

@@ -16,6 +16,8 @@
     <string name="baidu_web_ai_avatar_content_description">切换人工</string>
     <string name="baidu_web_toggle_manual_enter">点击切换人工</string>
     <string name="baidu_web_toggle_manual_exit">点击退出人工</string>
+    <string name="baidu_web_manual_online">人工在线</string>
+    <string name="baidu_web_manual_offline">人工离线</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>

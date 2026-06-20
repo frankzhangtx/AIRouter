@@ -26,6 +26,8 @@
     <string name="baidu_web_add_suggestion_list">添加横向列表</string>
     <string name="baidu_web_remove_suggestion_list">移除横向列表</string>
     <string name="baidu_web_replace_suggestion_items">替换5个</string>
+    <string name="baidu_web_show_bottom_overlay">显示蒙层</string>
+    <string name="baidu_web_hide_bottom_overlay">隐藏蒙层</string>
     <string name="baidu_web_suggestion_smart_insurance">智能选保</string>
     <string name="baidu_web_suggestion_product_explain">产品解读</string>
     <string name="baidu_web_suggestion_easy_match">省心配</string>

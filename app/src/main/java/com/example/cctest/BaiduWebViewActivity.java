@@ -2,11 +2,15 @@ package com.example.cctest;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -15,9 +19,12 @@ import com.google.android.material.button.MaterialButton;
 public class BaiduWebViewActivity extends AppCompatActivity {
 
     private static final String BAIDU_URL = "https://www.baidu.com";
+    private static final String KEY_BOTTOM_OVERLAY_VISIBLE = "bottom_overlay_visible";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
+    private View bottomInputOverlay;
+    private View.OnLayoutChangeListener bottomInputPanelLayoutChangeListener;
     private BaiduWebManualModeManager manualModeManager;
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
@@ -25,6 +32,8 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private MaterialButton appendSuggestionItemsButton;
     private MaterialButton suggestionListToggleButton;
     private MaterialButton replaceSuggestionItemsButton;
+    private MaterialButton bottomOverlayToggleButton;
+    private boolean bottomOverlayVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,12 +43,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         webView = findViewById(R.id.web_view);
         bottomInputPanel = findViewById(R.id.bottom_input_container);
+        bottomInputOverlay = findViewById(R.id.bottom_input_overlay);
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
         appendSuggestionItemsButton = findViewById(R.id.button_append_suggestion_items);
         suggestionListToggleButton = findViewById(R.id.button_toggle_suggestion_list);
         replaceSuggestionItemsButton = findViewById(R.id.button_replace_suggestion_items);
+        bottomOverlayToggleButton = findViewById(R.id.button_toggle_bottom_overlay);
+        bottomOverlayVisible = savedInstanceState != null
+            && savedInstanceState.getBoolean(KEY_BOTTOM_OVERLAY_VISIBLE);
         manualModeManager = new BaiduWebManualModeManager(
             savedInstanceState,
             bottomInputPanel,
@@ -55,6 +68,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
         configureWebView(webView);
         configureManualControls();
+        configureBottomOverlay();
         if (savedInstanceState == null) {
             webView.loadUrl(BAIDU_URL);
         } else {
@@ -113,6 +127,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 view -> manualModeManager.handleReplaceSuggestionItemsClick()
             );
         }
+        if (bottomOverlayToggleButton != null) {
+            bottomOverlayToggleButton.setOnClickListener(view -> toggleBottomOverlay());
+        }
         updateManualControlTexts();
     }
 
@@ -136,6 +153,91 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 manualModeManager.getSuggestionListToggleTextResource()
             );
         }
+        updateBottomOverlayToggleText();
+    }
+
+    private void configureBottomOverlay() {
+        if (bottomInputPanel != null) {
+            bottomInputPanelLayoutChangeListener = (
+                view,
+                left,
+                top,
+                right,
+                bottom,
+                oldLeft,
+                oldTop,
+                oldRight,
+                oldBottom
+            ) -> updateBottomOverlayFrame();
+            bottomInputPanel.addOnLayoutChangeListener(bottomInputPanelLayoutChangeListener);
+            bottomInputPanel.post(this::updateBottomOverlayFrame);
+        }
+        updateBottomOverlayVisibility();
+    }
+
+    private void toggleBottomOverlay() {
+        bottomOverlayVisible = !bottomOverlayVisible;
+        updateBottomOverlayVisibility();
+    }
+
+    private void updateBottomOverlayVisibility() {
+        if (bottomInputOverlay != null) {
+            bottomInputOverlay.setVisibility(bottomOverlayVisible ? View.VISIBLE : View.GONE);
+            if (bottomOverlayVisible) {
+                updateBottomOverlayFrame();
+            }
+        }
+        updateBottomOverlayToggleText();
+    }
+
+    private void updateBottomOverlayToggleText() {
+        if (bottomOverlayToggleButton == null) {
+            return;
+        }
+        bottomOverlayToggleButton.setText(
+            bottomOverlayVisible
+                ? R.string.baidu_web_hide_bottom_overlay
+                : R.string.baidu_web_show_bottom_overlay
+        );
+    }
+
+    private void updateBottomOverlayFrame() {
+        if (bottomInputOverlay == null || bottomInputPanel == null) {
+            return;
+        }
+        ViewGroup.LayoutParams layoutParams = bottomInputOverlay.getLayoutParams();
+        if (!(layoutParams instanceof FrameLayout.LayoutParams)) {
+            return;
+        }
+        FrameLayout.LayoutParams overlayLayoutParams =
+            (FrameLayout.LayoutParams) layoutParams;
+        int inputPanelHeight = bottomInputPanel.getVisualHeightForOverlay();
+        int inputPanelBottomMargin = getBottomMargin(bottomInputPanel);
+
+        boolean changed = false;
+        if (overlayLayoutParams.height != inputPanelHeight) {
+            overlayLayoutParams.height = inputPanelHeight;
+            changed = true;
+        }
+        if (overlayLayoutParams.bottomMargin != inputPanelBottomMargin) {
+            overlayLayoutParams.bottomMargin = inputPanelBottomMargin;
+            changed = true;
+        }
+        if (overlayLayoutParams.gravity != Gravity.BOTTOM) {
+            overlayLayoutParams.gravity = Gravity.BOTTOM;
+            changed = true;
+        }
+        if (changed) {
+            bottomInputOverlay.setLayoutParams(overlayLayoutParams);
+        }
+    }
+
+    private int getBottomMargin(View view) {
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
+            return ((ViewGroup.MarginLayoutParams) layoutParams).bottomMargin;
+        }
+        return 0;
     }
 
     @Override
@@ -150,6 +252,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_BOTTOM_OVERLAY_VISIBLE, bottomOverlayVisible);
         if (manualModeManager != null) {
             manualModeManager.saveInstanceState(outState);
         }
@@ -164,16 +267,22 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             manualModeManager.release();
             manualModeManager = null;
         }
+        if (bottomInputPanel != null && bottomInputPanelLayoutChangeListener != null) {
+            bottomInputPanel.removeOnLayoutChangeListener(bottomInputPanelLayoutChangeListener);
+            bottomInputPanelLayoutChangeListener = null;
+        }
         if (bottomInputPanel != null) {
             bottomInputPanel.release();
             bottomInputPanel = null;
         }
+        bottomInputOverlay = null;
         manualToggleButton = null;
         manualOnlineToggleButton = null;
         manualAgentTypeToggleButton = null;
         appendSuggestionItemsButton = null;
         suggestionListToggleButton = null;
         replaceSuggestionItemsButton = null;
+        bottomOverlayToggleButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

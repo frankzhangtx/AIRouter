@@ -42,6 +42,7 @@ public class BottomInputPanelView extends LinearLayout {
 
     private View inputBottomFill;
     private View attachmentPanel;
+    private View inputTopExtension;
     private RecyclerView suggestionListView;
     private View optionAttachImage;
     private View optionSendProduct;
@@ -155,6 +156,10 @@ public class BottomInputPanelView extends LinearLayout {
 
     public boolean isHorizontalSuggestionListVisible() {
         return horizontalSuggestionListVisible;
+    }
+
+    public int getVisualHeightForOverlay() {
+        return getHeight() + getTopVisualOverflowHeight();
     }
 
     public void prepareKeyboardDismissIfTouchOutsideTextInput(MotionEvent event) {
@@ -303,6 +308,7 @@ public class BottomInputPanelView extends LinearLayout {
 
         inputBottomFill = findViewById(R.id.input_bottom_fill);
         attachmentPanel = findViewById(R.id.input_attachment_panel);
+        inputTopExtension = findViewById(R.id.input_top_extension);
         suggestionListView = findViewById(R.id.input_suggestion_list);
         optionAttachImage = findViewById(R.id.option_attach_image);
         optionSendProduct = findViewById(R.id.option_send_product);
@@ -987,6 +993,16 @@ public class BottomInputPanelView extends LinearLayout {
             return ((ViewGroup.MarginLayoutParams) layoutParams).bottomMargin;
         }
         return 0;
+    }
+
+    private int getTopVisualOverflowHeight() {
+        if (inputTopExtension == null || inputTopExtension.getVisibility() != View.VISIBLE) {
+            return 0;
+        }
+        int visualTop = Math.round(
+            inputTopExtension.getTop() + inputTopExtension.getTranslationY()
+        );
+        return Math.max(0, -visualTop);
     }
 
     private void setBottomMargin(View view, int bottomMargin) {

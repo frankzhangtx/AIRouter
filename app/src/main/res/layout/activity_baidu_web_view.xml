@@ -159,6 +159,25 @@
                     app:strokeColor="@color/baidu_web_input_stroke"
                     app:strokeWidth="1dp" />
             </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_toggle_bottom_overlay"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:elevation="6dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="18dp"
+                android:paddingEnd="18dp"
+                android:text="@string/baidu_web_show_bottom_overlay"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                app:backgroundTint="@color/baidu_web_input_background"
+                app:cornerRadius="20dp"
+                app:strokeColor="@color/baidu_web_input_stroke"
+                app:strokeWidth="1dp" />
         </LinearLayout>
 
         <com.example.cctest.widget.BottomInputPanelView
@@ -168,5 +187,15 @@
             android:layout_gravity="bottom"
             android:clipChildren="false"
             android:clipToPadding="false" />
+
+        <View
+            android:id="@+id/bottom_input_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="bottom"
+            android:background="@color/baidu_web_bottom_input_overlay"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone" />
     </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

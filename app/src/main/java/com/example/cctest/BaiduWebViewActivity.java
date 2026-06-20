@@ -59,7 +59,22 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         manualModeManager = new BaiduWebManualModeManager(
             savedInstanceState,
             bottomInputPanel,
-            this::updateManualControlTexts
+            new BaiduWebManualModeManager.Listener() {
+                @Override
+                public void onManualControlStateChanged() {
+                    updateManualControlTexts();
+                }
+
+                @Override
+                public void onBottomOverlayToggleRequested() {
+                    toggleBottomOverlay();
+                }
+
+                @Override
+                public void onBottomPanelHeightRequested() {
+                    showBottomPanelHeight();
+                }
+            }
         );
 
         setSupportActionBar(toolbar);
@@ -100,43 +115,50 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void configureManualControls() {
-        if (manualToggleButton != null) {
-            manualToggleButton.setOnClickListener(
-                view -> manualModeManager.handleManualToggleButtonClick()
-            );
-        }
-        if (manualOnlineToggleButton != null) {
-            manualOnlineToggleButton.setOnClickListener(
-                view -> manualModeManager.handleManualOnlineToggleClick()
-            );
-        }
-        if (manualAgentTypeToggleButton != null) {
-            manualAgentTypeToggleButton.setOnClickListener(
-                view -> manualModeManager.handleManualAgentTypeToggleClick()
-            );
-        }
-        if (appendSuggestionItemsButton != null) {
-            appendSuggestionItemsButton.setOnClickListener(
-                view -> manualModeManager.handleAppendSuggestionItemsClick()
-            );
-        }
-        if (suggestionListToggleButton != null) {
-            suggestionListToggleButton.setOnClickListener(
-                view -> manualModeManager.handleSuggestionListToggleClick()
-            );
-        }
-        if (replaceSuggestionItemsButton != null) {
-            replaceSuggestionItemsButton.setOnClickListener(
-                view -> manualModeManager.handleReplaceSuggestionItemsClick()
-            );
-        }
-        if (bottomOverlayToggleButton != null) {
-            bottomOverlayToggleButton.setOnClickListener(view -> toggleBottomOverlay());
-        }
-        if (bottomPanelHeightButton != null) {
-            bottomPanelHeightButton.setOnClickListener(view -> showBottomPanelHeight());
-        }
+        bindManualControlClick(
+            manualToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_MANUAL_MODE
+        );
+        bindManualControlClick(
+            manualOnlineToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_MANUAL_ONLINE
+        );
+        bindManualControlClick(
+            manualAgentTypeToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_MANUAL_AGENT_TYPE
+        );
+        bindManualControlClick(
+            appendSuggestionItemsButton,
+            BaiduWebManualModeManager.CONTROL_APPEND_SUGGESTION_ITEMS
+        );
+        bindManualControlClick(
+            suggestionListToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_SUGGESTION_LIST
+        );
+        bindManualControlClick(
+            replaceSuggestionItemsButton,
+            BaiduWebManualModeManager.CONTROL_REPLACE_SUGGESTION_ITEMS
+        );
+        bindManualControlClick(
+            bottomOverlayToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_BOTTOM_OVERLAY
+        );
+        bindManualControlClick(
+            bottomPanelHeightButton,
+            BaiduWebManualModeManager.CONTROL_SHOW_BOTTOM_PANEL_HEIGHT
+        );
         updateManualControlTexts();
+    }
+
+    private void bindManualControlClick(MaterialButton button, String controlName) {
+        if (button == null) {
+            return;
+        }
+        button.setOnClickListener(view -> {
+            if (manualModeManager != null) {
+                manualModeManager.handleManualControlClick(controlName);
+            }
+        });
     }
 
     private void updateManualControlTexts() {

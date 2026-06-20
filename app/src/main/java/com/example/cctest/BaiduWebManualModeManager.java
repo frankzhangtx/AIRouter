@@ -11,9 +11,25 @@ class BaiduWebManualModeManager {
     private static final String KEY_MANUAL_AGENT_TYPE = "manual_agent_type";
     private static final String KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE =
         "horizontal_suggestion_list_visible";
+    static final String CONTROL_TOGGLE_MANUAL_MODE = "toggle_manual_mode";
+    static final String CONTROL_TOGGLE_MANUAL_ONLINE = "toggle_manual_online";
+    static final String CONTROL_TOGGLE_MANUAL_AGENT_TYPE = "toggle_manual_agent_type";
+    static final String CONTROL_APPEND_SUGGESTION_ITEMS = "append_suggestion_items";
+    static final String CONTROL_TOGGLE_SUGGESTION_LIST = "toggle_suggestion_list";
+    static final String CONTROL_REPLACE_SUGGESTION_ITEMS = "replace_suggestion_items";
+    static final String CONTROL_TOGGLE_BOTTOM_OVERLAY = "toggle_bottom_overlay";
+    static final String CONTROL_SHOW_BOTTOM_PANEL_HEIGHT = "show_bottom_panel_height";
 
     interface Listener {
         void onManualControlStateChanged();
+
+        default void onBottomOverlayToggleRequested() {
+            // Optional override.
+        }
+
+        default void onBottomPanelHeightRequested() {
+            // Optional override.
+        }
     }
 
     private BottomInputPanelView bottomInputPanel;
@@ -34,54 +50,68 @@ class BaiduWebManualModeManager {
         configureBottomInputPanel();
     }
 
-    void handleManualToggleButtonClick() {
-        setManualModeEnabledFromActivity(!manualModeEnabled);
-    }
-
-    void handleManualOnlineToggleClick() {
-        manualAgentOnline = !manualAgentOnline;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setManualAgentOnline(manualAgentOnline);
+    void handleManualControlClick(String controlName) {
+        if (controlName == null) {
+            return;
         }
-        notifyManualControlStateChanged();
-    }
-
-    void handleManualAgentTypeToggleClick() {
-        manualAgentType = manualAgentType == ManualAgentType.ONLINE_SERVICE
-            ? ManualAgentType.INSURANCE_PLANNER
-            : ManualAgentType.ONLINE_SERVICE;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setManualAgentType(manualAgentType);
+        switch (controlName) {
+            case CONTROL_TOGGLE_MANUAL_MODE:
+                setManualModeEnabledFromActivity(!manualModeEnabled);
+                break;
+            case CONTROL_TOGGLE_MANUAL_ONLINE:
+                manualAgentOnline = !manualAgentOnline;
+                if (bottomInputPanel != null) {
+                    bottomInputPanel.setManualAgentOnline(manualAgentOnline);
+                }
+                notifyManualControlStateChanged();
+                break;
+            case CONTROL_TOGGLE_MANUAL_AGENT_TYPE:
+                manualAgentType = manualAgentType == ManualAgentType.ONLINE_SERVICE
+                    ? ManualAgentType.INSURANCE_PLANNER
+                    : ManualAgentType.ONLINE_SERVICE;
+                if (bottomInputPanel != null) {
+                    bottomInputPanel.setManualAgentType(manualAgentType);
+                }
+                notifyManualControlStateChanged();
+                break;
+            case CONTROL_APPEND_SUGGESTION_ITEMS:
+                if (bottomInputPanel != null) {
+                    bottomInputPanel.appendAdditionalHorizontalSuggestions();
+                }
+                ensureSuggestionListVisible();
+                break;
+            case CONTROL_TOGGLE_SUGGESTION_LIST:
+                boolean nextVisible = !horizontalSuggestionListVisible;
+                if (bottomInputPanel != null) {
+                    if (nextVisible) {
+                        bottomInputPanel.ensureDefaultHorizontalSuggestions();
+                    } else {
+                        bottomInputPanel.clearHorizontalSuggestions();
+                    }
+                    bottomInputPanel.setHorizontalSuggestionListVisible(nextVisible);
+                }
+                horizontalSuggestionListVisible = nextVisible;
+                notifyManualControlStateChanged();
+                break;
+            case CONTROL_REPLACE_SUGGESTION_ITEMS:
+                if (bottomInputPanel != null) {
+                    bottomInputPanel.replaceHorizontalSuggestions();
+                }
+                ensureSuggestionListVisible();
+                break;
+            case CONTROL_TOGGLE_BOTTOM_OVERLAY:
+                if (listener != null) {
+                    listener.onBottomOverlayToggleRequested();
+                }
+                break;
+            case CONTROL_SHOW_BOTTOM_PANEL_HEIGHT:
+                if (listener != null) {
+                    listener.onBottomPanelHeightRequested();
+                }
+                break;
+            default:
+                break;
         }
-        notifyManualControlStateChanged();
-    }
-
-    void handleAppendSuggestionItemsClick() {
-        if (bottomInputPanel != null) {
-            bottomInputPanel.appendAdditionalHorizontalSuggestions();
-        }
-        ensureSuggestionListVisible();
-    }
-
-    void handleSuggestionListToggleClick() {
-        boolean nextVisible = !horizontalSuggestionListVisible;
-        if (bottomInputPanel != null) {
-            if (nextVisible) {
-                bottomInputPanel.ensureDefaultHorizontalSuggestions();
-            } else {
-                bottomInputPanel.clearHorizontalSuggestions();
-            }
-            bottomInputPanel.setHorizontalSuggestionListVisible(nextVisible);
-        }
-        horizontalSuggestionListVisible = nextVisible;
-        notifyManualControlStateChanged();
-    }
-
-    void handleReplaceSuggestionItemsClick() {
-        if (bottomInputPanel != null) {
-            bottomInputPanel.replaceHorizontalSuggestions();
-        }
-        ensureSuggestionListVisible();
     }
 
     int getManualToggleTextResource() {

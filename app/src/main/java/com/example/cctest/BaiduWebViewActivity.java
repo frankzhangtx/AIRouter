@@ -175,12 +175,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     }
 
     private void handleSuggestionListToggleClick() {
-        horizontalSuggestionListVisible = !horizontalSuggestionListVisible;
+        boolean nextVisible = !horizontalSuggestionListVisible;
         if (bottomInputPanel != null) {
-            bottomInputPanel.setHorizontalSuggestionListVisible(
-                horizontalSuggestionListVisible
-            );
+            if (nextVisible) {
+                bottomInputPanel.ensureDefaultHorizontalSuggestions();
+            } else {
+                bottomInputPanel.clearHorizontalSuggestions();
+            }
+            bottomInputPanel.setHorizontalSuggestionListVisible(nextVisible);
         }
+        horizontalSuggestionListVisible = nextVisible;
         updateSuggestionListToggleButtonText();
     }
 

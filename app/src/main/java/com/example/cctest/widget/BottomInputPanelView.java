@@ -204,6 +204,20 @@ public class BottomInputPanelView extends LinearLayout {
         suggestionAdapter.appendItems(createAdditionalHorizontalSuggestions());
     }
 
+    public void ensureDefaultHorizontalSuggestions() {
+        if (suggestionAdapter == null || suggestionAdapter.getItemCount() > 0) {
+            return;
+        }
+        suggestionAdapter.replaceItems(createDefaultHorizontalSuggestions());
+    }
+
+    public void clearHorizontalSuggestions() {
+        if (suggestionAdapter == null) {
+            return;
+        }
+        suggestionAdapter.replaceItems(new ArrayList<>());
+    }
+
     public void replaceHorizontalSuggestions() {
         if (suggestionAdapter == null) {
             return;
@@ -316,7 +330,7 @@ public class BottomInputPanelView extends LinearLayout {
         if (suggestionListView == null) {
             return;
         }
-        suggestionAdapter = new HorizontalSuggestionAdapter(createDefaultHorizontalSuggestions());
+        suggestionAdapter = new HorizontalSuggestionAdapter(new ArrayList<>());
         suggestionListView.setLayoutManager(
             new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         );

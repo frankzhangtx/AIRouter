@@ -12,6 +12,7 @@ import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -62,6 +63,7 @@ public class BottomInputPanelView extends LinearLayout {
     private boolean manualAgentOnline = true;
     private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
     private boolean horizontalSuggestionListVisible;
+    private boolean pendingKeyboardDismissOutsideTextInput;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
     private String textInputDraft = "";
@@ -153,6 +155,46 @@ public class BottomInputPanelView extends LinearLayout {
 
     public boolean isHorizontalSuggestionListVisible() {
         return horizontalSuggestionListVisible;
+    }
+
+    public void prepareKeyboardDismissIfTouchOutsideTextInput(MotionEvent event) {
+        if (event == null) {
+            return;
+        }
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            pendingKeyboardDismissOutsideTextInput =
+                shouldDismissKeyboardForTouchOutsideTextInput(event);
+        } else if (action == MotionEvent.ACTION_CANCEL) {
+            pendingKeyboardDismissOutsideTextInput = false;
+        }
+    }
+
+    public void finishKeyboardDismissIfTouchOutsideTextInput(MotionEvent event) {
+        if (event == null) {
+            return;
+        }
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_CANCEL) {
+            pendingKeyboardDismissOutsideTextInput = false;
+            return;
+        }
+        if (action != MotionEvent.ACTION_UP || !pendingKeyboardDismissOutsideTextInput) {
+            return;
+        }
+        pendingKeyboardDismissOutsideTextInput = false;
+        if (shouldDismissKeyboardForTouchOutsideTextInput(event)) {
+            dismissKeyboardAndClearFocus();
+        }
+    }
+
+    private boolean shouldDismissKeyboardForTouchOutsideTextInput(MotionEvent event) {
+        if (!keyboardVisible || voiceInputMode || consultInput == null) {
+            return false;
+        }
+        Rect inputBounds = new Rect();
+        return !consultInput.getGlobalVisibleRect(inputBounds)
+            || !inputBounds.contains((int) event.getRawX(), (int) event.getRawY());
     }
 
     public void appendAdditionalHorizontalSuggestions() {

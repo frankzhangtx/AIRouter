@@ -3,6 +3,7 @@ package com.example.cctest;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -78,6 +79,18 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         webView.setWebViewClient(new WebViewClient());
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (bottomInputPanel != null) {
+            bottomInputPanel.prepareKeyboardDismissIfTouchOutsideTextInput(event);
+        }
+        boolean handled = super.dispatchTouchEvent(event);
+        if (bottomInputPanel != null) {
+            bottomInputPanel.finishKeyboardDismissIfTouchOutsideTextInput(event);
+        }
+        return handled;
     }
 
     private void configureManualToggleButton() {

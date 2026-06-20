@@ -9,6 +9,25 @@
         android:clipToPadding="false">
 
         <LinearLayout
+            android:id="@+id/input_top_extension"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/baidu_web_input_top_extension_height"
+            android:importantForAccessibility="no"
+            android:orientation="vertical"
+            android:translationY="-15dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/baidu_web_input_top_extension_fade_height"
+                android:background="@drawable/bg_baidu_web_input_top_extension" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
+                android:background="@color/baidu_web_input_container_background" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/input_content_stack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -123,25 +142,6 @@
                     android:src="@drawable/ic_baidu_web_plus" />
             </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/input_top_extension"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/baidu_web_input_top_extension_height"
-            android:importantForAccessibility="no"
-            android:orientation="vertical"
-            android:translationY="-15dp">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/baidu_web_input_top_extension_fade_height"
-                android:background="@drawable/bg_baidu_web_input_top_extension" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
-                android:background="@color/baidu_web_input_container_background" />
         </LinearLayout>
     </FrameLayout>
 

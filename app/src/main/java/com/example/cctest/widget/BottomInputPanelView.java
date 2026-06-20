@@ -209,6 +209,7 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
         suggestionAdapter.replaceItems(createDefaultHorizontalSuggestions());
+        resetHorizontalSuggestionScroll();
     }
 
     public void clearHorizontalSuggestions() {
@@ -216,6 +217,7 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
         suggestionAdapter.replaceItems(new ArrayList<>());
+        resetHorizontalSuggestionScroll();
     }
 
     public void replaceHorizontalSuggestions() {
@@ -223,6 +225,7 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
         suggestionAdapter.replaceItems(createReplacementHorizontalSuggestions());
+        resetHorizontalSuggestionScroll();
         if (horizontalSuggestionListVisible && suggestionListView != null) {
             suggestionListView.scheduleLayoutAnimation();
         }
@@ -402,6 +405,14 @@ public class BottomInputPanelView extends LinearLayout {
                 R.string.baidu_web_suggestion_renewal_reminder
             )
         );
+    }
+
+    private void resetHorizontalSuggestionScroll() {
+        if (suggestionListView == null) {
+            return;
+        }
+        suggestionListView.stopScroll();
+        suggestionListView.scrollToPosition(0);
     }
 
     private void configureTextInputWrapping() {

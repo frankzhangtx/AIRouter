@@ -9,31 +9,22 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
-import com.example.cctest.widget.BottomInputPanelView.ManualAgentType;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
 public class BaiduWebViewActivity extends AppCompatActivity {
 
     private static final String BAIDU_URL = "https://www.baidu.com";
-    private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
-    private static final String KEY_MANUAL_AGENT_ONLINE = "manual_agent_online";
-    private static final String KEY_MANUAL_AGENT_TYPE = "manual_agent_type";
-    private static final String KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE =
-        "horizontal_suggestion_list_visible";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
+    private BaiduWebManualModeManager manualModeManager;
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
     private MaterialButton manualAgentTypeToggleButton;
     private MaterialButton appendSuggestionItemsButton;
     private MaterialButton suggestionListToggleButton;
     private MaterialButton replaceSuggestionItemsButton;
-    private boolean manualModeEnabled;
-    private boolean manualAgentOnline = true;
-    private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
-    private boolean horizontalSuggestionListVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,13 +40,11 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         appendSuggestionItemsButton = findViewById(R.id.button_append_suggestion_items);
         suggestionListToggleButton = findViewById(R.id.button_toggle_suggestion_list);
         replaceSuggestionItemsButton = findViewById(R.id.button_replace_suggestion_items);
-        manualModeEnabled = savedInstanceState != null
-            && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
-        manualAgentOnline = savedInstanceState == null
-            || savedInstanceState.getBoolean(KEY_MANUAL_AGENT_ONLINE, true);
-        manualAgentType = readManualAgentType(savedInstanceState);
-        horizontalSuggestionListVisible = savedInstanceState != null
-            && savedInstanceState.getBoolean(KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE);
+        manualModeManager = new BaiduWebManualModeManager(
+            savedInstanceState,
+            bottomInputPanel,
+            this::updateManualControlTexts
+        );
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -65,7 +54,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         toolbar.setNavigationOnClickListener(view -> finish());
 
         configureWebView(webView);
-        configureManualToggleButton();
+        configureManualControls();
         if (savedInstanceState == null) {
             webView.loadUrl(BAIDU_URL);
         } else {
@@ -93,175 +82,59 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         return handled;
     }
 
-    private void configureManualToggleButton() {
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setModeChangeListener(enabled -> {
-                manualModeEnabled = enabled;
-                updateManualToggleButtonText();
-            });
-            bottomInputPanel.setManualModeEnabled(manualModeEnabled);
-            bottomInputPanel.setManualAgentOnline(manualAgentOnline);
-            bottomInputPanel.setManualAgentType(manualAgentType);
-            bottomInputPanel.setHorizontalSuggestionListVisible(horizontalSuggestionListVisible);
+    private void configureManualControls() {
+        if (manualToggleButton != null) {
+            manualToggleButton.setOnClickListener(
+                view -> manualModeManager.handleManualToggleButtonClick()
+            );
         }
-        if (manualToggleButton == null) {
-            return;
-        }
-        manualToggleButton.setOnClickListener(view -> handleManualToggleButtonClick());
         if (manualOnlineToggleButton != null) {
-            manualOnlineToggleButton.setOnClickListener(view -> handleManualOnlineToggleClick());
+            manualOnlineToggleButton.setOnClickListener(
+                view -> manualModeManager.handleManualOnlineToggleClick()
+            );
         }
         if (manualAgentTypeToggleButton != null) {
             manualAgentTypeToggleButton.setOnClickListener(
-                view -> handleManualAgentTypeToggleClick()
+                view -> manualModeManager.handleManualAgentTypeToggleClick()
             );
         }
         if (appendSuggestionItemsButton != null) {
             appendSuggestionItemsButton.setOnClickListener(
-                view -> handleAppendSuggestionItemsClick()
+                view -> manualModeManager.handleAppendSuggestionItemsClick()
             );
         }
         if (suggestionListToggleButton != null) {
             suggestionListToggleButton.setOnClickListener(
-                view -> handleSuggestionListToggleClick()
+                view -> manualModeManager.handleSuggestionListToggleClick()
             );
         }
         if (replaceSuggestionItemsButton != null) {
             replaceSuggestionItemsButton.setOnClickListener(
-                view -> handleReplaceSuggestionItemsClick()
+                view -> manualModeManager.handleReplaceSuggestionItemsClick()
             );
         }
-        updateManualToggleButtonText();
-        updateManualOnlineToggleButtonText();
-        updateManualAgentTypeToggleButtonText();
-        updateSuggestionListToggleButtonText();
+        updateManualControlTexts();
     }
 
-    private void handleManualToggleButtonClick() {
-        setManualModeEnabledFromActivity(!manualModeEnabled);
-    }
-
-    private void setManualModeEnabledFromActivity(boolean enabled) {
-        manualModeEnabled = enabled;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setManualModeEnabled(manualModeEnabled);
-        }
-        updateManualToggleButtonText();
-    }
-
-    private void handleManualOnlineToggleClick() {
-        manualAgentOnline = !manualAgentOnline;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setManualAgentOnline(manualAgentOnline);
-        }
-        updateManualOnlineToggleButtonText();
-    }
-
-    private void handleManualAgentTypeToggleClick() {
-        manualAgentType = manualAgentType == ManualAgentType.ONLINE_SERVICE
-            ? ManualAgentType.INSURANCE_PLANNER
-            : ManualAgentType.ONLINE_SERVICE;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setManualAgentType(manualAgentType);
-        }
-        updateManualAgentTypeToggleButtonText();
-    }
-
-    private void handleAppendSuggestionItemsClick() {
-        if (bottomInputPanel != null) {
-            bottomInputPanel.appendAdditionalHorizontalSuggestions();
-        }
-        ensureSuggestionListVisible();
-    }
-
-    private void handleSuggestionListToggleClick() {
-        boolean nextVisible = !horizontalSuggestionListVisible;
-        if (bottomInputPanel != null) {
-            if (nextVisible) {
-                bottomInputPanel.ensureDefaultHorizontalSuggestions();
-            } else {
-                bottomInputPanel.clearHorizontalSuggestions();
-            }
-            bottomInputPanel.setHorizontalSuggestionListVisible(nextVisible);
-        }
-        horizontalSuggestionListVisible = nextVisible;
-        updateSuggestionListToggleButtonText();
-    }
-
-    private void handleReplaceSuggestionItemsClick() {
-        if (bottomInputPanel != null) {
-            bottomInputPanel.replaceHorizontalSuggestions();
-        }
-        ensureSuggestionListVisible();
-    }
-
-    private void ensureSuggestionListVisible() {
-        if (horizontalSuggestionListVisible) {
+    private void updateManualControlTexts() {
+        if (manualModeManager == null) {
             return;
         }
-        horizontalSuggestionListVisible = true;
-        if (bottomInputPanel != null) {
-            bottomInputPanel.setHorizontalSuggestionListVisible(true);
+        if (manualToggleButton != null) {
+            manualToggleButton.setText(manualModeManager.getManualToggleTextResource());
         }
-        updateSuggestionListToggleButtonText();
-    }
-
-    private void updateManualToggleButtonText() {
-        if (manualToggleButton == null) {
-            return;
+        if (manualOnlineToggleButton != null) {
+            manualOnlineToggleButton.setText(manualModeManager.getManualOnlineTextResource());
         }
-        manualToggleButton.setText(
-            manualModeEnabled
-                ? R.string.baidu_web_toggle_manual_exit
-                : R.string.baidu_web_toggle_manual_enter
-        );
-    }
-
-    private void updateManualOnlineToggleButtonText() {
-        if (manualOnlineToggleButton == null) {
-            return;
+        if (manualAgentTypeToggleButton != null) {
+            manualAgentTypeToggleButton.setText(
+                manualModeManager.getManualAgentTypeTextResource()
+            );
         }
-        manualOnlineToggleButton.setText(
-            manualAgentOnline
-                ? R.string.baidu_web_manual_online
-                : R.string.baidu_web_manual_offline
-        );
-    }
-
-    private void updateManualAgentTypeToggleButtonText() {
-        if (manualAgentTypeToggleButton == null) {
-            return;
-        }
-        manualAgentTypeToggleButton.setText(
-            manualAgentType == ManualAgentType.ONLINE_SERVICE
-                ? R.string.baidu_web_manual_type_online_service
-                : R.string.baidu_web_manual_type_insurance_planner
-        );
-    }
-
-    private void updateSuggestionListToggleButtonText() {
-        if (suggestionListToggleButton == null) {
-            return;
-        }
-        suggestionListToggleButton.setText(
-            horizontalSuggestionListVisible
-                ? R.string.baidu_web_remove_suggestion_list
-                : R.string.baidu_web_add_suggestion_list
-        );
-    }
-
-    private ManualAgentType readManualAgentType(Bundle savedInstanceState) {
-        if (savedInstanceState == null) {
-            return ManualAgentType.ONLINE_SERVICE;
-        }
-        String manualAgentTypeName = savedInstanceState.getString(KEY_MANUAL_AGENT_TYPE);
-        if (manualAgentTypeName == null) {
-            return ManualAgentType.ONLINE_SERVICE;
-        }
-        try {
-            return ManualAgentType.valueOf(manualAgentTypeName);
-        } catch (IllegalArgumentException exception) {
-            return ManualAgentType.ONLINE_SERVICE;
+        if (suggestionListToggleButton != null) {
+            suggestionListToggleButton.setText(
+                manualModeManager.getSuggestionListToggleTextResource()
+            );
         }
     }
 
@@ -277,13 +150,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
-        outState.putBoolean(KEY_MANUAL_AGENT_ONLINE, manualAgentOnline);
-        outState.putString(KEY_MANUAL_AGENT_TYPE, manualAgentType.name());
-        outState.putBoolean(
-            KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE,
-            horizontalSuggestionListVisible
-        );
+        if (manualModeManager != null) {
+            manualModeManager.saveInstanceState(outState);
+        }
         if (webView != null) {
             webView.saveState(outState);
         }
@@ -291,6 +160,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if (manualModeManager != null) {
+            manualModeManager.release();
+            manualModeManager = null;
+        }
         if (bottomInputPanel != null) {
             bottomInputPanel.release();
             bottomInputPanel = null;

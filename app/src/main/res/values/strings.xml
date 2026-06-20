@@ -22,12 +22,21 @@
     <string name="baidu_web_manual_offline">人工离线</string>
     <string name="baidu_web_manual_type_online_service">普通在线客服</string>
     <string name="baidu_web_manual_type_insurance_planner">保险规划师</string>
+    <string name="baidu_web_append_suggestion_items">追加2个</string>
     <string name="baidu_web_add_suggestion_list">添加横向列表</string>
     <string name="baidu_web_remove_suggestion_list">移除横向列表</string>
+    <string name="baidu_web_replace_suggestion_items">替换5个</string>
     <string name="baidu_web_suggestion_smart_insurance">智能选保</string>
     <string name="baidu_web_suggestion_product_explain">产品解读</string>
     <string name="baidu_web_suggestion_easy_match">省心配</string>
     <string name="baidu_web_suggestion_custom_plan">定制方案</string>
+    <string name="baidu_web_suggestion_family_plan">家庭方案</string>
+    <string name="baidu_web_suggestion_coverage_calculator">保障测算</string>
+    <string name="baidu_web_suggestion_health_notice">健康告知</string>
+    <string name="baidu_web_suggestion_claim_assist">理赔协助</string>
+    <string name="baidu_web_suggestion_policy_review">保单体检</string>
+    <string name="baidu_web_suggestion_budget_plan">预算规划</string>
+    <string name="baidu_web_suggestion_renewal_reminder">续保提醒</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>

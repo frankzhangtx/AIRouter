@@ -26,7 +26,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
     private MaterialButton manualAgentTypeToggleButton;
+    private MaterialButton appendSuggestionItemsButton;
     private MaterialButton suggestionListToggleButton;
+    private MaterialButton replaceSuggestionItemsButton;
     private boolean manualModeEnabled;
     private boolean manualAgentOnline = true;
     private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
@@ -43,7 +45,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
+        appendSuggestionItemsButton = findViewById(R.id.button_append_suggestion_items);
         suggestionListToggleButton = findViewById(R.id.button_toggle_suggestion_list);
+        replaceSuggestionItemsButton = findViewById(R.id.button_replace_suggestion_items);
         manualModeEnabled = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
         manualAgentOnline = savedInstanceState == null
@@ -99,9 +103,19 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 view -> handleManualAgentTypeToggleClick()
             );
         }
+        if (appendSuggestionItemsButton != null) {
+            appendSuggestionItemsButton.setOnClickListener(
+                view -> handleAppendSuggestionItemsClick()
+            );
+        }
         if (suggestionListToggleButton != null) {
             suggestionListToggleButton.setOnClickListener(
                 view -> handleSuggestionListToggleClick()
+            );
+        }
+        if (replaceSuggestionItemsButton != null) {
+            replaceSuggestionItemsButton.setOnClickListener(
+                view -> handleReplaceSuggestionItemsClick()
             );
         }
         updateManualToggleButtonText();
@@ -140,12 +154,37 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         updateManualAgentTypeToggleButtonText();
     }
 
+    private void handleAppendSuggestionItemsClick() {
+        if (bottomInputPanel != null) {
+            bottomInputPanel.appendAdditionalHorizontalSuggestions();
+        }
+        ensureSuggestionListVisible();
+    }
+
     private void handleSuggestionListToggleClick() {
         horizontalSuggestionListVisible = !horizontalSuggestionListVisible;
         if (bottomInputPanel != null) {
             bottomInputPanel.setHorizontalSuggestionListVisible(
                 horizontalSuggestionListVisible
             );
+        }
+        updateSuggestionListToggleButtonText();
+    }
+
+    private void handleReplaceSuggestionItemsClick() {
+        if (bottomInputPanel != null) {
+            bottomInputPanel.replaceHorizontalSuggestions();
+        }
+        ensureSuggestionListVisible();
+    }
+
+    private void ensureSuggestionListVisible() {
+        if (horizontalSuggestionListVisible) {
+            return;
+        }
+        horizontalSuggestionListVisible = true;
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setHorizontalSuggestionListVisible(true);
         }
         updateSuggestionListToggleButtonText();
     }
@@ -242,7 +281,9 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         manualToggleButton = null;
         manualOnlineToggleButton = null;
         manualAgentTypeToggleButton = null;
+        appendSuggestionItemsButton = null;
         suggestionListToggleButton = null;
+        replaceSuggestionItemsButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

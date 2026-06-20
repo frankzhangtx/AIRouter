@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.cctest.R;
 import com.example.cctest.voice.PicVoiceRecordPanel;
 import com.example.cctest.voice.VoiceRecordCallback;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -152,6 +153,23 @@ public class BottomInputPanelView extends LinearLayout {
 
     public boolean isHorizontalSuggestionListVisible() {
         return horizontalSuggestionListVisible;
+    }
+
+    public void appendAdditionalHorizontalSuggestions() {
+        if (suggestionAdapter == null) {
+            return;
+        }
+        suggestionAdapter.appendItems(createAdditionalHorizontalSuggestions());
+    }
+
+    public void replaceHorizontalSuggestions() {
+        if (suggestionAdapter == null) {
+            return;
+        }
+        suggestionAdapter.replaceItems(createReplacementHorizontalSuggestions());
+        if (horizontalSuggestionListVisible && suggestionListView != null) {
+            suggestionListView.scheduleLayoutAnimation();
+        }
     }
 
     public String getInputText() {
@@ -288,6 +306,44 @@ public class BottomInputPanelView extends LinearLayout {
             new HorizontalSuggestionItem(
                 R.drawable.ic_baidu_web_plus,
                 R.string.baidu_web_suggestion_custom_plan
+            )
+        );
+    }
+
+    private List<HorizontalSuggestionItem> createAdditionalHorizontalSuggestions() {
+        return Arrays.asList(
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_product,
+                R.string.baidu_web_suggestion_family_plan
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_ai_grid,
+                R.string.baidu_web_suggestion_coverage_calculator
+            )
+        );
+    }
+
+    private List<HorizontalSuggestionItem> createReplacementHorizontalSuggestions() {
+        return Arrays.asList(
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_image,
+                R.string.baidu_web_suggestion_health_notice
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_product,
+                R.string.baidu_web_suggestion_claim_assist
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_ai_grid,
+                R.string.baidu_web_suggestion_policy_review
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_plus,
+                R.string.baidu_web_suggestion_budget_plan
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_product,
+                R.string.baidu_web_suggestion_renewal_reminder
             )
         );
     }
@@ -900,7 +956,19 @@ public class BottomInputPanelView extends LinearLayout {
         private final List<HorizontalSuggestionItem> items;
 
         private HorizontalSuggestionAdapter(List<HorizontalSuggestionItem> items) {
-            this.items = items;
+            this.items = new ArrayList<>(items);
+        }
+
+        private void appendItems(List<HorizontalSuggestionItem> newItems) {
+            int startPosition = items.size();
+            items.addAll(newItems);
+            notifyItemRangeInserted(startPosition, newItems.size());
+        }
+
+        private void replaceItems(List<HorizontalSuggestionItem> newItems) {
+            items.clear();
+            items.addAll(newItems);
+            notifyDataSetChanged();
         }
 
         @Override

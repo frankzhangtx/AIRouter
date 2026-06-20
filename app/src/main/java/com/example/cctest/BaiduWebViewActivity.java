@@ -11,7 +11,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
 import com.google.android.material.appbar.MaterialToolbar;
@@ -68,11 +67,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 @Override
                 public void onBottomOverlayToggleRequested() {
                     toggleBottomOverlay();
-                }
-
-                @Override
-                public void onBottomPanelHeightRequested() {
-                    showBottomPanelHeight();
                 }
             }
         );
@@ -266,18 +260,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             return ((ViewGroup.MarginLayoutParams) layoutParams).bottomMargin;
         }
         return 0;
-    }
-
-    private void showBottomPanelHeight() {
-        if (bottomInputPanel == null) {
-            return;
-        }
-        int visualHeightPx = bottomInputPanel.getVisualHeightForOverlay();
-        Toast.makeText(
-            this,
-            getString(R.string.baidu_web_bottom_panel_height_toast, visualHeightPx),
-            Toast.LENGTH_SHORT
-        ).show();
     }
 
     @Override

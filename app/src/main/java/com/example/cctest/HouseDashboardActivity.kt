@@ -3,7 +3,6 @@ package com.example.cctest
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.example.cctest.databinding.ActivityHouseDashboardBinding
@@ -36,11 +35,11 @@ class HouseDashboardActivity : AppCompatActivity() {
         }
 
         binding.buttonRefreshWeather.setOnClickListener {
-            Toast.makeText(this, R.string.house_dashboard_refresh_message, Toast.LENGTH_SHORT).show()
+            BaiduWebManualModeManager.showToast(this, R.string.house_dashboard_refresh_message)
         }
 
         binding.fabEditTasks.setOnClickListener {
-            Toast.makeText(this, R.string.house_dashboard_edit_message, Toast.LENGTH_SHORT).show()
+            BaiduWebManualModeManager.showToast(this, R.string.house_dashboard_edit_message)
         }
     }
 

@@ -25,7 +25,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.activity.ComponentActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -342,7 +341,7 @@ public class BottomInputPanelView extends LinearLayout {
         if (suggestionListView == null) {
             return;
         }
-        suggestionAdapter = new HorizontalSuggestionAdapter(new ArrayList<>());
+        suggestionAdapter = new HorizontalSuggestionAdapter(new ArrayList<>(), this::requestToast);
         suggestionListView.setLayoutManager(
             new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         );
@@ -746,11 +745,7 @@ public class BottomInputPanelView extends LinearLayout {
             if (!voiceInputMode && hasTextInputContent()) {
                 String inputText = getInputText();
                 setAttachmentPanelVisible(false);
-                Toast.makeText(
-                    getContext(),
-                    getResources().getString(R.string.baidu_web_send_toast_format, inputText),
-                    Toast.LENGTH_SHORT
-                ).show();
+                requestToast(R.string.baidu_web_send_toast_format, inputText);
                 if (keyboardVisible) {
                     dismissKeyboardAndClearFocus();
                 }
@@ -776,11 +771,7 @@ public class BottomInputPanelView extends LinearLayout {
 
             if (isAiGridActionVisible()) {
                 setAttachmentPanelVisible(false);
-                Toast.makeText(
-                    getContext(),
-                    R.string.baidu_web_more_products,
-                    Toast.LENGTH_SHORT
-                ).show();
+                requestToast(R.string.baidu_web_more_products);
                 return;
             }
 
@@ -844,6 +835,12 @@ public class BottomInputPanelView extends LinearLayout {
         attachmentPanel.setVisibility(targetVisibility);
         bindActiveHoldTrigger();
         updateContentInsetsForInputBar();
+    }
+
+    private void requestToast(int messageResource, Object... formatArgs) {
+        if (actionListener != null) {
+            actionListener.onToastRequested(messageResource, formatArgs);
+        }
     }
 
     private void applyTextInputWrapping() {
@@ -1101,9 +1098,14 @@ public class BottomInputPanelView extends LinearLayout {
         extends RecyclerView.Adapter<HorizontalSuggestionViewHolder> {
 
         private final List<HorizontalSuggestionItem> items;
+        private final ToastRequestListener toastRequestListener;
 
-        private HorizontalSuggestionAdapter(List<HorizontalSuggestionItem> items) {
+        private HorizontalSuggestionAdapter(
+            List<HorizontalSuggestionItem> items,
+            ToastRequestListener toastRequestListener
+        ) {
             this.items = new ArrayList<>(items);
+            this.toastRequestListener = toastRequestListener;
         }
 
         private void appendItems(List<HorizontalSuggestionItem> newItems) {
@@ -1133,7 +1135,7 @@ public class BottomInputPanelView extends LinearLayout {
 
         @Override
         public void onBindViewHolder(HorizontalSuggestionViewHolder holder, int position) {
-            holder.bind(items.get(position));
+            holder.bind(items.get(position), toastRequestListener);
         }
 
         @Override
@@ -1152,16 +1154,20 @@ public class BottomInputPanelView extends LinearLayout {
             textView = itemView.findViewById(R.id.suggestion_chip_text);
         }
 
-        private void bind(HorizontalSuggestionItem item) {
+        private void bind(HorizontalSuggestionItem item, ToastRequestListener toastRequestListener) {
             iconView.setImageResource(item.iconResource);
             textView.setText(item.textResource);
             itemView.setContentDescription(textView.getText());
-            itemView.setOnClickListener(view -> Toast.makeText(
-                view.getContext(),
-                textView.getText(),
-                Toast.LENGTH_SHORT
-            ).show());
+            itemView.setOnClickListener(view -> {
+                if (toastRequestListener != null) {
+                    toastRequestListener.onToastRequested(item.textResource);
+                }
+            });
         }
+    }
+
+    private interface ToastRequestListener {
+        void onToastRequested(int messageResource, Object... formatArgs);
     }
 
     public interface ActionListener {
@@ -1174,6 +1180,10 @@ public class BottomInputPanelView extends LinearLayout {
         }
 
         default void onProductRequested() {
+            // Optional override.
+        }
+
+        default void onToastRequested(int messageResource, Object... formatArgs) {
             // Optional override.
         }
     }

@@ -1,6 +1,8 @@
 package com.example.cctest;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.widget.Toast;
 import com.example.cctest.widget.BottomInputPanelView;
 import com.example.cctest.widget.BottomInputPanelView.ManualAgentType;
 
@@ -24,10 +26,6 @@ class BaiduWebManualModeManager {
         void onManualControlStateChanged();
 
         default void onBottomOverlayToggleRequested() {
-            // Optional override.
-        }
-
-        default void onBottomPanelHeightRequested() {
             // Optional override.
         }
     }
@@ -105,9 +103,7 @@ class BaiduWebManualModeManager {
                 }
                 break;
             case CONTROL_SHOW_BOTTOM_PANEL_HEIGHT:
-                if (listener != null) {
-                    listener.onBottomPanelHeightRequested();
-                }
+                showBottomPanelHeightToast();
                 break;
             default:
                 break;
@@ -151,6 +147,7 @@ class BaiduWebManualModeManager {
     void release() {
         if (bottomInputPanel != null) {
             bottomInputPanel.setModeChangeListener(null);
+            bottomInputPanel.setActionListener(null);
         }
         bottomInputPanel = null;
         listener = null;
@@ -178,6 +175,14 @@ class BaiduWebManualModeManager {
         bottomInputPanel.setManualAgentOnline(manualAgentOnline);
         bottomInputPanel.setManualAgentType(manualAgentType);
         bottomInputPanel.setHorizontalSuggestionListVisible(horizontalSuggestionListVisible);
+        bottomInputPanel.setActionListener(new BottomInputPanelView.ActionListener() {
+            @Override
+            public void onToastRequested(int messageResource, Object... formatArgs) {
+                if (bottomInputPanel != null) {
+                    showToast(bottomInputPanel.getContext(), messageResource, formatArgs);
+                }
+            }
+        });
     }
 
     private void setManualModeEnabledFromActivity(boolean enabled) {
@@ -203,6 +208,27 @@ class BaiduWebManualModeManager {
         if (listener != null) {
             listener.onManualControlStateChanged();
         }
+    }
+
+    private void showBottomPanelHeightToast() {
+        if (bottomInputPanel == null) {
+            return;
+        }
+        showToast(
+            bottomInputPanel.getContext(),
+            R.string.baidu_web_bottom_panel_height_toast,
+            bottomInputPanel.getVisualHeightForOverlay()
+        );
+    }
+
+    static void showToast(Context context, int messageResource, Object... formatArgs) {
+        if (context == null) {
+            return;
+        }
+        String message = formatArgs == null || formatArgs.length == 0
+            ? context.getString(messageResource)
+            : context.getString(messageResource, formatArgs);
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 
     private ManualAgentType readManualAgentType(Bundle savedInstanceState) {

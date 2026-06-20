@@ -27,6 +27,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.ComponentActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.cctest.R;
@@ -67,6 +69,7 @@ public class BottomInputPanelView extends LinearLayout {
     private boolean pendingKeyboardDismissOutsideTextInput;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
+    private boolean trailingActionStartedWithTextInputInteraction;
     private String textInputDraft = "";
     private int textInputOriginalInputType;
     private int textInputOriginalImeOptions;
@@ -539,6 +542,19 @@ public class BottomInputPanelView extends LinearLayout {
         textInputOriginalGravity = consultInput.getGravity();
         textInputOriginalTypeface = consultInput.getTypeface();
         buttonVoiceInput.setOnClickListener(view -> setVoiceInputMode(!voiceInputMode));
+        buttonAddContent.setOnTouchListener((view, event) -> {
+            if (event == null) {
+                return false;
+            }
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                refreshKeyboardVisibilityForAction();
+                trailingActionStartedWithTextInputInteraction = isTextInputInteractionActive();
+            } else if (action == MotionEvent.ACTION_CANCEL) {
+                trailingActionStartedWithTextInputInteraction = false;
+            }
+            return false;
+        });
         buttonAddContent.setOnClickListener(view -> handleTrailingActionClick());
         setVoiceInputMode(false);
         updateTextInputActionState();
@@ -725,55 +741,60 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     private void handleTrailingActionClick() {
-        if (!voiceInputMode && hasTextInputContent()) {
-            String inputText = getInputText();
-            setAttachmentPanelVisible(false);
-            Toast.makeText(
-                getContext(),
-                getResources().getString(R.string.baidu_web_send_toast_format, inputText),
-                Toast.LENGTH_SHORT
-            ).show();
-            if (keyboardVisible) {
+        try {
+            refreshKeyboardVisibilityForAction();
+            if (!voiceInputMode && hasTextInputContent()) {
+                String inputText = getInputText();
+                setAttachmentPanelVisible(false);
+                Toast.makeText(
+                    getContext(),
+                    getResources().getString(R.string.baidu_web_send_toast_format, inputText),
+                    Toast.LENGTH_SHORT
+                ).show();
+                if (keyboardVisible) {
+                    dismissKeyboardAndClearFocus();
+                }
+                if (actionListener != null) {
+                    actionListener.onSendText(inputText);
+                }
+                return;
+            }
+
+            if (isKeyboardDismissActionVisible()) {
+                setAttachmentPanelVisible(false);
                 dismissKeyboardAndClearFocus();
+                return;
             }
-            if (actionListener != null) {
-                actionListener.onSendText(inputText);
+
+            if (isSendActionVisible()) {
+                setAttachmentPanelVisible(false);
+                if (actionListener != null) {
+                    actionListener.onSendText(getInputText());
+                }
+                return;
             }
-            return;
-        }
 
-        if (isKeyboardDismissActionVisible()) {
-            setAttachmentPanelVisible(false);
-            dismissKeyboardAndClearFocus();
-            return;
-        }
-
-        if (isSendActionVisible()) {
-            setAttachmentPanelVisible(false);
-            if (actionListener != null) {
-                actionListener.onSendText(getInputText());
+            if (isAiGridActionVisible()) {
+                setAttachmentPanelVisible(false);
+                Toast.makeText(
+                    getContext(),
+                    R.string.baidu_web_more_products,
+                    Toast.LENGTH_SHORT
+                ).show();
+                return;
             }
-            return;
-        }
 
-        if (isAiGridActionVisible()) {
-            setAttachmentPanelVisible(false);
-            Toast.makeText(
-                getContext(),
-                R.string.baidu_web_more_products,
-                Toast.LENGTH_SHORT
-            ).show();
-            return;
-        }
+            if (!isPlusActionVisible()) {
+                setAttachmentPanelVisible(false);
+                return;
+            }
 
-        if (!isPlusActionVisible()) {
-            setAttachmentPanelVisible(false);
-            return;
+            boolean shouldShowPanel = attachmentPanel == null
+                || attachmentPanel.getVisibility() != View.VISIBLE;
+            setAttachmentPanelVisible(shouldShowPanel);
+        } finally {
+            trailingActionStartedWithTextInputInteraction = false;
         }
-
-        boolean shouldShowPanel = attachmentPanel == null
-            || attachmentPanel.getVisibility() != View.VISIBLE;
-        setAttachmentPanelVisible(shouldShowPanel);
     }
 
     private boolean isPlusActionVisible() {
@@ -783,15 +804,23 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     private boolean isAiGridActionVisible() {
-        return !manualModeEnabled && !isSendActionVisible();
+        return !manualModeEnabled
+            && !isSendActionVisible()
+            && !isTextInputInteractionActive();
     }
 
     private boolean isKeyboardDismissActionVisible() {
-        return !voiceInputMode && keyboardVisible && !hasTextInputContent();
+        return !voiceInputMode && isTextInputInteractionActive() && !hasTextInputContent();
     }
 
     private boolean isSendActionVisible() {
         return !voiceInputMode && (hasTextInputContent() || keyboardVisible);
+    }
+
+    private boolean isTextInputInteractionActive() {
+        return keyboardVisible
+            || trailingActionStartedWithTextInputInteraction
+            || (consultInput != null && consultInput.hasFocus());
     }
 
     private boolean isAttachmentPanelVisible() {
@@ -877,6 +906,41 @@ public class BottomInputPanelView extends LinearLayout {
             ? currentKeyboardHeight
             : inputBarBaseBottomMargin;
         setBottomMargin(this, inputBarBottomMargin);
+    }
+
+    private void refreshKeyboardVisibilityForAction() {
+        if (contentRoot == null) {
+            contentRoot = getRootView();
+        }
+        if (contentRoot == null) {
+            return;
+        }
+        WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(contentRoot);
+        boolean keyboardVisibleFromInsets = false;
+        if (rootWindowInsets != null) {
+            keyboardVisibleFromInsets = rootWindowInsets.isVisible(WindowInsetsCompat.Type.ime());
+            if (keyboardVisibleFromInsets) {
+                currentKeyboardHeight = rootWindowInsets
+                    .getInsets(WindowInsetsCompat.Type.ime())
+                    .bottom;
+            }
+        }
+
+        Rect visibleFrame = new Rect();
+        int[] rootLocation = new int[2];
+        contentRoot.getWindowVisibleDisplayFrame(visibleFrame);
+        contentRoot.getLocationOnScreen(rootLocation);
+        int visibleBottomInRoot = visibleFrame.bottom - rootLocation[1];
+        int keyboardHeightFromFrame = Math.max(
+            0,
+            contentRoot.getHeight() - visibleBottomInRoot
+        );
+        boolean keyboardVisibleFromFrame = keyboardHeightFromFrame >= keyboardVisibilityThreshold;
+        if (keyboardVisibleFromFrame) {
+            currentKeyboardHeight = keyboardHeightFromFrame;
+        }
+        keyboardVisible = keyboardVisibleFromInsets || keyboardVisibleFromFrame;
+        updateContentInsetsForInputBar();
     }
 
     private void setInputBottomFillVisible(boolean visible, int height) {

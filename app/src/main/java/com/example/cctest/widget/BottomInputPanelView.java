@@ -50,6 +50,7 @@ public class BottomInputPanelView extends LinearLayout {
     private TextWatcher inputTextWatcher;
     private boolean manualModeEnabled = true;
     private boolean manualAgentOnline = true;
+    private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
     private String textInputDraft = "";
@@ -108,6 +109,22 @@ public class BottomInputPanelView extends LinearLayout {
 
     public boolean isManualAgentOnline() {
         return manualAgentOnline;
+    }
+
+    public void setManualAgentType(ManualAgentType manualAgentType) {
+        ManualAgentType nextManualAgentType = manualAgentType == null
+            ? ManualAgentType.ONLINE_SERVICE
+            : manualAgentType;
+        if (this.manualAgentType == nextManualAgentType) {
+            updateAttachmentPanelOptions();
+            return;
+        }
+        this.manualAgentType = nextManualAgentType;
+        updateAttachmentPanelOptions();
+    }
+
+    public ManualAgentType getManualAgentType() {
+        return manualAgentType;
     }
 
     public String getInputText() {
@@ -196,6 +213,7 @@ public class BottomInputPanelView extends LinearLayout {
         configureVoiceInputToggle();
         configureAttachmentOptions();
         updateManualModeUi();
+        updateAttachmentPanelOptions();
     }
 
     private void configureManualModeToggle() {
@@ -347,6 +365,15 @@ public class BottomInputPanelView extends LinearLayout {
         }
     }
 
+    private void updateAttachmentPanelOptions() {
+        if (optionSendProduct != null) {
+            optionSendProduct.setVisibility(
+                manualAgentType == ManualAgentType.INSURANCE_PLANNER ? View.VISIBLE : View.GONE
+            );
+        }
+        updateContentInsetsForInputBar();
+    }
+
     private void setManualModeEnabled(boolean enabled, boolean notifyListener) {
         if (manualModeEnabled == enabled) {
             updateManualModeUi();
@@ -446,8 +473,11 @@ public class BottomInputPanelView extends LinearLayout {
         if (showSendAction) {
             setAttachmentPanelVisible(false);
             buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
+            int contentDescriptionResource = keyboardVisible && !hasInputText
+                ? R.string.baidu_web_hide_keyboard_content_description
+                : R.string.baidu_web_send_content_description;
             buttonAddContent.setContentDescription(
-                getResources().getString(R.string.baidu_web_send_content_description)
+                getResources().getString(contentDescriptionResource)
             );
             buttonAddContent.setPadding(0, 0, 0, 0);
         } else {
@@ -497,6 +527,29 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     private void handleTrailingActionClick() {
+        if (!voiceInputMode && hasTextInputContent()) {
+            String inputText = getInputText();
+            setAttachmentPanelVisible(false);
+            Toast.makeText(
+                getContext(),
+                getResources().getString(R.string.baidu_web_send_toast_format, inputText),
+                Toast.LENGTH_SHORT
+            ).show();
+            if (keyboardVisible) {
+                dismissKeyboardAndClearFocus();
+            }
+            if (actionListener != null) {
+                actionListener.onSendText(inputText);
+            }
+            return;
+        }
+
+        if (isKeyboardDismissActionVisible()) {
+            setAttachmentPanelVisible(false);
+            dismissKeyboardAndClearFocus();
+            return;
+        }
+
         if (isSendActionVisible()) {
             setAttachmentPanelVisible(false);
             if (actionListener != null) {
@@ -533,6 +586,10 @@ public class BottomInputPanelView extends LinearLayout {
 
     private boolean isAiGridActionVisible() {
         return !manualModeEnabled && !isSendActionVisible();
+    }
+
+    private boolean isKeyboardDismissActionVisible() {
+        return !voiceInputMode && keyboardVisible && !hasTextInputContent();
     }
 
     private boolean isSendActionVisible() {
@@ -658,6 +715,13 @@ public class BottomInputPanelView extends LinearLayout {
         }
     }
 
+    private void dismissKeyboardAndClearFocus() {
+        hideKeyboard();
+        if (consultInput != null) {
+            consultInput.clearFocus();
+        }
+    }
+
     private void focusTextInput() {
         if (consultInput == null || voiceInputMode) {
             return;
@@ -767,5 +831,10 @@ public class BottomInputPanelView extends LinearLayout {
 
     public interface ModeChangeListener {
         void onManualModeChanged(boolean manualModeEnabled);
+    }
+
+    public enum ManualAgentType {
+        ONLINE_SERVICE,
+        INSURANCE_PLANNER
     }
 }

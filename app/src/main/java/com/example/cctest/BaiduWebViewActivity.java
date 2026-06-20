@@ -8,6 +8,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
+import com.example.cctest.widget.BottomInputPanelView.ManualAgentType;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
@@ -16,13 +17,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private static final String BAIDU_URL = "https://www.baidu.com";
     private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
     private static final String KEY_MANUAL_AGENT_ONLINE = "manual_agent_online";
+    private static final String KEY_MANUAL_AGENT_TYPE = "manual_agent_type";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
+    private MaterialButton manualAgentTypeToggleButton;
     private boolean manualModeEnabled;
     private boolean manualAgentOnline = true;
+    private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +38,12 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         bottomInputPanel = findViewById(R.id.bottom_input_container);
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
+        manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
         manualModeEnabled = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
         manualAgentOnline = savedInstanceState == null
             || savedInstanceState.getBoolean(KEY_MANUAL_AGENT_ONLINE, true);
+        manualAgentType = readManualAgentType(savedInstanceState);
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -71,6 +77,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             });
             bottomInputPanel.setManualModeEnabled(manualModeEnabled);
             bottomInputPanel.setManualAgentOnline(manualAgentOnline);
+            bottomInputPanel.setManualAgentType(manualAgentType);
         }
         if (manualToggleButton == null) {
             return;
@@ -79,8 +86,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         if (manualOnlineToggleButton != null) {
             manualOnlineToggleButton.setOnClickListener(view -> handleManualOnlineToggleClick());
         }
+        if (manualAgentTypeToggleButton != null) {
+            manualAgentTypeToggleButton.setOnClickListener(
+                view -> handleManualAgentTypeToggleClick()
+            );
+        }
         updateManualToggleButtonText();
         updateManualOnlineToggleButtonText();
+        updateManualAgentTypeToggleButtonText();
     }
 
     private void handleManualToggleButtonClick() {
@@ -101,6 +114,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel.setManualAgentOnline(manualAgentOnline);
         }
         updateManualOnlineToggleButtonText();
+    }
+
+    private void handleManualAgentTypeToggleClick() {
+        manualAgentType = manualAgentType == ManualAgentType.ONLINE_SERVICE
+            ? ManualAgentType.INSURANCE_PLANNER
+            : ManualAgentType.ONLINE_SERVICE;
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setManualAgentType(manualAgentType);
+        }
+        updateManualAgentTypeToggleButtonText();
     }
 
     private void updateManualToggleButtonText() {
@@ -125,6 +148,32 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         );
     }
 
+    private void updateManualAgentTypeToggleButtonText() {
+        if (manualAgentTypeToggleButton == null) {
+            return;
+        }
+        manualAgentTypeToggleButton.setText(
+            manualAgentType == ManualAgentType.ONLINE_SERVICE
+                ? R.string.baidu_web_manual_type_online_service
+                : R.string.baidu_web_manual_type_insurance_planner
+        );
+    }
+
+    private ManualAgentType readManualAgentType(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            return ManualAgentType.ONLINE_SERVICE;
+        }
+        String manualAgentTypeName = savedInstanceState.getString(KEY_MANUAL_AGENT_TYPE);
+        if (manualAgentTypeName == null) {
+            return ManualAgentType.ONLINE_SERVICE;
+        }
+        try {
+            return ManualAgentType.valueOf(manualAgentTypeName);
+        } catch (IllegalArgumentException exception) {
+            return ManualAgentType.ONLINE_SERVICE;
+        }
+    }
+
     @Override
     public void onBackPressed() {
         if (webView != null && webView.canGoBack()) {
@@ -139,6 +188,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
         outState.putBoolean(KEY_MANUAL_AGENT_ONLINE, manualAgentOnline);
+        outState.putString(KEY_MANUAL_AGENT_TYPE, manualAgentType.name());
         if (webView != null) {
             webView.saveState(outState);
         }
@@ -152,6 +202,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         manualToggleButton = null;
         manualOnlineToggleButton = null;
+        manualAgentTypeToggleButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

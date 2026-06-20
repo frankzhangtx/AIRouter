@@ -10,7 +10,9 @@
     <string name="baidu_web_plus_content_description">添加内容</string>
     <string name="baidu_web_ai_grid_content_description">更多功能</string>
     <string name="baidu_web_more_products">更多产品</string>
+    <string name="baidu_web_hide_keyboard_content_description">收起键盘</string>
     <string name="baidu_web_send_content_description">发送</string>
+    <string name="baidu_web_send_toast_format">发送%1$s</string>
     <string name="baidu_web_attachment_image">图片</string>
     <string name="baidu_web_attachment_product">发送产品</string>
     <string name="baidu_web_ai_avatar_content_description">切换人工</string>
@@ -18,6 +20,8 @@
     <string name="baidu_web_toggle_manual_exit">点击退出人工</string>
     <string name="baidu_web_manual_online">人工在线</string>
     <string name="baidu_web_manual_offline">人工离线</string>
+    <string name="baidu_web_manual_type_online_service">普通在线客服</string>
+    <string name="baidu_web_manual_type_insurance_planner">保险规划师</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>

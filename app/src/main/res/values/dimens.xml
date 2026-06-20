@@ -53,4 +53,13 @@
     <dimen name="baidu_web_attachment_label_top_margin">10dp</dimen>
     <dimen name="baidu_web_attachment_text_size">15sp</dimen>
     <dimen name="baidu_web_manual_toggle_top_margin">16dp</dimen>
+    <dimen name="baidu_web_suggestion_list_height">56dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_height">40dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_min_width">118dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_radius">20dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_gap">10dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_horizontal_padding">14dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_icon_size">22dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_icon_gap">8dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_text_size">15sp</dimen>
 </resources>

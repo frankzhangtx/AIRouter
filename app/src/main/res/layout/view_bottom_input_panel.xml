@@ -9,34 +9,36 @@
         android:clipToPadding="false">
 
         <LinearLayout
-            android:id="@+id/input_top_extension"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/baidu_web_input_top_extension_height"
-            android:importantForAccessibility="no"
-            android:orientation="vertical"
-            android:translationY="-15dp">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/baidu_web_input_top_extension_fade_height"
-                android:background="@drawable/bg_baidu_web_input_top_extension" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
-                android:background="@color/baidu_web_input_container_background" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/input_bar_row"
+            android:id="@+id/input_content_stack"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
-            android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/input_suggestion_list"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/baidu_web_suggestion_list_height"
+                android:clipToPadding="false"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:paddingStart="@dimen/baidu_web_input_horizontal_margin"
+                android:paddingEnd="@dimen/baidu_web_input_horizontal_margin"
+                android:paddingBottom="@dimen/baidu_web_input_top_extension_height"
+                android:scrollbars="none"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/input_bar_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/baidu_web_input_horizontal_margin"
+                android:layout_marginEnd="@dimen/baidu_web_input_horizontal_margin"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
             <FrameLayout
                 android:id="@+id/button_ai_avatar"
@@ -120,6 +122,26 @@
                     android:scaleType="center"
                     android:src="@drawable/ic_baidu_web_plus" />
             </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/input_top_extension"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/baidu_web_input_top_extension_height"
+            android:importantForAccessibility="no"
+            android:orientation="vertical"
+            android:translationY="-15dp">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/baidu_web_input_top_extension_fade_height"
+                android:background="@drawable/bg_baidu_web_input_top_extension" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/baidu_web_input_top_extension_solid_height"
+                android:background="@color/baidu_web_input_container_background" />
         </LinearLayout>
     </FrameLayout>
 

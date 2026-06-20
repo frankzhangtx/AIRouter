@@ -18,15 +18,19 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
     private static final String KEY_MANUAL_AGENT_ONLINE = "manual_agent_online";
     private static final String KEY_MANUAL_AGENT_TYPE = "manual_agent_type";
+    private static final String KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE =
+        "horizontal_suggestion_list_visible";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
     private MaterialButton manualAgentTypeToggleButton;
+    private MaterialButton suggestionListToggleButton;
     private boolean manualModeEnabled;
     private boolean manualAgentOnline = true;
     private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
+    private boolean horizontalSuggestionListVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,11 +43,14 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
+        suggestionListToggleButton = findViewById(R.id.button_toggle_suggestion_list);
         manualModeEnabled = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_MANUAL_MODE_ENABLED);
         manualAgentOnline = savedInstanceState == null
             || savedInstanceState.getBoolean(KEY_MANUAL_AGENT_ONLINE, true);
         manualAgentType = readManualAgentType(savedInstanceState);
+        horizontalSuggestionListVisible = savedInstanceState != null
+            && savedInstanceState.getBoolean(KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE);
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -78,6 +85,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel.setManualModeEnabled(manualModeEnabled);
             bottomInputPanel.setManualAgentOnline(manualAgentOnline);
             bottomInputPanel.setManualAgentType(manualAgentType);
+            bottomInputPanel.setHorizontalSuggestionListVisible(horizontalSuggestionListVisible);
         }
         if (manualToggleButton == null) {
             return;
@@ -91,9 +99,15 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 view -> handleManualAgentTypeToggleClick()
             );
         }
+        if (suggestionListToggleButton != null) {
+            suggestionListToggleButton.setOnClickListener(
+                view -> handleSuggestionListToggleClick()
+            );
+        }
         updateManualToggleButtonText();
         updateManualOnlineToggleButtonText();
         updateManualAgentTypeToggleButtonText();
+        updateSuggestionListToggleButtonText();
     }
 
     private void handleManualToggleButtonClick() {
@@ -124,6 +138,16 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel.setManualAgentType(manualAgentType);
         }
         updateManualAgentTypeToggleButtonText();
+    }
+
+    private void handleSuggestionListToggleClick() {
+        horizontalSuggestionListVisible = !horizontalSuggestionListVisible;
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setHorizontalSuggestionListVisible(
+                horizontalSuggestionListVisible
+            );
+        }
+        updateSuggestionListToggleButtonText();
     }
 
     private void updateManualToggleButtonText() {
@@ -159,6 +183,17 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         );
     }
 
+    private void updateSuggestionListToggleButtonText() {
+        if (suggestionListToggleButton == null) {
+            return;
+        }
+        suggestionListToggleButton.setText(
+            horizontalSuggestionListVisible
+                ? R.string.baidu_web_remove_suggestion_list
+                : R.string.baidu_web_add_suggestion_list
+        );
+    }
+
     private ManualAgentType readManualAgentType(Bundle savedInstanceState) {
         if (savedInstanceState == null) {
             return ManualAgentType.ONLINE_SERVICE;
@@ -189,6 +224,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
         outState.putBoolean(KEY_MANUAL_AGENT_ONLINE, manualAgentOnline);
         outState.putString(KEY_MANUAL_AGENT_TYPE, manualAgentType.name());
+        outState.putBoolean(
+            KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE,
+            horizontalSuggestionListVisible
+        );
         if (webView != null) {
             webView.saveState(outState);
         }
@@ -203,6 +242,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         manualToggleButton = null;
         manualOnlineToggleButton = null;
         manualAgentTypeToggleButton = null;
+        suggestionListToggleButton = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

@@ -20,12 +20,18 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.ComponentActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.cctest.R;
 import com.example.cctest.voice.PicVoiceRecordPanel;
 import com.example.cctest.voice.VoiceRecordCallback;
+import java.util.Arrays;
+import java.util.List;
 
 public class BottomInputPanelView extends LinearLayout {
 
@@ -33,6 +39,7 @@ public class BottomInputPanelView extends LinearLayout {
 
     private View inputBottomFill;
     private View attachmentPanel;
+    private RecyclerView suggestionListView;
     private View optionAttachImage;
     private View optionSendProduct;
     private View aiAvatarButton;
@@ -48,9 +55,11 @@ public class BottomInputPanelView extends LinearLayout {
     private ViewTreeObserver.OnGlobalLayoutListener keyboardLayoutListener;
     private OnLayoutChangeListener inputBarLayoutChangeListener;
     private TextWatcher inputTextWatcher;
+    private HorizontalSuggestionAdapter suggestionAdapter;
     private boolean manualModeEnabled = true;
     private boolean manualAgentOnline = true;
     private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
+    private boolean horizontalSuggestionListVisible;
     private boolean voiceInputMode;
     private boolean keyboardVisible;
     private String textInputDraft = "";
@@ -127,6 +136,18 @@ public class BottomInputPanelView extends LinearLayout {
         return manualAgentType;
     }
 
+    public void setHorizontalSuggestionListVisible(boolean visible) {
+        horizontalSuggestionListVisible = visible;
+        if (suggestionListView != null) {
+            suggestionListView.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        updateContentInsetsForInputBar();
+    }
+
+    public boolean isHorizontalSuggestionListVisible() {
+        return horizontalSuggestionListVisible;
+    }
+
     public String getInputText() {
         if (consultInput == null || consultInput.getText() == null) {
             return "";
@@ -199,6 +220,7 @@ public class BottomInputPanelView extends LinearLayout {
 
         inputBottomFill = findViewById(R.id.input_bottom_fill);
         attachmentPanel = findViewById(R.id.input_attachment_panel);
+        suggestionListView = findViewById(R.id.input_suggestion_list);
         optionAttachImage = findViewById(R.id.option_attach_image);
         optionSendProduct = findViewById(R.id.option_send_product);
         aiAvatarButton = findViewById(R.id.button_ai_avatar);
@@ -208,6 +230,7 @@ public class BottomInputPanelView extends LinearLayout {
         consultInput = findViewById(R.id.edit_text_consult_content);
 
         configureManualModeToggle();
+        configureHorizontalSuggestionList(context);
         configureTextInputWrapping();
         configureVoiceRecordPanel(context);
         configureVoiceInputToggle();
@@ -221,6 +244,40 @@ public class BottomInputPanelView extends LinearLayout {
             return;
         }
         aiAvatarButton.setOnClickListener(view -> setManualModeEnabled(true));
+    }
+
+    private void configureHorizontalSuggestionList(Context context) {
+        if (suggestionListView == null) {
+            return;
+        }
+        suggestionAdapter = new HorizontalSuggestionAdapter(createDefaultHorizontalSuggestions());
+        suggestionListView.setLayoutManager(
+            new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        );
+        suggestionListView.setItemAnimator(null);
+        suggestionListView.setAdapter(suggestionAdapter);
+        setHorizontalSuggestionListVisible(false);
+    }
+
+    private List<HorizontalSuggestionItem> createDefaultHorizontalSuggestions() {
+        return Arrays.asList(
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_ai_grid,
+                R.string.baidu_web_suggestion_smart_insurance
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_product,
+                R.string.baidu_web_suggestion_product_explain
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_attachment_image,
+                R.string.baidu_web_suggestion_easy_match
+            ),
+            new HorizontalSuggestionItem(
+                R.drawable.ic_baidu_web_plus,
+                R.string.baidu_web_suggestion_custom_plan
+            )
+        );
     }
 
     private void configureTextInputWrapping() {
@@ -813,6 +870,66 @@ public class BottomInputPanelView extends LinearLayout {
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private static class HorizontalSuggestionItem {
+        private final int iconResource;
+        private final int textResource;
+
+        private HorizontalSuggestionItem(int iconResource, int textResource) {
+            this.iconResource = iconResource;
+            this.textResource = textResource;
+        }
+    }
+
+    private static class HorizontalSuggestionAdapter
+        extends RecyclerView.Adapter<HorizontalSuggestionViewHolder> {
+
+        private final List<HorizontalSuggestionItem> items;
+
+        private HorizontalSuggestionAdapter(List<HorizontalSuggestionItem> items) {
+            this.items = items;
+        }
+
+        @Override
+        public HorizontalSuggestionViewHolder onCreateViewHolder(
+            ViewGroup parent,
+            int viewType
+        ) {
+            View itemView = LayoutInflater.from(parent.getContext()).inflate(
+                R.layout.item_baidu_web_suggestion_chip,
+                parent,
+                false
+            );
+            return new HorizontalSuggestionViewHolder(itemView);
+        }
+
+        @Override
+        public void onBindViewHolder(HorizontalSuggestionViewHolder holder, int position) {
+            holder.bind(items.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return items.size();
+        }
+    }
+
+    private static class HorizontalSuggestionViewHolder extends RecyclerView.ViewHolder {
+        private final ImageView iconView;
+        private final TextView textView;
+
+        private HorizontalSuggestionViewHolder(View itemView) {
+            super(itemView);
+            iconView = itemView.findViewById(R.id.suggestion_chip_icon);
+            textView = itemView.findViewById(R.id.suggestion_chip_text);
+        }
+
+        private void bind(HorizontalSuggestionItem item) {
+            iconView.setImageResource(item.iconResource);
+            textView.setText(item.textResource);
+            itemView.setContentDescription(textView.getText());
+        }
     }
 
     public interface ActionListener {

@@ -161,6 +161,9 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     public int getVisualHeightForOverlay() {
+        if (getVisibility() != View.VISIBLE) {
+            return 0;
+        }
         return getHeight() + getTopVisualOverflowHeight();
     }
 
@@ -262,6 +265,23 @@ public class BottomInputPanelView extends LinearLayout {
 
     public void closeAttachmentPanel() {
         setAttachmentPanelVisible(false);
+    }
+
+    public boolean isAttachmentPanelVisible() {
+        return attachmentPanel != null && attachmentPanel.getVisibility() == View.VISIBLE;
+    }
+
+    public void setAttachmentPanelVisible(boolean visible) {
+        updateAttachmentPanelVisibility(visible);
+    }
+
+    public void dismissKeyboardForPanelHide() {
+        pendingKeyboardDismissOutsideTextInput = false;
+        dismissKeyboardAndClearFocus();
+        keyboardVisible = false;
+        currentKeyboardHeight = 0;
+        updateTextInputActionState();
+        updateContentInsetsForInputBar();
     }
 
     public void setVoiceInputModeEnabled(boolean enabled) {
@@ -814,17 +834,13 @@ public class BottomInputPanelView extends LinearLayout {
             || (consultInput != null && consultInput.hasFocus());
     }
 
-    private boolean isAttachmentPanelVisible() {
-        return attachmentPanel != null && attachmentPanel.getVisibility() == View.VISIBLE;
-    }
-
     private boolean hasTextInputContent() {
         return consultInput != null
             && consultInput.getText() != null
             && consultInput.getText().toString().trim().length() > 0;
     }
 
-    private void setAttachmentPanelVisible(boolean visible) {
+    private void updateAttachmentPanelVisibility(boolean visible) {
         if (attachmentPanel == null) {
             return;
         }

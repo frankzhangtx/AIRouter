@@ -21,11 +21,17 @@ class BaiduWebManualModeManager {
     static final String CONTROL_REPLACE_SUGGESTION_ITEMS = "replace_suggestion_items";
     static final String CONTROL_TOGGLE_BOTTOM_OVERLAY = "toggle_bottom_overlay";
     static final String CONTROL_SHOW_BOTTOM_PANEL_HEIGHT = "show_bottom_panel_height";
+    static final String CONTROL_TOGGLE_BOTTOM_PANEL_VISIBILITY =
+        "toggle_bottom_panel_visibility";
 
     interface Listener {
         void onManualControlStateChanged();
 
         default void onBottomOverlayToggleRequested() {
+            // Optional override.
+        }
+
+        default void onBottomPanelToggleRequested() {
             // Optional override.
         }
     }
@@ -104,6 +110,11 @@ class BaiduWebManualModeManager {
                 break;
             case CONTROL_SHOW_BOTTOM_PANEL_HEIGHT:
                 showBottomPanelHeightToast();
+                break;
+            case CONTROL_TOGGLE_BOTTOM_PANEL_VISIBILITY:
+                if (listener != null) {
+                    listener.onBottomPanelToggleRequested();
+                }
                 break;
             default:
                 break;

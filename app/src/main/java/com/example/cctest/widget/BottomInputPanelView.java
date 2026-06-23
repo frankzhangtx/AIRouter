@@ -1,83 +1,36 @@
 package com.example.cctest.widget;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.ContextWrapper;
-import android.graphics.Rect;
-import android.graphics.Typeface;
-import android.text.Editable;
-import android.text.InputType;
-import android.text.Layout;
-import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.animation.AnimationUtils;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
-import androidx.activity.ComponentActivity;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import com.example.cctest.R;
-import com.example.cctest.voice.PicVoiceRecordPanel;
 import com.example.cctest.voice.VoiceRecordCallback;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class BottomInputPanelView extends LinearLayout {
 
-    private static final int TEXT_INPUT_MAX_LINES = 4;
-
     private View inputBottomFill;
-    private View attachmentPanel;
     private View inputTopExtension;
-    private RecyclerView suggestionListView;
-    private View optionAttachImage;
-    private View optionSendProduct;
     private View aiAvatarButton;
     private View bottomInputBar;
     private ImageButton buttonVoiceInput;
     private ImageButton buttonAddContent;
     private EditText consultInput;
-    private PicVoiceRecordPanel voiceRecordPanel;
+    private BottomSuggestionListController suggestionListController;
+    private BottomAttachmentPanelController attachmentPanelController;
+    private BottomTextInputController textInputController;
+    private BottomKeyboardController keyboardController;
+    private BottomVoiceRecordController voiceRecordController;
+    private BottomInputActionController inputActionController;
+    private BottomManualModeController manualModeController;
+    private BottomOutsideKeyboardDismissController outsideKeyboardDismissController;
     private VoiceRecordCallback voiceRecordCallback;
-    private ActionListener actionListener;
-    private ModeChangeListener modeChangeListener;
-    private View contentRoot;
-    private ViewTreeObserver.OnGlobalLayoutListener keyboardLayoutListener;
-    private OnLayoutChangeListener inputBarLayoutChangeListener;
-    private TextWatcher inputTextWatcher;
-    private HorizontalSuggestionAdapter suggestionAdapter;
-    private boolean manualModeEnabled = true;
-    private boolean manualAgentOnline = true;
-    private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
-    private boolean horizontalSuggestionListVisible;
-    private boolean pendingKeyboardDismissOutsideTextInput;
+    private BottomInputActionListener actionListener;
     private boolean voiceInputMode;
-    private boolean keyboardVisible;
-    private boolean trailingActionStartedWithTextInputInteraction;
-    private String textInputDraft = "";
-    private int textInputOriginalInputType;
-    private int textInputOriginalImeOptions;
-    private int textInputOriginalGravity;
-    private Typeface textInputOriginalTypeface;
-    private int inputBarBaseBottomMargin;
-    private int keyboardVisibilityThreshold;
-    private int inputBarKeyboardBottomMargin;
-    private int currentKeyboardHeight;
 
     public BottomInputPanelView(Context context) {
         super(context);
@@ -94,7 +47,7 @@ public class BottomInputPanelView extends LinearLayout {
         initialize(context);
     }
 
-    public void setActionListener(ActionListener actionListener) {
+    public void setActionListener(BottomInputActionListener actionListener) {
         this.actionListener = actionListener;
     }
 
@@ -102,62 +55,53 @@ public class BottomInputPanelView extends LinearLayout {
         this.voiceRecordCallback = voiceRecordCallback;
     }
 
-    public void setModeChangeListener(ModeChangeListener modeChangeListener) {
-        this.modeChangeListener = modeChangeListener;
+    public void setModeChangeListener(BottomInputModeChangeListener modeChangeListener) {
+        if (manualModeController != null) {
+            manualModeController.setModeChangeListener(modeChangeListener);
+        }
     }
 
     public void setManualModeEnabled(boolean enabled) {
-        setManualModeEnabled(enabled, true);
+        if (manualModeController != null) {
+            manualModeController.setManualModeEnabled(enabled);
+        }
     }
 
     public boolean isManualModeEnabled() {
-        return manualModeEnabled;
+        return manualModeController != null && manualModeController.isManualModeEnabled();
     }
 
     public void setManualAgentOnline(boolean online) {
-        if (manualAgentOnline == online) {
-            updateManualModeUi();
-            return;
+        if (manualModeController != null) {
+            manualModeController.setManualAgentOnline(online);
         }
-        manualAgentOnline = online;
-        updateManualModeUi();
     }
 
     public boolean isManualAgentOnline() {
-        return manualAgentOnline;
+        return manualModeController != null && manualModeController.isManualAgentOnline();
     }
 
     public void setManualAgentType(ManualAgentType manualAgentType) {
-        ManualAgentType nextManualAgentType = manualAgentType == null
-            ? ManualAgentType.ONLINE_SERVICE
-            : manualAgentType;
-        if (this.manualAgentType == nextManualAgentType) {
-            updateAttachmentPanelOptions();
-            return;
+        if (manualModeController != null) {
+            manualModeController.setManualAgentType(manualAgentType);
         }
-        this.manualAgentType = nextManualAgentType;
-        updateAttachmentPanelOptions();
     }
 
     public ManualAgentType getManualAgentType() {
-        return manualAgentType;
+        return manualModeController == null
+            ? ManualAgentType.ONLINE_SERVICE
+            : manualModeController.getManualAgentType();
     }
 
     public void setHorizontalSuggestionListVisible(boolean visible) {
-        horizontalSuggestionListVisible = visible;
-        if (suggestionListView != null) {
-            boolean shouldAnimateEntrance = visible
-                && suggestionListView.getVisibility() != View.VISIBLE;
-            suggestionListView.setVisibility(visible ? View.VISIBLE : View.GONE);
-            if (shouldAnimateEntrance) {
-                suggestionListView.scheduleLayoutAnimation();
-            }
+        if (suggestionListController != null) {
+            suggestionListController.setVisible(visible);
         }
         updateContentInsetsForInputBar();
     }
 
     public boolean isHorizontalSuggestionListVisible() {
-        return horizontalSuggestionListVisible;
+        return suggestionListController != null && suggestionListController.isVisible();
     }
 
     public int getVisualHeightForOverlay() {
@@ -168,99 +112,64 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     public void prepareKeyboardDismissIfTouchOutsideTextInput(MotionEvent event) {
-        if (event == null) {
-            return;
-        }
-        int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_DOWN) {
-            pendingKeyboardDismissOutsideTextInput =
-                shouldDismissKeyboardForTouchOutsideTextInput(event);
-        } else if (action == MotionEvent.ACTION_CANCEL) {
-            pendingKeyboardDismissOutsideTextInput = false;
+        if (outsideKeyboardDismissController != null) {
+            outsideKeyboardDismissController.prepare(event);
         }
     }
 
     public void finishKeyboardDismissIfTouchOutsideTextInput(MotionEvent event) {
-        if (event == null) {
-            return;
-        }
-        int action = event.getActionMasked();
-        if (action == MotionEvent.ACTION_CANCEL) {
-            pendingKeyboardDismissOutsideTextInput = false;
-            return;
-        }
-        if (action != MotionEvent.ACTION_UP || !pendingKeyboardDismissOutsideTextInput) {
-            return;
-        }
-        pendingKeyboardDismissOutsideTextInput = false;
-        if (shouldDismissKeyboardForTouchOutsideTextInput(event)) {
-            dismissKeyboardAndClearFocus();
+        if (outsideKeyboardDismissController != null) {
+            outsideKeyboardDismissController.finish(event);
         }
     }
 
     private boolean shouldDismissKeyboardForTouchOutsideTextInput(MotionEvent event) {
-        if (!keyboardVisible || voiceInputMode || consultInput == null) {
+        if (!isKeyboardVisible() || voiceInputMode || textInputController == null) {
             return false;
         }
-        Rect inputBounds = new Rect();
-        return !consultInput.getGlobalVisibleRect(inputBounds)
-            || !inputBounds.contains((int) event.getRawX(), (int) event.getRawY());
+        return !textInputController.containsRawPoint(event.getRawX(), event.getRawY());
     }
 
     public void appendAdditionalHorizontalSuggestions() {
-        if (suggestionAdapter == null) {
-            return;
+        if (suggestionListController != null) {
+            suggestionListController.appendAdditionalSuggestions();
         }
-        suggestionAdapter.appendItems(createAdditionalHorizontalSuggestions());
     }
 
     public void ensureDefaultHorizontalSuggestions() {
-        if (suggestionAdapter == null || suggestionAdapter.getItemCount() > 0) {
-            return;
+        if (suggestionListController != null) {
+            suggestionListController.ensureDefaultSuggestions();
         }
-        suggestionAdapter.replaceItems(createDefaultHorizontalSuggestions());
-        resetHorizontalSuggestionScroll();
     }
 
     public void clearHorizontalSuggestions() {
-        if (suggestionAdapter == null) {
-            return;
+        if (suggestionListController != null) {
+            suggestionListController.clearSuggestions();
         }
-        suggestionAdapter.replaceItems(new ArrayList<>());
-        resetHorizontalSuggestionScroll();
     }
 
     public void replaceHorizontalSuggestions() {
-        if (suggestionAdapter == null) {
-            return;
-        }
-        suggestionAdapter.replaceItems(createReplacementHorizontalSuggestions());
-        resetHorizontalSuggestionScroll();
-        if (horizontalSuggestionListVisible && suggestionListView != null) {
-            suggestionListView.scheduleLayoutAnimation();
+        if (suggestionListController != null) {
+            suggestionListController.replaceSuggestions();
         }
     }
 
     public String getInputText() {
-        if (consultInput == null || consultInput.getText() == null) {
-            return "";
-        }
-        return consultInput.getText().toString();
+        return textInputController == null ? "" : textInputController.getText();
     }
 
     public void setInputText(CharSequence text) {
-        if (consultInput == null) {
-            return;
+        if (textInputController != null) {
+            textInputController.setText(text);
         }
-        consultInput.setText(text == null ? "" : text);
-        consultInput.setSelection(consultInput.getText().length());
-        keepTextInputCursorOnBottomLine();
         updateTextInputActionState();
         updateContentInsetsForInputBar();
     }
 
     public void clearInputText() {
-        setInputText("");
+        if (textInputController != null) {
+            textInputController.clearText();
+        }
     }
 
     public void closeAttachmentPanel() {
@@ -268,18 +177,23 @@ public class BottomInputPanelView extends LinearLayout {
     }
 
     public boolean isAttachmentPanelVisible() {
-        return attachmentPanel != null && attachmentPanel.getVisibility() == View.VISIBLE;
+        return attachmentPanelController != null && attachmentPanelController.isVisible();
     }
 
     public void setAttachmentPanelVisible(boolean visible) {
-        updateAttachmentPanelVisibility(visible);
+        if (attachmentPanelController != null) {
+            attachmentPanelController.setVisible(visible);
+        }
     }
 
     public void dismissKeyboardForPanelHide() {
-        pendingKeyboardDismissOutsideTextInput = false;
+        if (outsideKeyboardDismissController != null) {
+            outsideKeyboardDismissController.reset();
+        }
         dismissKeyboardAndClearFocus();
-        keyboardVisible = false;
-        currentKeyboardHeight = 0;
+        if (keyboardController != null) {
+            keyboardController.forceKeyboardHidden();
+        }
         updateTextInputActionState();
         updateContentInsetsForInputBar();
     }
@@ -294,15 +208,16 @@ public class BottomInputPanelView extends LinearLayout {
 
     public void release() {
         detachKeyboardAvoidance();
-        if (consultInput != null && inputTextWatcher != null) {
-            consultInput.removeTextChangedListener(inputTextWatcher);
-            inputTextWatcher = null;
+        if (textInputController != null) {
+            textInputController.release();
         }
-        if (voiceRecordPanel != null) {
-            voiceRecordPanel.dismiss();
+        if (voiceRecordController != null) {
+            voiceRecordController.dismiss();
         }
         actionListener = null;
-        modeChangeListener = null;
+        if (manualModeController != null) {
+            manualModeController.setModeChangeListener(null);
+        }
         voiceRecordCallback = null;
     }
 
@@ -315,8 +230,8 @@ public class BottomInputPanelView extends LinearLayout {
     @Override
     protected void onDetachedFromWindow() {
         detachKeyboardAvoidance();
-        if (voiceRecordPanel != null) {
-            voiceRecordPanel.dismiss();
+        if (voiceRecordController != null) {
+            voiceRecordController.dismiss();
         }
         super.onDetachedFromWindow();
     }
@@ -329,221 +244,145 @@ public class BottomInputPanelView extends LinearLayout {
         LayoutInflater.from(context).inflate(R.layout.view_bottom_input_panel, this, true);
 
         inputBottomFill = findViewById(R.id.input_bottom_fill);
-        attachmentPanel = findViewById(R.id.input_attachment_panel);
         inputTopExtension = findViewById(R.id.input_top_extension);
-        suggestionListView = findViewById(R.id.input_suggestion_list);
-        optionAttachImage = findViewById(R.id.option_attach_image);
-        optionSendProduct = findViewById(R.id.option_send_product);
         aiAvatarButton = findViewById(R.id.button_ai_avatar);
         bottomInputBar = findViewById(R.id.bottom_input_bar);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
         buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
 
-        configureManualModeToggle();
+        configureManualModeController();
+        configureKeyboardController();
+        configureOutsideKeyboardDismissController();
         configureHorizontalSuggestionList(context);
-        configureTextInputWrapping();
+        configureAttachmentPanel();
+        configureTextInputController();
         configureVoiceRecordPanel(context);
         configureVoiceInputToggle();
-        configureAttachmentOptions();
-        updateManualModeUi();
         updateAttachmentPanelOptions();
     }
 
-    private void configureManualModeToggle() {
-        if (aiAvatarButton == null) {
-            return;
-        }
-        aiAvatarButton.setOnClickListener(view -> setManualModeEnabled(true));
+    private void configureManualModeController() {
+        manualModeController = new BottomManualModeController(
+            aiAvatarButton,
+            new BottomManualModeController.Callback() {
+                @Override
+                public void closeAttachmentPanel() {
+                    BottomInputPanelView.this.closeAttachmentPanel();
+                }
+
+                @Override
+                public void onManualModeUiStateChanged() {
+                    updateTextInputActionState();
+                }
+
+                @Override
+                public void onManualAgentTypeChanged() {
+                    updateAttachmentPanelOptions();
+                }
+            }
+        );
     }
 
     private void configureHorizontalSuggestionList(Context context) {
-        if (suggestionListView == null) {
-            return;
-        }
-        suggestionAdapter = new HorizontalSuggestionAdapter(new ArrayList<>(), this::requestToast);
-        suggestionListView.setLayoutManager(
-            new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-        );
-        suggestionListView.setLayoutAnimation(
-            AnimationUtils.loadLayoutAnimation(
-                context,
-                R.anim.layout_baidu_web_suggestion_enter
-            )
-        );
-        suggestionListView.setItemAnimator(null);
-        suggestionListView.setAdapter(suggestionAdapter);
-        setHorizontalSuggestionListVisible(false);
-    }
-
-    private List<HorizontalSuggestionItem> createDefaultHorizontalSuggestions() {
-        return Arrays.asList(
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_ai_grid,
-                R.string.baidu_web_suggestion_smart_insurance
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_product,
-                R.string.baidu_web_suggestion_product_explain
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_image,
-                R.string.baidu_web_suggestion_easy_match
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_plus,
-                R.string.baidu_web_suggestion_custom_plan
-            )
+        suggestionListController = new BottomSuggestionListController(
+            context,
+            this,
+            this::requestToast
         );
     }
 
-    private List<HorizontalSuggestionItem> createAdditionalHorizontalSuggestions() {
-        return Arrays.asList(
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_product,
-                R.string.baidu_web_suggestion_family_plan
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_ai_grid,
-                R.string.baidu_web_suggestion_coverage_calculator
-            )
-        );
-    }
+    private void configureKeyboardController() {
+        keyboardController = new BottomKeyboardController(
+            this,
+            inputBottomFill,
+            new BottomKeyboardController.Callback() {
+                @Override
+                public void onKeyboardStateChanged() {
+                    updateTextInputActionState();
+                }
 
-    private List<HorizontalSuggestionItem> createReplacementHorizontalSuggestions() {
-        return Arrays.asList(
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_image,
-                R.string.baidu_web_suggestion_health_notice
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_product,
-                R.string.baidu_web_suggestion_claim_assist
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_ai_grid,
-                R.string.baidu_web_suggestion_policy_review
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_plus,
-                R.string.baidu_web_suggestion_budget_plan
-            ),
-            new HorizontalSuggestionItem(
-                R.drawable.ic_baidu_web_attachment_product,
-                R.string.baidu_web_suggestion_renewal_reminder
-            )
-        );
-    }
-
-    private void resetHorizontalSuggestionScroll() {
-        if (suggestionListView == null) {
-            return;
-        }
-        suggestionListView.stopScroll();
-        suggestionListView.scrollToPosition(0);
-    }
-
-    private void configureTextInputWrapping() {
-        if (consultInput == null) {
-            return;
-        }
-
-        applyTextInputWrapping();
-        consultInput.setVerticalScrollBarEnabled(false);
-        consultInput.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        inputTextWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence text, int start, int count, int after) {
-                // No-op.
+                @Override
+                public boolean isAttachmentPanelVisible() {
+                    return BottomInputPanelView.this.isAttachmentPanelVisible();
+                }
             }
-
-            @Override
-            public void onTextChanged(CharSequence text, int start, int before, int count) {
-                // No-op.
-            }
-
-            @Override
-            public void afterTextChanged(Editable text) {
-                keepTextInputCursorOnBottomLine();
-                updateTextInputActionState();
-                updateContentInsetsForInputBar();
-            }
-        };
-        consultInput.addTextChangedListener(inputTextWatcher);
+        );
     }
 
-    private void configureKeyboardAvoidance() {
-        if (keyboardLayoutListener != null) {
-            return;
-        }
+    private void configureOutsideKeyboardDismissController() {
+        outsideKeyboardDismissController = new BottomOutsideKeyboardDismissController(
+            new BottomOutsideKeyboardDismissController.Callback() {
+                @Override
+                public boolean shouldDismissKeyboardForTouch(MotionEvent event) {
+                    return shouldDismissKeyboardForTouchOutsideTextInput(event);
+                }
 
-        Activity activity = findActivity(getContext());
-        if (activity != null) {
-            setWindowAdjustResize(activity);
-            contentRoot = activity.findViewById(android.R.id.content);
-        }
-        if (contentRoot == null) {
-            contentRoot = getRootView();
-        }
-        if (contentRoot == null) {
-            return;
-        }
+                @Override
+                public void dismissKeyboardAndClearFocus() {
+                    BottomInputPanelView.this.dismissKeyboardAndClearFocus();
+                }
+            }
+        );
+    }
 
-        inputBarBaseBottomMargin = getBottomMargin(this);
-        keyboardVisibilityThreshold = dpToPx(80);
-        inputBarKeyboardBottomMargin = dpToPx(10);
-        final Rect visibleFrame = new Rect();
-        final int[] rootLocation = new int[2];
+    private void configureTextInputController() {
+        textInputController = new BottomTextInputController(
+            consultInput,
+            new BottomTextInputController.Callback() {
+                @Override
+                public void onTextInputChanged() {
+                    updateTextInputActionState();
+                    updateContentInsetsForInputBar();
+                }
 
-        keyboardLayoutListener = () -> {
-            contentRoot.getWindowVisibleDisplayFrame(visibleFrame);
-            contentRoot.getLocationOnScreen(rootLocation);
-
-            int visibleBottomInRoot = visibleFrame.bottom - rootLocation[1];
-            currentKeyboardHeight = Math.max(0, contentRoot.getHeight() - visibleBottomInRoot);
-            keyboardVisible = currentKeyboardHeight >= keyboardVisibilityThreshold;
-            updateTextInputActionState();
-            updateContentInsetsForInputBar();
-        };
-        contentRoot.getViewTreeObserver().addOnGlobalLayoutListener(keyboardLayoutListener);
-        inputBarLayoutChangeListener = (view, left, top, right, bottom, oldLeft, oldTop,
-            oldRight, oldBottom) -> updateContentInsetsForInputBar();
-        addOnLayoutChangeListener(inputBarLayoutChangeListener);
-        post(this::updateContentInsetsForInputBar);
+                @Override
+                public boolean isVoiceInputMode() {
+                    return voiceInputMode;
+                }
+            }
+        );
     }
 
     private void configureVoiceRecordPanel(Context context) {
-        if (consultInput == null) {
-            return;
-        }
-        consultInput.setLongClickable(false);
-        voiceRecordPanel = createVoiceRecordPanel(context);
-        voiceRecordPanel.setRecordPanelAnchorView(bottomInputBar);
-        voiceRecordPanel.setCallback(new VoiceRecordCallback() {
-            @Override
-            public void onStart() {
-                hideKeyboard();
-                consultInput.clearFocus();
-                if (voiceRecordCallback != null) {
-                    voiceRecordCallback.onStart();
+        voiceRecordController = new BottomVoiceRecordController(
+            context,
+            consultInput,
+            bottomInputBar,
+            new BottomVoiceRecordController.Callback() {
+                @Override
+                public boolean shouldEnableTextHoldTrigger() {
+                    return !isKeyboardVisible() && !hasTextInputContent();
                 }
-            }
 
-            @Override
-            public void onCancel() {
-                if (voiceRecordCallback != null) {
-                    voiceRecordCallback.onCancel();
+                @Override
+                public void focusTextInput() {
+                    BottomInputPanelView.this.focusTextInput();
                 }
-            }
 
-            @Override
-            public void onFinish() {
-                if (voiceRecordCallback != null) {
-                    voiceRecordCallback.onFinish();
+                @Override
+                public void onStart() {
+                    dismissKeyboardAndClearFocus();
+                    if (voiceRecordCallback != null) {
+                        voiceRecordCallback.onStart();
+                    }
+                }
+
+                @Override
+                public void onCancel() {
+                    if (voiceRecordCallback != null) {
+                        voiceRecordCallback.onCancel();
+                    }
+                }
+
+                @Override
+                public void onFinish() {
+                    if (voiceRecordCallback != null) {
+                        voiceRecordCallback.onFinish();
+                    }
                 }
             }
-        });
-        bindTextInputHoldTrigger(consultInput);
+        );
     }
 
     private void configureVoiceInputToggle() {
@@ -551,525 +390,168 @@ public class BottomInputPanelView extends LinearLayout {
             buttonVoiceInput == null
                 || buttonAddContent == null
                 || consultInput == null
-                || voiceRecordPanel == null
+                || voiceRecordController == null
+                || !voiceRecordController.isAvailable()
         ) {
             return;
         }
 
-        textInputOriginalInputType = consultInput.getInputType();
-        textInputOriginalImeOptions = consultInput.getImeOptions();
-        textInputOriginalGravity = consultInput.getGravity();
-        textInputOriginalTypeface = consultInput.getTypeface();
-        buttonVoiceInput.setOnClickListener(view -> setVoiceInputMode(!voiceInputMode));
-        buttonAddContent.setOnTouchListener((view, event) -> {
-            if (event == null) {
-                return false;
-            }
-            int action = event.getActionMasked();
-            if (action == MotionEvent.ACTION_DOWN) {
-                refreshKeyboardVisibilityForAction();
-                trailingActionStartedWithTextInputInteraction = isTextInputInteractionActive();
-            } else if (action == MotionEvent.ACTION_CANCEL) {
-                trailingActionStartedWithTextInputInteraction = false;
-            }
-            return false;
-        });
-        buttonAddContent.setOnClickListener(view -> handleTrailingActionClick());
+        inputActionController = new BottomInputActionController(
+            buttonVoiceInput,
+            buttonAddContent,
+            new BottomInputPanelActionCallback(this)
+        );
         setVoiceInputMode(false);
         updateTextInputActionState();
     }
 
-    private void configureAttachmentOptions() {
-        if (optionAttachImage != null) {
-            optionAttachImage.setOnClickListener(view -> {
-                setAttachmentPanelVisible(false);
-                if (actionListener != null) {
-                    actionListener.onImageRequested();
+    private void configureAttachmentPanel() {
+        attachmentPanelController = new BottomAttachmentPanelController(
+            this,
+            new BottomAttachmentPanelController.Callback() {
+                @Override
+                public void onVisibilityChanged() {
+                    bindActiveHoldTrigger();
+                    updateContentInsetsForInputBar();
                 }
-            });
-        }
-        if (optionSendProduct != null) {
-            optionSendProduct.setOnClickListener(view -> {
-                setAttachmentPanelVisible(false);
-                if (actionListener != null) {
-                    actionListener.onProductRequested();
+
+                @Override
+                public void onImageRequested() {
+                    if (actionListener != null) {
+                        actionListener.onImageRequested();
+                    }
                 }
-            });
-        }
+
+                @Override
+                public void onProductRequested() {
+                    if (actionListener != null) {
+                        actionListener.onProductRequested();
+                    }
+                }
+            }
+        );
     }
 
     private void updateAttachmentPanelOptions() {
-        if (optionSendProduct != null) {
-            optionSendProduct.setVisibility(
-                manualAgentType == ManualAgentType.INSURANCE_PLANNER ? View.VISIBLE : View.GONE
-            );
+        if (attachmentPanelController != null) {
+            attachmentPanelController.setManualAgentType(getManualAgentType());
         }
         updateContentInsetsForInputBar();
-    }
-
-    private void setManualModeEnabled(boolean enabled, boolean notifyListener) {
-        if (manualModeEnabled == enabled) {
-            updateManualModeUi();
-            updateTextInputActionState();
-            return;
-        }
-        manualModeEnabled = enabled;
-        if (manualModeEnabled) {
-            closeAttachmentPanel();
-        }
-        updateManualModeUi();
-        updateTextInputActionState();
-        if (notifyListener && modeChangeListener != null) {
-            modeChangeListener.onManualModeChanged(manualModeEnabled);
-        }
-    }
-
-    private void updateManualModeUi() {
-        if (aiAvatarButton != null) {
-            aiAvatarButton.setVisibility(
-                !manualModeEnabled && manualAgentOnline ? View.VISIBLE : View.GONE
-            );
-        }
     }
 
     private void setVoiceInputMode(boolean enabled) {
         if (
             buttonVoiceInput == null
                 || buttonAddContent == null
-                || consultInput == null
-                || voiceRecordPanel == null
+                || textInputController == null
+                || voiceRecordController == null
+                || !voiceRecordController.isAvailable()
         ) {
             return;
         }
 
         if (enabled && !voiceInputMode) {
-            textInputDraft = consultInput.getText().toString();
+            textInputController.captureDraft();
         }
         voiceInputMode = enabled;
 
         if (enabled) {
-            hideKeyboard();
             setAttachmentPanelVisible(false);
-            consultInput.clearFocus();
+            textInputController.dismissKeyboardAndClearFocus();
             bindActiveHoldTrigger();
-            buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_keyboard);
-            buttonVoiceInput.setContentDescription(
-                getResources().getString(R.string.baidu_web_keyboard_content_description)
-            );
-            consultInput.setInputType(InputType.TYPE_NULL);
-            consultInput.setFocusable(false);
-            consultInput.setFocusableInTouchMode(false);
-            consultInput.setCursorVisible(false);
-            consultInput.setTextIsSelectable(false);
-            consultInput.setSingleLine(true);
-            consultInput.setMinLines(1);
-            consultInput.setMaxLines(1);
-            consultInput.setHorizontallyScrolling(false);
-            consultInput.setGravity(Gravity.CENTER);
-            consultInput.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-            consultInput.setText(R.string.baidu_web_hold_to_talk);
+            updateVoiceInputModeIcon();
+            textInputController.showVoicePrompt();
             updateTextInputActionState();
             updateContentInsetsForInputBar();
         } else {
             bindActiveHoldTrigger();
-            buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_voice);
-            buttonVoiceInput.setContentDescription(
-                getResources().getString(R.string.baidu_web_voice_content_description)
-            );
-            consultInput.setFocusable(true);
-            consultInput.setFocusableInTouchMode(true);
-            consultInput.setInputType(textInputOriginalInputType);
-            consultInput.setCursorVisible(true);
-            consultInput.setTextIsSelectable(false);
-            applyTextInputWrapping();
-            consultInput.setImeOptions(textInputOriginalImeOptions);
-            consultInput.setGravity(textInputOriginalGravity);
-            consultInput.setTypeface(textInputOriginalTypeface);
-            consultInput.setHint(R.string.baidu_web_input_hint);
-            consultInput.setText(textInputDraft);
-            consultInput.setSelection(consultInput.getText().length());
-            keepTextInputCursorOnBottomLine();
+            updateVoiceInputModeIcon();
+            textInputController.restoreTextInput();
             updateTextInputActionState();
             updateContentInsetsForInputBar();
         }
     }
 
     private void updateTextInputActionState() {
-        if (buttonVoiceInput == null || buttonAddContent == null || consultInput == null) {
-            return;
-        }
-
-        boolean hasInputText = !voiceInputMode && hasTextInputContent();
-        boolean showSendAction = isSendActionVisible();
-
-        buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
-        if (showSendAction) {
-            setAttachmentPanelVisible(false);
-            buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
-            int contentDescriptionResource = keyboardVisible && !hasInputText
-                ? R.string.baidu_web_hide_keyboard_content_description
-                : R.string.baidu_web_send_content_description;
-            buttonAddContent.setContentDescription(
-                getResources().getString(contentDescriptionResource)
-            );
-            buttonAddContent.setPadding(0, 0, 0, 0);
-        } else {
-            int iconResource = manualModeEnabled
-                ? R.drawable.ic_baidu_web_plus
-                : R.drawable.ic_baidu_web_ai_grid;
-            int contentDescriptionResource = manualModeEnabled
-                ? R.string.baidu_web_plus_content_description
-                : R.string.baidu_web_ai_grid_content_description;
-            buttonAddContent.setImageResource(iconResource);
-            buttonAddContent.setContentDescription(
-                getResources().getString(contentDescriptionResource)
-            );
-            int iconPadding = getResources().getDimensionPixelSize(
-                R.dimen.baidu_web_input_icon_padding
-            );
-            buttonAddContent.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
+        if (inputActionController != null) {
+            inputActionController.updateState();
         }
     }
 
-    private void bindTextInputHoldTrigger(View trigger) {
-        if (voiceRecordPanel == null || trigger == null) {
-            return;
+    private void updateVoiceInputModeIcon() {
+        if (inputActionController != null) {
+            inputActionController.setVoiceInputModeIcon(voiceInputMode);
         }
-        voiceRecordPanel.bindToHoldTriggerPreservingClickWhen(
-            trigger,
-            () -> !keyboardVisible && !hasTextInputContent()
-        );
     }
 
     private void bindActiveHoldTrigger() {
-        if (voiceRecordPanel == null || consultInput == null) {
-            return;
-        }
-        if (voiceInputMode) {
-            voiceRecordPanel.bindToImmediateHoldTrigger(consultInput);
-            if (bottomInputBar != null) {
-                voiceRecordPanel.bindToImmediateHoldTrigger(bottomInputBar);
-            }
-        } else {
-            bindTextInputHoldTrigger(consultInput);
-            if (bottomInputBar != null) {
-                bindTextInputHoldTrigger(bottomInputBar);
-                bottomInputBar.setOnClickListener(view -> focusTextInput());
-            }
+        if (voiceRecordController != null) {
+            voiceRecordController.bindActiveHoldTrigger(voiceInputMode);
         }
     }
 
-    private void handleTrailingActionClick() {
-        try {
-            refreshKeyboardVisibilityForAction();
-            if (!voiceInputMode && hasTextInputContent()) {
-                String inputText = getInputText();
-                setAttachmentPanelVisible(false);
-                requestToast(R.string.baidu_web_send_toast_format, inputText);
-                if (keyboardVisible) {
-                    dismissKeyboardAndClearFocus();
-                }
-                if (actionListener != null) {
-                    actionListener.onSendText(inputText);
-                }
-                return;
-            }
-
-            if (isKeyboardDismissActionVisible()) {
-                setAttachmentPanelVisible(false);
-                dismissKeyboardAndClearFocus();
-                return;
-            }
-
-            if (isSendActionVisible()) {
-                setAttachmentPanelVisible(false);
-                if (actionListener != null) {
-                    actionListener.onSendText(getInputText());
-                }
-                return;
-            }
-
-            if (isAiGridActionVisible()) {
-                setAttachmentPanelVisible(false);
-                requestToast(R.string.baidu_web_more_products);
-                return;
-            }
-
-            if (!isPlusActionVisible()) {
-                setAttachmentPanelVisible(false);
-                return;
-            }
-
-            boolean shouldShowPanel = attachmentPanel == null
-                || attachmentPanel.getVisibility() != View.VISIBLE;
-            setAttachmentPanelVisible(shouldShowPanel);
-        } finally {
-            trailingActionStartedWithTextInputInteraction = false;
-        }
+    boolean hasTextInputContent() {
+        return textInputController != null && textInputController.hasContent();
     }
 
-    private boolean isPlusActionVisible() {
-        return manualModeEnabled
-            && !keyboardVisible
-            && (voiceInputMode || !hasTextInputContent());
-    }
-
-    private boolean isAiGridActionVisible() {
-        return !manualModeEnabled
-            && !isSendActionVisible()
-            && !isTextInputInteractionActive();
-    }
-
-    private boolean isKeyboardDismissActionVisible() {
-        return !voiceInputMode && isTextInputInteractionActive() && !hasTextInputContent();
-    }
-
-    private boolean isSendActionVisible() {
-        return !voiceInputMode && (hasTextInputContent() || keyboardVisible);
-    }
-
-    private boolean isTextInputInteractionActive() {
-        return keyboardVisible
-            || trailingActionStartedWithTextInputInteraction
-            || (consultInput != null && consultInput.hasFocus());
-    }
-
-    private boolean hasTextInputContent() {
-        return consultInput != null
-            && consultInput.getText() != null
-            && consultInput.getText().toString().trim().length() > 0;
-    }
-
-    private void updateAttachmentPanelVisibility(boolean visible) {
-        if (attachmentPanel == null) {
-            return;
-        }
-        int targetVisibility = visible ? View.VISIBLE : View.GONE;
-        if (attachmentPanel.getVisibility() == targetVisibility) {
-            return;
-        }
-        attachmentPanel.setVisibility(targetVisibility);
-        bindActiveHoldTrigger();
-        updateContentInsetsForInputBar();
-    }
-
-    private void requestToast(int messageResource, Object... formatArgs) {
+    void requestToast(int messageResource, Object... formatArgs) {
         if (actionListener != null) {
             actionListener.onToastRequested(messageResource, formatArgs);
         }
     }
 
-    private void applyTextInputWrapping() {
-        if (consultInput == null) {
-            return;
-        }
-        consultInput.setSingleLine(false);
-        consultInput.setMinLines(1);
-        consultInput.setMaxLines(TEXT_INPUT_MAX_LINES);
-        consultInput.setHorizontallyScrolling(false);
-    }
-
-    private void keepTextInputCursorOnBottomLine() {
-        final EditText input = consultInput;
-        if (input == null || voiceInputMode) {
-            return;
-        }
-        input.post(() -> scrollTextInputToCursorLine(input));
-    }
-
-    private void scrollTextInputToCursorLine(EditText input) {
-        if (input != consultInput || voiceInputMode) {
-            return;
-        }
-        Layout layout = input.getLayout();
-        if (layout == null) {
-            return;
-        }
-        if (layout.getLineCount() <= TEXT_INPUT_MAX_LINES) {
-            input.scrollTo(input.getScrollX(), 0);
-            return;
-        }
-
-        int selection = input.getSelectionEnd();
-        if (selection < 0) {
-            selection = input.length();
-        }
-        selection = Math.min(selection, input.length());
-        int cursorLine = layout.getLineForOffset(selection);
-        int visibleTextHeight = input.getHeight()
-            - input.getCompoundPaddingTop()
-            - input.getCompoundPaddingBottom();
-        if (visibleTextHeight <= 0) {
-            return;
-        }
-
-        int targetScrollY = Math.max(0, layout.getLineBottom(cursorLine) - visibleTextHeight);
-        int maxScrollY = Math.max(0, layout.getHeight() - visibleTextHeight);
-        input.scrollTo(input.getScrollX(), Math.min(targetScrollY, maxScrollY));
-    }
-
     private void updateContentInsetsForInputBar() {
-        boolean attachmentPanelVisible = attachmentPanel != null
-            && attachmentPanel.getVisibility() == View.VISIBLE;
-        int inputBottomFillHeight = keyboardVisible
-            ? inputBarKeyboardBottomMargin
-            : getResources().getDimensionPixelSize(R.dimen.baidu_web_input_bottom_margin);
-        setInputBottomFillVisible(!attachmentPanelVisible, inputBottomFillHeight);
-        int inputBarBottomMargin = keyboardVisible
-            ? currentKeyboardHeight
-            : inputBarBaseBottomMargin;
-        setBottomMargin(this, inputBarBottomMargin);
-    }
-
-    private void refreshKeyboardVisibilityForAction() {
-        if (contentRoot == null) {
-            contentRoot = getRootView();
-        }
-        if (contentRoot == null) {
-            return;
-        }
-        WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(contentRoot);
-        boolean keyboardVisibleFromInsets = false;
-        if (rootWindowInsets != null) {
-            keyboardVisibleFromInsets = rootWindowInsets.isVisible(WindowInsetsCompat.Type.ime());
-            if (keyboardVisibleFromInsets) {
-                currentKeyboardHeight = rootWindowInsets
-                    .getInsets(WindowInsetsCompat.Type.ime())
-                    .bottom;
-            }
-        }
-
-        Rect visibleFrame = new Rect();
-        int[] rootLocation = new int[2];
-        contentRoot.getWindowVisibleDisplayFrame(visibleFrame);
-        contentRoot.getLocationOnScreen(rootLocation);
-        int visibleBottomInRoot = visibleFrame.bottom - rootLocation[1];
-        int keyboardHeightFromFrame = Math.max(
-            0,
-            contentRoot.getHeight() - visibleBottomInRoot
-        );
-        boolean keyboardVisibleFromFrame = keyboardHeightFromFrame >= keyboardVisibilityThreshold;
-        if (keyboardVisibleFromFrame) {
-            currentKeyboardHeight = keyboardHeightFromFrame;
-        }
-        keyboardVisible = keyboardVisibleFromInsets || keyboardVisibleFromFrame;
-        updateContentInsetsForInputBar();
-    }
-
-    private void setInputBottomFillVisible(boolean visible, int height) {
-        if (inputBottomFill == null) {
-            return;
-        }
-        ViewGroup.LayoutParams layoutParams = inputBottomFill.getLayoutParams();
-        if (layoutParams != null && layoutParams.height != height) {
-            layoutParams.height = height;
-            inputBottomFill.setLayoutParams(layoutParams);
-        }
-        int targetVisibility = visible ? View.VISIBLE : View.GONE;
-        if (inputBottomFill.getVisibility() != targetVisibility) {
-            inputBottomFill.setVisibility(targetVisibility);
+        if (keyboardController != null) {
+            keyboardController.updateContentInsets();
         }
     }
 
-    private void hideKeyboard() {
-        View focusedView = null;
-        Activity activity = findActivity(getContext());
-        if (activity != null) {
-            focusedView = activity.getCurrentFocus();
-        }
-        if (focusedView == null) {
-            focusedView = consultInput;
-        }
-        if (focusedView == null) {
-            return;
-        }
-        InputMethodManager inputMethodManager =
-            (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (inputMethodManager != null) {
-            inputMethodManager.hideSoftInputFromWindow(focusedView.getWindowToken(), 0);
+    void refreshKeyboardVisibilityForAction() {
+        if (keyboardController != null) {
+            keyboardController.refreshKeyboardVisibilityForAction();
         }
     }
 
-    private void dismissKeyboardAndClearFocus() {
-        hideKeyboard();
-        if (consultInput != null) {
-            consultInput.clearFocus();
+    private void configureKeyboardAvoidance() {
+        if (keyboardController != null) {
+            keyboardController.attach();
+        }
+    }
+
+    private void detachKeyboardAvoidance() {
+        if (keyboardController != null) {
+            keyboardController.detach();
+        }
+    }
+
+    void dismissKeyboardAndClearFocus() {
+        if (textInputController != null) {
+            textInputController.dismissKeyboardAndClearFocus();
         }
     }
 
     private void focusTextInput() {
-        if (consultInput == null || voiceInputMode) {
-            return;
+        if (textInputController != null) {
+            textInputController.focusTextInput();
         }
-        consultInput.requestFocus();
-        consultInput.setSelection(consultInput.getText().length());
-        consultInput.post(() -> {
-            InputMethodManager inputMethodManager =
-                (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (inputMethodManager != null) {
-                inputMethodManager.showSoftInput(consultInput, InputMethodManager.SHOW_IMPLICIT);
-            }
-        });
     }
 
-    private void detachKeyboardAvoidance() {
-        if (contentRoot != null && keyboardLayoutListener != null) {
-            contentRoot.getViewTreeObserver().removeOnGlobalLayoutListener(keyboardLayoutListener);
-            keyboardLayoutListener = null;
-        }
-        if (inputBarLayoutChangeListener != null) {
-            removeOnLayoutChangeListener(inputBarLayoutChangeListener);
-            inputBarLayoutChangeListener = null;
-        }
-        contentRoot = null;
+    boolean isKeyboardVisible() {
+        return keyboardController != null && keyboardController.isKeyboardVisible();
     }
 
-    private PicVoiceRecordPanel createVoiceRecordPanel(Context context) {
-        ComponentActivity activity = findComponentActivity(context);
-        if (activity != null) {
-            return new PicVoiceRecordPanel(activity);
-        }
-        return new PicVoiceRecordPanel(context);
+    boolean isTextInputFocused() {
+        return consultInput != null && consultInput.hasFocus();
     }
 
-    private void setWindowAdjustResize(Activity activity) {
-        Window window = activity.getWindow();
-        if (window == null) {
-            return;
-        }
-        int softInputMode = window.getAttributes().softInputMode;
-        int stateMode = softInputMode & WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE;
-        window.setSoftInputMode(stateMode | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    void toggleVoiceInputMode() {
+        setVoiceInputMode(!voiceInputMode);
     }
 
-    private Activity findActivity(Context context) {
-        Context currentContext = context;
-        while (currentContext instanceof ContextWrapper) {
-            if (currentContext instanceof Activity) {
-                return (Activity) currentContext;
-            }
-            currentContext = ((ContextWrapper) currentContext).getBaseContext();
+    void dispatchSendText(String text) {
+        if (actionListener != null) {
+            actionListener.onSendText(text);
         }
-        return null;
-    }
-
-    private ComponentActivity findComponentActivity(Context context) {
-        Context currentContext = context;
-        while (currentContext instanceof ContextWrapper) {
-            if (currentContext instanceof ComponentActivity) {
-                return (ComponentActivity) currentContext;
-            }
-            currentContext = ((ContextWrapper) currentContext).getBaseContext();
-        }
-        return null;
-    }
-
-    private int getBottomMargin(View view) {
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        if (layoutParams instanceof ViewGroup.MarginLayoutParams) {
-            return ((ViewGroup.MarginLayoutParams) layoutParams).bottomMargin;
-        }
-        return 0;
     }
 
     private int getTopVisualOverflowHeight() {
@@ -1082,134 +564,4 @@ public class BottomInputPanelView extends LinearLayout {
         return Math.max(0, -visualTop);
     }
 
-    private void setBottomMargin(View view, int bottomMargin) {
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-        if (!(layoutParams instanceof ViewGroup.MarginLayoutParams)) {
-            return;
-        }
-        ViewGroup.MarginLayoutParams marginLayoutParams =
-            (ViewGroup.MarginLayoutParams) layoutParams;
-        if (marginLayoutParams.bottomMargin == bottomMargin) {
-            return;
-        }
-        marginLayoutParams.bottomMargin = bottomMargin;
-        view.setLayoutParams(marginLayoutParams);
-    }
-
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
-    }
-
-    private static class HorizontalSuggestionItem {
-        private final int iconResource;
-        private final int textResource;
-
-        private HorizontalSuggestionItem(int iconResource, int textResource) {
-            this.iconResource = iconResource;
-            this.textResource = textResource;
-        }
-    }
-
-    private static class HorizontalSuggestionAdapter
-        extends RecyclerView.Adapter<HorizontalSuggestionViewHolder> {
-
-        private final List<HorizontalSuggestionItem> items;
-        private final ToastRequestListener toastRequestListener;
-
-        private HorizontalSuggestionAdapter(
-            List<HorizontalSuggestionItem> items,
-            ToastRequestListener toastRequestListener
-        ) {
-            this.items = new ArrayList<>(items);
-            this.toastRequestListener = toastRequestListener;
-        }
-
-        private void appendItems(List<HorizontalSuggestionItem> newItems) {
-            int startPosition = items.size();
-            items.addAll(newItems);
-            notifyItemRangeInserted(startPosition, newItems.size());
-        }
-
-        private void replaceItems(List<HorizontalSuggestionItem> newItems) {
-            items.clear();
-            items.addAll(newItems);
-            notifyDataSetChanged();
-        }
-
-        @Override
-        public HorizontalSuggestionViewHolder onCreateViewHolder(
-            ViewGroup parent,
-            int viewType
-        ) {
-            View itemView = LayoutInflater.from(parent.getContext()).inflate(
-                R.layout.item_baidu_web_suggestion_chip,
-                parent,
-                false
-            );
-            return new HorizontalSuggestionViewHolder(itemView);
-        }
-
-        @Override
-        public void onBindViewHolder(HorizontalSuggestionViewHolder holder, int position) {
-            holder.bind(items.get(position), toastRequestListener);
-        }
-
-        @Override
-        public int getItemCount() {
-            return items.size();
-        }
-    }
-
-    private static class HorizontalSuggestionViewHolder extends RecyclerView.ViewHolder {
-        private final ImageView iconView;
-        private final TextView textView;
-
-        private HorizontalSuggestionViewHolder(View itemView) {
-            super(itemView);
-            iconView = itemView.findViewById(R.id.suggestion_chip_icon);
-            textView = itemView.findViewById(R.id.suggestion_chip_text);
-        }
-
-        private void bind(HorizontalSuggestionItem item, ToastRequestListener toastRequestListener) {
-            iconView.setImageResource(item.iconResource);
-            textView.setText(item.textResource);
-            itemView.setContentDescription(textView.getText());
-            itemView.setOnClickListener(view -> {
-                if (toastRequestListener != null) {
-                    toastRequestListener.onToastRequested(item.textResource);
-                }
-            });
-        }
-    }
-
-    private interface ToastRequestListener {
-        void onToastRequested(int messageResource, Object... formatArgs);
-    }
-
-    public interface ActionListener {
-        default void onSendText(String text) {
-            // Optional override.
-        }
-
-        default void onImageRequested() {
-            // Optional override.
-        }
-
-        default void onProductRequested() {
-            // Optional override.
-        }
-
-        default void onToastRequested(int messageResource, Object... formatArgs) {
-            // Optional override.
-        }
-    }
-
-    public interface ModeChangeListener {
-        void onManualModeChanged(boolean manualModeEnabled);
-    }
-
-    public enum ManualAgentType {
-        ONLINE_SERVICE,
-        INSURANCE_PLANNER
-    }
 }

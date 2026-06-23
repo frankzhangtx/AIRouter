@@ -3,8 +3,9 @@ package com.example.cctest;
 import android.content.Context;
 import android.os.Bundle;
 import android.widget.Toast;
+import com.example.cctest.widget.BottomInputActionListener;
 import com.example.cctest.widget.BottomInputPanelView;
-import com.example.cctest.widget.BottomInputPanelView.ManualAgentType;
+import com.example.cctest.widget.ManualAgentType;
 
 class BaiduWebManualModeManager {
 
@@ -186,7 +187,7 @@ class BaiduWebManualModeManager {
         bottomInputPanel.setManualAgentOnline(manualAgentOnline);
         bottomInputPanel.setManualAgentType(manualAgentType);
         bottomInputPanel.setHorizontalSuggestionListVisible(horizontalSuggestionListVisible);
-        bottomInputPanel.setActionListener(new BottomInputPanelView.ActionListener() {
+        bottomInputPanel.setActionListener(new BottomInputActionListener() {
             @Override
             public void onToastRequested(int messageResource, Object... formatArgs) {
                 if (bottomInputPanel != null) {

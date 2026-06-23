@@ -28,6 +28,7 @@ public class BottomInputPanelView extends LinearLayout {
     private BottomInputActionController inputActionController;
     private BottomManualModeController manualModeController;
     private BottomOutsideKeyboardDismissController outsideKeyboardDismissController;
+    private BottomInputBarLayoutController inputBarLayoutController;
     private VoiceRecordCallback voiceRecordCallback;
     private BottomInputActionListener actionListener;
     private boolean voiceInputMode;
@@ -254,6 +255,7 @@ public class BottomInputPanelView extends LinearLayout {
         configureManualModeController();
         configureKeyboardController();
         configureOutsideKeyboardDismissController();
+        configureInputBarLayoutController();
         configureHorizontalSuggestionList(context);
         configureAttachmentPanel();
         configureTextInputController();
@@ -274,6 +276,8 @@ public class BottomInputPanelView extends LinearLayout {
                 @Override
                 public void onManualModeUiStateChanged() {
                     updateTextInputActionState();
+                    updateInputBarLayoutState();
+                    updateContentInsetsForInputBar();
                 }
 
                 @Override
@@ -282,6 +286,10 @@ public class BottomInputPanelView extends LinearLayout {
                 }
             }
         );
+    }
+
+    private void configureInputBarLayoutController() {
+        inputBarLayoutController = new BottomInputBarLayoutController(this);
     }
 
     private void configureHorizontalSuggestionList(Context context) {
@@ -454,6 +462,7 @@ public class BottomInputPanelView extends LinearLayout {
             textInputController.captureDraft();
         }
         voiceInputMode = enabled;
+        updateInputBarLayoutState();
 
         if (enabled) {
             setAttachmentPanelVisible(false);
@@ -475,6 +484,12 @@ public class BottomInputPanelView extends LinearLayout {
     private void updateTextInputActionState() {
         if (inputActionController != null) {
             inputActionController.updateState();
+        }
+    }
+
+    private void updateInputBarLayoutState() {
+        if (inputBarLayoutController != null) {
+            inputBarLayoutController.setManualOfflineStyleEnabled(!isManualAgentOnline());
         }
     }
 

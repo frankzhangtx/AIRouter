@@ -32,10 +32,12 @@ final class BottomManualModeController {
     void setManualAgentOnline(boolean online) {
         if (manualAgentOnline == online) {
             updateManualModeUi();
+            notifyManualModeUiStateChanged();
             return;
         }
         manualAgentOnline = online;
         updateManualModeUi();
+        notifyManualModeUiStateChanged();
     }
 
     boolean isManualAgentOnline() {

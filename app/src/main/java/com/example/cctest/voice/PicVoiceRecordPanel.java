@@ -795,11 +795,12 @@ public class PicVoiceRecordPanel extends FrameLayout {
         }
 
         private void updatePanelBounds() {
-            float left = panelHorizontalMargin;
-            float right = getWidth() - panelHorizontalMargin;
+            panelRect.left = panelHorizontalMargin;
+            panelRect.right = getWidth() - panelHorizontalMargin;
             float bottom = resolvePanelBottom();
             float top = bottom - panelHeight;
-            panelRect.set(left, top, right, bottom);
+            panelRect.top = top;
+            panelRect.bottom = bottom;
         }
 
         private float resolvePanelBottom() {

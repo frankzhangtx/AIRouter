@@ -90,9 +90,9 @@
                 android:minHeight="@dimen/baidu_web_input_height"
                 android:orientation="horizontal"
                 android:paddingStart="12dp"
-                android:paddingTop="8dp"
+                android:paddingTop="@dimen/baidu_web_input_vertical_padding"
                 android:paddingEnd="12dp"
-                android:paddingBottom="8dp">
+                android:paddingBottom="@dimen/baidu_web_input_vertical_padding">
 
                 <ImageButton
                     android:id="@+id/button_voice_input"

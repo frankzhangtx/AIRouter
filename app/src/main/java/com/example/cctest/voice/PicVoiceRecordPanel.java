@@ -282,6 +282,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
             }
         });
         if (recording) {
+            vibrateForVoicePanelFeedback();
             if (callback != null) {
                 callback.onStart();
             }
@@ -423,7 +424,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         canvasView.updateFinger(x, y, active);
         boolean cancelModeChanged = canvasView.setCancelMode(!active);
         if (vibrateOnModeChange && cancelModeChanged) {
-            vibrateForModeChange();
+            vibrateForVoicePanelFeedback();
         }
     }
 
@@ -440,7 +441,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         return insideRecordArea;
     }
 
-    private void vibrateForModeChange() {
+    private void vibrateForVoicePanelFeedback() {
         Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
         if (vibrator == null || !vibrator.hasVibrator()) {
             return;

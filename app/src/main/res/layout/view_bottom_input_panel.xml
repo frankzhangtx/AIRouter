@@ -77,6 +77,14 @@
                     android:importantForAccessibility="no"
                     android:padding="@dimen/baidu_web_ai_avatar_padding"
                     android:src="@drawable/ic_baidu_web_ai_avatar" />
+
+                <ImageView
+                    android:layout_width="@dimen/baidu_web_ai_avatar_online_badge_width"
+                    android:layout_height="@dimen/baidu_web_ai_avatar_online_badge_height"
+                    android:layout_gravity="bottom|center_horizontal"
+                    android:importantForAccessibility="no"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/ic_zhixiaoan_online_label" />
             </FrameLayout>
 
             <LinearLayout
@@ -121,11 +129,11 @@
                     android:maxLines="4"
                     android:minLines="1"
                     android:overScrollMode="never"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
+                    android:paddingStart="@dimen/baidu_web_input_hint_icon_gap"
+                    android:paddingEnd="@dimen/baidu_web_input_text_trailing_icon_gap"
                     android:scrollbars="none"
                     android:singleLine="false"
-                    android:textColor="@color/black"
+                    android:textColor="@color/baidu_web_input_text"
                     android:textColorHint="@color/baidu_web_input_hint"
                     android:textSize="@dimen/baidu_web_input_text_size" />
 

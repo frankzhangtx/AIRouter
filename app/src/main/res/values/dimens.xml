@@ -39,10 +39,16 @@
     <dimen name="baidu_web_input_compact_icon_size">24dp</dimen>
     <dimen name="baidu_web_input_send_icon_bottom_gap">10dp</dimen>
     <dimen name="baidu_web_input_icon_padding">6dp</dimen>
-    <dimen name="baidu_web_input_text_size">16sp</dimen>
+    <dimen name="baidu_web_input_text_size">13dp</dimen>
+    <dimen name="baidu_web_input_text_left_gap">16dp</dimen>
+    <dimen name="baidu_web_input_hint_icon_gap">8dp</dimen>
+    <dimen name="baidu_web_input_text_trailing_icon_gap">8dp</dimen>
+    <dimen name="baidu_web_input_multiline_text_vertical_gap">15dp</dimen>
     <dimen name="baidu_web_ai_avatar_size">44dp</dimen>
     <dimen name="baidu_web_ai_avatar_gap">6dp</dimen>
     <dimen name="baidu_web_ai_avatar_padding">6dp</dimen>
+    <dimen name="baidu_web_ai_avatar_online_badge_width">28dp</dimen>
+    <dimen name="baidu_web_ai_avatar_online_badge_height">14dp</dimen>
     <dimen name="baidu_web_input_top_extension_height">15dp</dimen>
     <dimen name="baidu_web_input_top_extension_fade_height">5dp</dimen>
     <dimen name="baidu_web_input_top_extension_solid_height">10dp</dimen>

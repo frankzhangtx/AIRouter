@@ -26,6 +26,8 @@ final class BottomTextInputController {
     private int originalInputType;
     private int originalImeOptions;
     private int originalGravity;
+    private int originalPaddingTop;
+    private int originalPaddingBottom;
     private Typeface originalTypeface;
 
     BottomTextInputController(EditText input, Callback callback) {
@@ -178,8 +180,11 @@ final class BottomTextInputController {
         originalInputType = input.getInputType();
         originalImeOptions = input.getImeOptions();
         originalGravity = input.getGravity();
+        originalPaddingTop = input.getPaddingTop();
+        originalPaddingBottom = input.getPaddingBottom();
         originalTypeface = input.getTypeface();
         applyWrapping();
+        applyTextContentPadding();
         input.setVerticalScrollBarEnabled(false);
         input.setOverScrollMode(View.OVER_SCROLL_NEVER);
         inputTextWatcher = new TextWatcher() {
@@ -195,6 +200,8 @@ final class BottomTextInputController {
 
             @Override
             public void afterTextChanged(Editable text) {
+                applyTextContentPadding();
+                input.post(() -> applyTextContentPadding());
                 keepCursorOnBottomLine();
                 notifyTextChanged();
             }
@@ -210,6 +217,76 @@ final class BottomTextInputController {
         input.setMinLines(1);
         input.setMaxLines(TEXT_INPUT_MAX_LINES);
         input.setHorizontallyScrolling(false);
+    }
+
+    private void applyTextContentPadding() {
+        if (input == null || isVoiceInputMode()) {
+            return;
+        }
+
+        int startPadding = hasContent() ? getPlainTextStartPadding() : getHintStartPadding();
+        int endPadding = input.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_text_trailing_icon_gap
+        );
+        int topPadding = getTextTopPadding();
+        int bottomPadding = getTextBottomPadding();
+        if (input.getPaddingStart() == startPadding
+            && input.getPaddingTop() == topPadding
+            && input.getPaddingEnd() == endPadding
+            && input.getPaddingBottom() == bottomPadding) {
+            return;
+        }
+
+        input.setPaddingRelative(
+            startPadding,
+            topPadding,
+            endPadding,
+            bottomPadding
+        );
+    }
+
+    private int getPlainTextStartPadding() {
+        int textLeftGap = input.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_text_left_gap
+        );
+        Object parent = input.getParent();
+        int parentPaddingStart = parent instanceof View ? ((View) parent).getPaddingStart() : 0;
+        return Math.max(0, textLeftGap - parentPaddingStart);
+    }
+
+    private int getHintStartPadding() {
+        return input.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_hint_icon_gap
+        );
+    }
+
+    private int getTextTopPadding() {
+        if (!hasMultilineText()) {
+            return originalPaddingTop;
+        }
+        int visualTopGap = input.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_multiline_text_vertical_gap
+        );
+        Object parent = input.getParent();
+        int parentPaddingTop = parent instanceof View ? ((View) parent).getPaddingTop() : 0;
+        return Math.max(0, visualTopGap - parentPaddingTop);
+    }
+
+    private int getTextBottomPadding() {
+        if (!hasMultilineText()) {
+            return originalPaddingBottom;
+        }
+        int visualBottomGap = input.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_multiline_text_vertical_gap
+        );
+        Object parent = input.getParent();
+        int parentPaddingBottom = parent instanceof View ? ((View) parent).getPaddingBottom() : 0;
+        return Math.max(0, visualBottomGap - parentPaddingBottom);
+    }
+
+    private boolean hasMultilineText() {
+        Layout layout = input.getLayout();
+        return hasContent() && layout != null && layout.getLineCount() > 1;
     }
 
     private void scrollToCursorLine(EditText currentInput) {

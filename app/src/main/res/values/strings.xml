@@ -32,6 +32,8 @@
     <string name="baidu_web_bottom_panel_height_toast">底部面板高度：%1$d px</string>
     <string name="baidu_web_show_bottom_panel">显示底部面板</string>
     <string name="baidu_web_hide_bottom_panel">隐藏底部面板</string>
+    <string name="baidu_web_bottom_panel_layer_above">底部面板在WebView上面</string>
+    <string name="baidu_web_bottom_panel_layer_below">底部面板在WebView下面</string>
     <string name="baidu_web_suggestion_smart_insurance">智能选保</string>
     <string name="baidu_web_suggestion_product_explain">产品解读</string>
     <string name="baidu_web_suggestion_easy_match">省心配</string>

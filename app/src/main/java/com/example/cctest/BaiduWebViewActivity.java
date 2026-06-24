@@ -21,12 +21,15 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private static final String BAIDU_URL = "https://www.baidu.com";
     private static final String KEY_BOTTOM_OVERLAY_VISIBLE = "bottom_overlay_visible";
     private static final String KEY_BOTTOM_PANEL_VISIBLE = "bottom_panel_visible";
+    private static final String KEY_BOTTOM_PANEL_LAYER_ABOVE_WEB_VIEW =
+        "bottom_panel_layer_above_web_view";
     private static final String KEY_BOTTOM_PANEL_ATTACHMENT_VISIBLE_WHEN_HIDDEN =
         "bottom_panel_attachment_visible_when_hidden";
 
     private WebView webView;
     private BottomInputPanelView bottomInputPanel;
     private View bottomInputOverlay;
+    private View manualControls;
     private View.OnLayoutChangeListener bottomInputPanelLayoutChangeListener;
     private BaiduWebManualModeManager manualModeManager;
     private MaterialButton manualToggleButton;
@@ -38,8 +41,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private MaterialButton bottomOverlayToggleButton;
     private MaterialButton bottomPanelHeightButton;
     private MaterialButton bottomPanelVisibilityToggleButton;
+    private MaterialButton bottomPanelLayerToggleButton;
     private boolean bottomOverlayVisible;
     private boolean bottomPanelVisible = true;
+    private boolean bottomPanelLayerAboveWebView = true;
     private boolean bottomPanelAttachmentVisibleWhenHidden;
 
     @Override
@@ -51,6 +56,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         webView = findViewById(R.id.web_view);
         bottomInputPanel = findViewById(R.id.bottom_input_container);
         bottomInputOverlay = findViewById(R.id.bottom_input_overlay);
+        manualControls = findViewById(R.id.manual_controls);
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
@@ -61,10 +67,13 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         bottomPanelHeightButton = findViewById(R.id.button_get_bottom_panel_height);
         bottomPanelVisibilityToggleButton =
             findViewById(R.id.button_toggle_bottom_panel_visibility);
+        bottomPanelLayerToggleButton = findViewById(R.id.button_toggle_bottom_panel_layer);
         bottomOverlayVisible = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_BOTTOM_OVERLAY_VISIBLE);
         bottomPanelVisible = savedInstanceState == null
             || savedInstanceState.getBoolean(KEY_BOTTOM_PANEL_VISIBLE, true);
+        bottomPanelLayerAboveWebView = savedInstanceState == null
+            || savedInstanceState.getBoolean(KEY_BOTTOM_PANEL_LAYER_ABOVE_WEB_VIEW, true);
         bottomPanelAttachmentVisibleWhenHidden = savedInstanceState != null
             && savedInstanceState.getBoolean(
                 KEY_BOTTOM_PANEL_ATTACHMENT_VISIBLE_WHEN_HIDDEN
@@ -101,6 +110,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         configureManualControls();
         updateBottomPanelVisibility();
         configureBottomOverlay();
+        applyBottomPanelLayerOrder();
         if (savedInstanceState == null) {
             webView.loadUrl(BAIDU_URL);
         } else {
@@ -165,6 +175,11 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomPanelVisibilityToggleButton,
             BaiduWebManualModeManager.CONTROL_TOGGLE_BOTTOM_PANEL_VISIBILITY
         );
+        if (bottomPanelLayerToggleButton != null) {
+            bottomPanelLayerToggleButton.setOnClickListener(
+                view -> toggleBottomPanelLayerOrder()
+            );
+        }
         updateManualControlTexts();
     }
 
@@ -201,6 +216,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         updateBottomOverlayToggleText();
         updateBottomPanelVisibilityToggleText();
+        updateBottomPanelLayerToggleText();
     }
 
     private void configureBottomOverlay() {
@@ -235,6 +251,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 updateBottomOverlayFrame();
             }
         }
+        applyBottomPanelLayerOrder();
         updateBottomOverlayToggleText();
     }
 
@@ -273,6 +290,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         updateBottomOverlayVisibility();
         updateBottomPanelVisibilityToggleText();
+        applyBottomPanelLayerOrder();
     }
 
     private void updateBottomPanelVisibilityToggleText() {
@@ -283,6 +301,46 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomPanelVisible
                 ? R.string.baidu_web_hide_bottom_panel
                 : R.string.baidu_web_show_bottom_panel
+        );
+    }
+
+    private void toggleBottomPanelLayerOrder() {
+        bottomPanelLayerAboveWebView = !bottomPanelLayerAboveWebView;
+        applyBottomPanelLayerOrder();
+    }
+
+    private void applyBottomPanelLayerOrder() {
+        if (webView == null) {
+            updateBottomPanelLayerToggleText();
+            return;
+        }
+        webView.setTranslationZ(bottomPanelLayerAboveWebView ? 0f : 2f);
+        if (bottomInputPanel != null) {
+            bottomInputPanel.setTranslationZ(bottomPanelLayerAboveWebView ? 1f : 0f);
+            bottomInputPanel.bringToFront();
+        }
+        if (bottomInputOverlay != null) {
+            bottomInputOverlay.setTranslationZ(bottomPanelLayerAboveWebView ? 1f : 0f);
+            bottomInputOverlay.bringToFront();
+        }
+        if (!bottomPanelLayerAboveWebView) {
+            webView.bringToFront();
+        }
+        if (manualControls != null) {
+            manualControls.setTranslationZ(3f);
+            manualControls.bringToFront();
+        }
+        updateBottomPanelLayerToggleText();
+    }
+
+    private void updateBottomPanelLayerToggleText() {
+        if (bottomPanelLayerToggleButton == null) {
+            return;
+        }
+        bottomPanelLayerToggleButton.setText(
+            bottomPanelLayerAboveWebView
+                ? R.string.baidu_web_bottom_panel_layer_above
+                : R.string.baidu_web_bottom_panel_layer_below
         );
     }
 
@@ -340,6 +398,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         outState.putBoolean(KEY_BOTTOM_OVERLAY_VISIBLE, bottomOverlayVisible);
         outState.putBoolean(KEY_BOTTOM_PANEL_VISIBLE, bottomPanelVisible);
         outState.putBoolean(
+            KEY_BOTTOM_PANEL_LAYER_ABOVE_WEB_VIEW,
+            bottomPanelLayerAboveWebView
+        );
+        outState.putBoolean(
             KEY_BOTTOM_PANEL_ATTACHMENT_VISIBLE_WHEN_HIDDEN,
             bottomPanelAttachmentVisibleWhenHidden
         );
@@ -375,6 +437,8 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         bottomOverlayToggleButton = null;
         bottomPanelHeightButton = null;
         bottomPanelVisibilityToggleButton = null;
+        bottomPanelLayerToggleButton = null;
+        manualControls = null;
         if (webView != null) {
             webView.destroy();
             webView = null;

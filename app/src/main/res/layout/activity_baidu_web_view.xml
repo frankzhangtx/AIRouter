@@ -216,6 +216,25 @@
                 app:cornerRadius="14dp"
                 app:strokeColor="@color/baidu_web_input_stroke"
                 app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button_toggle_bottom_panel_layer"
+                android:layout_width="wrap_content"
+                android:layout_height="36.4dp"
+                android:layout_marginTop="4dp"
+                android:elevation="4dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingStart="13dp"
+                android:paddingEnd="13dp"
+                android:text="@string/baidu_web_bottom_panel_layer_above"
+                android:textAllCaps="false"
+                android:textColor="@color/black"
+                android:textSize="8sp"
+                app:backgroundTint="@color/baidu_web_input_background"
+                app:cornerRadius="14dp"
+                app:strokeColor="@color/baidu_web_input_stroke"
+                app:strokeWidth="1dp" />
         </LinearLayout>
 
         <com.example.cctest.widget.BottomInputPanelView

@@ -2,6 +2,7 @@ package com.example.cctest.widget;
 
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
 import com.example.cctest.R;
 
@@ -27,15 +28,16 @@ final class BottomInputActionController {
         if (buttonVoiceInput == null) {
             return;
         }
+        applyVoiceToggleIconStyle();
         if (enabled) {
-            buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_keyboard);
+            buttonVoiceInput.setImageResource(R.mipmap.ic_zhixiaoan_panel);
             buttonVoiceInput.setContentDescription(
                 buttonVoiceInput.getResources().getString(
                     R.string.baidu_web_keyboard_content_description
                 )
             );
         } else {
-            buttonVoiceInput.setImageResource(R.drawable.ic_baidu_web_voice);
+            buttonVoiceInput.setImageResource(R.mipmap.ic_zhixiaoan_voice);
             buttonVoiceInput.setContentDescription(
                 buttonVoiceInput.getResources().getString(
                     R.string.baidu_web_voice_content_description
@@ -55,6 +57,7 @@ final class BottomInputActionController {
         buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
         if (showSendAction) {
             callback.setAttachmentPanelVisible(false);
+            applyTrailingActionIconStyle();
             buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
             int contentDescriptionResource = callback.isKeyboardVisible() && !hasInputText
                 ? R.string.baidu_web_hide_keyboard_content_description
@@ -62,23 +65,28 @@ final class BottomInputActionController {
             buttonAddContent.setContentDescription(
                 buttonAddContent.getResources().getString(contentDescriptionResource)
             );
-            buttonAddContent.setPadding(0, 0, 0, 0);
         } else {
-            int iconResource = callback.isManualModeEnabled()
-                ? R.drawable.ic_baidu_web_plus
-                : R.drawable.ic_baidu_web_ai_grid;
-            int contentDescriptionResource = callback.isManualModeEnabled()
-                ? R.string.baidu_web_plus_content_description
-                : R.string.baidu_web_ai_grid_content_description;
+            boolean gridIconVisible = !callback.isManualModeEnabled();
+            int iconResource = gridIconVisible
+                ? R.drawable.ic_baidu_web_ai_grid
+                : R.drawable.ic_baidu_web_plus;
+            int contentDescriptionResource = gridIconVisible
+                ? R.string.baidu_web_ai_grid_content_description
+                : R.string.baidu_web_plus_content_description;
+            applyTrailingActionIconStyle();
             buttonAddContent.setImageResource(iconResource);
             buttonAddContent.setContentDescription(
                 buttonAddContent.getResources().getString(contentDescriptionResource)
             );
-            int iconPadding = buttonAddContent.getResources().getDimensionPixelSize(
-                R.dimen.baidu_web_input_icon_padding
-            );
-            buttonAddContent.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
         }
+    }
+
+    private void applyTrailingActionIconStyle() {
+        int size = buttonAddContent.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_compact_icon_size
+        );
+        applyIconSize(buttonAddContent, size);
+        applyIconPadding(buttonAddContent, 0);
     }
 
     private void configure() {
@@ -100,6 +108,33 @@ final class BottomInputActionController {
             return false;
         });
         buttonAddContent.setOnClickListener(view -> handleTrailingActionClick());
+    }
+
+    private void applyVoiceToggleIconStyle() {
+        int size = buttonVoiceInput.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_compact_icon_size
+        );
+        applyIconSize(buttonVoiceInput, size);
+        applyIconPadding(buttonVoiceInput, 0);
+    }
+
+    private void applyIconSize(ImageButton button, int size) {
+        ViewGroup.LayoutParams layoutParams = button.getLayoutParams();
+        if (layoutParams != null
+            && (layoutParams.width != size || layoutParams.height != size)) {
+            layoutParams.width = size;
+            layoutParams.height = size;
+            button.setLayoutParams(layoutParams);
+        }
+    }
+
+    private void applyIconPadding(ImageButton button, int padding) {
+        if (button.getPaddingStart() != padding
+            || button.getPaddingTop() != padding
+            || button.getPaddingEnd() != padding
+            || button.getPaddingBottom() != padding) {
+            button.setPadding(padding, padding, padding, padding);
+        }
     }
 
     private void handleTrailingActionClick() {

@@ -96,15 +96,15 @@
 
                 <ImageButton
                     android:id="@+id/button_voice_input"
-                    android:layout_width="@dimen/baidu_web_input_icon_size"
-                    android:layout_height="@dimen/baidu_web_input_icon_size"
+                    android:layout_width="@dimen/baidu_web_input_compact_icon_size"
+                    android:layout_height="@dimen/baidu_web_input_compact_icon_size"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/baidu_web_voice_content_description"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:padding="@dimen/baidu_web_input_icon_padding"
+                    android:padding="0dp"
                     android:scaleType="center"
-                    android:src="@drawable/ic_baidu_web_voice" />
+                    android:src="@mipmap/ic_zhixiaoan_voice" />
 
                 <EditText
                     android:id="@+id/edit_text_consult_content"
@@ -131,14 +131,14 @@
 
                 <ImageButton
                     android:id="@+id/button_add_content"
-                    android:layout_width="@dimen/baidu_web_input_icon_size"
-                    android:layout_height="@dimen/baidu_web_input_icon_size"
+                    android:layout_width="@dimen/baidu_web_input_compact_icon_size"
+                    android:layout_height="@dimen/baidu_web_input_compact_icon_size"
                     android:background="@android:color/transparent"
                     android:contentDescription="@string/baidu_web_plus_content_description"
                     android:minWidth="0dp"
                     android:minHeight="0dp"
-                    android:padding="@dimen/baidu_web_input_icon_padding"
-                    android:scaleType="center"
+                    android:padding="0dp"
+                    android:scaleType="fitCenter"
                     android:src="@drawable/ic_baidu_web_plus" />
             </LinearLayout>
             </LinearLayout>

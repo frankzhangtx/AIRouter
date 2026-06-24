@@ -40,6 +40,7 @@
     <dimen name="baidu_web_input_send_icon_bottom_gap">10dp</dimen>
     <dimen name="baidu_web_input_icon_padding">6dp</dimen>
     <dimen name="baidu_web_input_text_size">13dp</dimen>
+    <dimen name="baidu_web_voice_prompt_text_size">16dp</dimen>
     <dimen name="baidu_web_input_text_left_gap">16dp</dimen>
     <dimen name="baidu_web_input_hint_icon_gap">8dp</dimen>
     <dimen name="baidu_web_input_text_trailing_icon_gap">8dp</dimen>

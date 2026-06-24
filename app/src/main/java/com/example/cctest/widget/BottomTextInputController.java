@@ -3,16 +3,19 @@ package com.example.cctest.widget;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.res.ColorStateList;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.Layout;
 import android.text.TextWatcher;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import androidx.core.content.ContextCompat;
 import com.example.cctest.R;
 
 final class BottomTextInputController {
@@ -28,6 +31,8 @@ final class BottomTextInputController {
     private int originalGravity;
     private int originalPaddingTop;
     private int originalPaddingBottom;
+    private float originalTextSize;
+    private ColorStateList originalTextColors;
     private Typeface originalTypeface;
 
     BottomTextInputController(EditText input, Callback callback) {
@@ -90,6 +95,11 @@ final class BottomTextInputController {
         input.setMaxLines(1);
         input.setHorizontallyScrolling(false);
         input.setGravity(Gravity.CENTER);
+        input.setTextColor(ContextCompat.getColor(input.getContext(), R.color.baidu_web_input_text));
+        input.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            input.getResources().getDimension(R.dimen.baidu_web_voice_prompt_text_size)
+        );
         input.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         input.setText(R.string.baidu_web_hold_to_talk);
     }
@@ -106,6 +116,10 @@ final class BottomTextInputController {
         applyWrapping();
         input.setImeOptions(originalImeOptions);
         input.setGravity(originalGravity);
+        input.setTextSize(TypedValue.COMPLEX_UNIT_PX, originalTextSize);
+        if (originalTextColors != null) {
+            input.setTextColor(originalTextColors);
+        }
         input.setTypeface(originalTypeface);
         input.setHint(R.string.baidu_web_input_hint);
         input.setText(textInputDraft);
@@ -182,6 +196,8 @@ final class BottomTextInputController {
         originalGravity = input.getGravity();
         originalPaddingTop = input.getPaddingTop();
         originalPaddingBottom = input.getPaddingBottom();
+        originalTextSize = input.getTextSize();
+        originalTextColors = input.getTextColors();
         originalTypeface = input.getTypeface();
         applyWrapping();
         applyTextContentPadding();

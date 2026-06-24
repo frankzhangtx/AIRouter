@@ -70,7 +70,7 @@ final class BottomInputActionController {
         } else {
             boolean gridIconVisible = !callback.isManualModeEnabled();
             int iconResource = gridIconVisible
-                ? R.drawable.ic_baidu_web_ai_grid
+                ? R.mipmap.ic_zhixiaoan_more
                 : R.drawable.ic_baidu_web_plus;
             int contentDescriptionResource = gridIconVisible
                 ? R.string.baidu_web_ai_grid_content_description

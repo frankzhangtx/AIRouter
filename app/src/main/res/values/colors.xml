@@ -20,7 +20,7 @@
     <color name="baidu_web_input_icon">#2F3237</color>
     <color name="baidu_web_input_text">#222222</color>
     <color name="baidu_web_input_hint">#CCCCCC</color>
-    <color name="baidu_web_input_container_background">#F4F4F5</color>
+    <color name="baidu_web_input_container_background">#F6F7F8</color>
     <color name="baidu_web_ai_avatar_background">#D9E1EB</color>
     <color name="baidu_web_ai_avatar_stroke">#FFFFFFFF</color>
     <color name="baidu_web_send_background">#FFFF6A00</color>

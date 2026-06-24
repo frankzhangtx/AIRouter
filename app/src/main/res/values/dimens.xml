@@ -37,6 +37,7 @@
     <dimen name="baidu_web_input_corner_radius">22dp</dimen>
     <dimen name="baidu_web_input_icon_size">40dp</dimen>
     <dimen name="baidu_web_input_compact_icon_size">24dp</dimen>
+    <dimen name="baidu_web_input_send_icon_bottom_gap">10dp</dimen>
     <dimen name="baidu_web_input_icon_padding">6dp</dimen>
     <dimen name="baidu_web_input_text_size">16sp</dimen>
     <dimen name="baidu_web_ai_avatar_size">44dp</dimen>

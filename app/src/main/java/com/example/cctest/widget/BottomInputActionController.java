@@ -3,7 +3,9 @@ package com.example.cctest.widget;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Gravity;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import com.example.cctest.R;
 
 final class BottomInputActionController {
@@ -57,8 +59,8 @@ final class BottomInputActionController {
         buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
         if (showSendAction) {
             callback.setAttachmentPanelVisible(false);
-            applyTrailingActionIconStyle();
-            buttonAddContent.setImageResource(R.drawable.ic_baidu_web_send);
+            applyTrailingActionIconStyle(true);
+            buttonAddContent.setImageResource(R.mipmap.ic_zhixiaoan_send);
             int contentDescriptionResource = callback.isKeyboardVisible() && !hasInputText
                 ? R.string.baidu_web_hide_keyboard_content_description
                 : R.string.baidu_web_send_content_description;
@@ -73,7 +75,7 @@ final class BottomInputActionController {
             int contentDescriptionResource = gridIconVisible
                 ? R.string.baidu_web_ai_grid_content_description
                 : R.string.baidu_web_plus_content_description;
-            applyTrailingActionIconStyle();
+            applyTrailingActionIconStyle(false);
             buttonAddContent.setImageResource(iconResource);
             buttonAddContent.setContentDescription(
                 buttonAddContent.getResources().getString(contentDescriptionResource)
@@ -81,12 +83,13 @@ final class BottomInputActionController {
         }
     }
 
-    private void applyTrailingActionIconStyle() {
+    private void applyTrailingActionIconStyle(boolean sendIconVisible) {
         int size = buttonAddContent.getResources().getDimensionPixelSize(
             R.dimen.baidu_web_input_compact_icon_size
         );
         applyIconSize(buttonAddContent, size);
         applyIconPadding(buttonAddContent, 0);
+        applyTrailingActionVerticalPosition(sendIconVisible);
     }
 
     private void configure() {
@@ -135,6 +138,34 @@ final class BottomInputActionController {
             || button.getPaddingBottom() != padding) {
             button.setPadding(padding, padding, padding, padding);
         }
+    }
+
+    private void applyTrailingActionVerticalPosition(boolean sendIconVisible) {
+        ViewGroup.LayoutParams layoutParams = buttonAddContent.getLayoutParams();
+        if (!(layoutParams instanceof LinearLayout.LayoutParams)) {
+            return;
+        }
+
+        LinearLayout.LayoutParams linearLayoutParams = (LinearLayout.LayoutParams) layoutParams;
+        int targetGravity = sendIconVisible ? Gravity.BOTTOM : Gravity.CENTER_VERTICAL;
+        int targetBottomMargin = sendIconVisible ? getSendIconBottomMargin() : 0;
+        if (linearLayoutParams.gravity == targetGravity
+            && linearLayoutParams.bottomMargin == targetBottomMargin) {
+            return;
+        }
+
+        linearLayoutParams.gravity = targetGravity;
+        linearLayoutParams.bottomMargin = targetBottomMargin;
+        buttonAddContent.setLayoutParams(linearLayoutParams);
+    }
+
+    private int getSendIconBottomMargin() {
+        int visualBottomGap = buttonAddContent.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_send_icon_bottom_gap
+        );
+        Object parent = buttonAddContent.getParent();
+        int parentPaddingBottom = parent instanceof View ? ((View) parent).getPaddingBottom() : 0;
+        return Math.max(0, visualBottomGap - parentPaddingBottom);
     }
 
     private void handleTrailingActionClick() {

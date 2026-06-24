@@ -52,7 +52,9 @@ final class BottomKeyboardController {
 
         inputBarBaseBottomMargin = getBottomMargin(panelView);
         keyboardVisibilityThreshold = dpToPx(80);
-        inputBarKeyboardBottomMargin = dpToPx(10);
+        inputBarKeyboardBottomMargin = panelView.getResources().getDimensionPixelSize(
+            R.dimen.baidu_web_input_keyboard_gap
+        );
         final Rect visibleFrame = new Rect();
         final int[] rootLocation = new int[2];
 

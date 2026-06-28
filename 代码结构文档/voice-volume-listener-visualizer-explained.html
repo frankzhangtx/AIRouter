@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音量监听与音量柱逻辑说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.94);
+            --surface-strong: #fff9f2;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.28);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --blue: #315f8f;
+            --blue-soft: rgba(49, 95, 143, 0.12);
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1240px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, p {
+            margin: 0;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 34px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 280px;
+            height: 280px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 820px;
+            font-size: clamp(32px, 4vw, 54px);
+            line-height: 1.02;
+            letter-spacing: 0;
+        }
+
+        .hero .lead {
+            margin-top: 14px;
+            max-width: 820px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.7;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.44);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 26px;
+        }
+
+        .panel + .panel,
+        .diagram-panel {
+            margin-top: 20px;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .panel-title {
+            font-size: 26px;
+            letter-spacing: 0;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .summary-card {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .summary-card h3 {
+            font-size: 16px;
+        }
+
+        .summary-card p {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .flow-list {
+            display: grid;
+            gap: 10px;
+            counter-reset: flow;
+        }
+
+        .flow-item {
+            position: relative;
+            padding: 14px 14px 14px 50px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.46);
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 14px;
+        }
+
+        .flow-item::before {
+            counter-increment: flow;
+            content: counter(flow);
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            background: var(--teal-soft);
+            color: var(--teal);
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.68) 0%, rgba(249, 243, 234, 0.86) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.5px;
+            line-height: 1.78;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 10px;
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.72), rgba(244, 236, 227, 0.92));
+            border: 1px solid var(--line);
+        }
+
+        svg {
+            width: 100%;
+            min-width: 1120px;
+            height: auto;
+            display: block;
+        }
+
+        .caption {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.48);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .formula {
+            padding: 16px;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            background: var(--surface-strong);
+            color: var(--muted);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        .formula strong {
+            color: var(--ink);
+        }
+
+        .note {
+            padding: 16px;
+            border-left: 4px solid var(--accent);
+            border-radius: 14px;
+            background: var(--accent-soft);
+            color: var(--muted);
+            line-height: 1.8;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero,
+            .panel {
+                padding: 22px;
+                border-radius: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <span class="eyebrow">Voice Volume Structure</span>
+        <h1>音量监听与音量柱影响链路</h1>
+        <p class="lead">
+            这份文档说明项目中录音音量如何从麦克风采样进入监听回调，如何被平滑成 UI 状态，
+            以及最终如何影响底部可视化音量柱的高度、透明度和波形节奏。
+        </p>
+        <div class="meta-list">
+            <div class="meta-item">主入口：<code>BottomVoiceRecordController</code> 绑定 <code>PicVoiceRecordPanel</code></div>
+            <div class="meta-item">核心文件：<code>app/src/main/java/com/example/cctest/voice/PicVoiceRecordPanel.java</code></div>
+            <div class="meta-item">同源实现：<code>app/src/main/java/com/example/cctest/voice/VoiceRecordPanel.kt</code></div>
+            <div class="meta-item">采样间隔：<code>60ms</code>，音量范围：<code>0..100</code></div>
+        </div>
+    </section>
+
+    <section class="layout">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">阅读抓手</h2>
+                    <p class="panel-subtitle">先看结论，再看下方代码切片和结构图。</p>
+                </div>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>当前业务实际使用的是 Pic 面板</h3>
+                    <p>
+                        <code>BottomInputPanelView</code> 创建 <code>BottomVoiceRecordController</code>，
+                        控制器内部创建并持有 <code>PicVoiceRecordPanel</code>。<code>MainActivity</code>
+                        的 FAB 也直接绑定了 <code>PicVoiceRecordPanel</code>。
+                    </p>
+                </div>
+                <div class="summary-card">
+                    <h3>监听不是系统音量广播，而是麦克风振幅轮询</h3>
+                    <p>
+                        <code>PicVoiceAmplitudeRecorder</code> 启动 <code>MediaRecorder</code> 后，
+                        用主线程 <code>Handler</code> 每 <code>60ms</code> 读取一次
+                        <code>getMaxAmplitude()</code>，再转成 <code>0..100</code> 的逻辑音量。
+                    </p>
+                </div>
+                <div class="summary-card">
+                    <h3>音量柱不直接使用原始采样值</h3>
+                    <p>
+                        回调只写入 <code>targetVolume</code>。动画帧里通过
+                        <code>displayedVolume += (targetVolume - displayedVolume) * 0.54</code>
+                        平滑追赶目标值，避免柱子随着采样跳变而抖动。
+                    </p>
+                </div>
+                <div class="summary-card">
+                    <h3>柱高由音量、波形和中心权重共同决定</h3>
+                    <p>
+                        每根柱子都有按中心衰减的 <code>envelope</code> 和按索引错相的
+                        <code>sin</code> 波。音量越大，柱高越接近最大高度，透明度也更高。
+                    </p>
+                </div>
+            </div>
+        </article>
+
+        <aside class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">关键参数</h2>
+                    <p class="panel-subtitle">参数来自源码常量和 <code>dimens.xml</code>。</p>
+                </div>
+            </div>
+            <div class="flow-list">
+                <div class="flow-item"><code>MAX_RAW_AMPLITUDE = 32767</code>：按 Android 录音振幅上限做归一化。</div>
+                <div class="flow-item"><code>SAMPLE_INTERVAL_MS = 60L</code>：音量采样频率约 16.7 次/秒。</div>
+                <div class="flow-item"><code>WAVE_DURATION_MS = 1100L</code>：可视化波形一轮循环时间。</div>
+                <div class="flow-item"><code>VOLUME_EASING = 0.54f</code>：显示音量每帧追赶目标音量的比例。</div>
+                <div class="flow-item"><code>VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER = 2f</code>：让中低音量也能明显驱动柱高。</div>
+                <div class="flow-item"><code>MIN_BAR_COUNT = 24</code>：可视化区域至少绘制 24 根柱子。</div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="panel diagram-panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">代码结构图</h2>
+                <p class="panel-subtitle">从按住输入栏到音量柱重绘的完整执行路径。</p>
+            </div>
+        </div>
+        <div class="diagram-wrap">
+            <svg viewBox="0 0 1120 720" role="img" aria-labelledby="diagramTitle diagramDesc">
+                <title id="diagramTitle">音量监听影响音量柱的结构图</title>
+                <desc id="diagramDesc">用户长按触发录音，MediaRecorder 采样振幅，回调更新目标音量，动画帧平滑到显示音量，并在 Canvas 中绘制音量柱。</desc>
+                <defs>
+                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#8a6a4d"></path>
+                    </marker>
+                    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#3d2b1e" flood-opacity="0.12"></feDropShadow>
+                    </filter>
+                </defs>
+
+                <rect x="24" y="24" width="1072" height="672" rx="26" fill="#fffaf3" stroke="rgba(84,66,47,0.18)"></rect>
+
+                <g filter="url(#softShadow)">
+                    <rect x="70" y="72" width="230" height="84" rx="18" fill="#fff4e8" stroke="#d8b795"></rect>
+                    <text x="185" y="103" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">触发入口</text>
+                    <text x="185" y="128" text-anchor="middle" fill="#675d52" font-size="13">输入栏 / FAB 长按</text>
+
+                    <rect x="350" y="72" width="230" height="84" rx="18" fill="#edf7f5" stroke="#a9d4cf"></rect>
+                    <text x="465" y="102" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">PicVoiceRecordPanel.show()</text>
+                    <text x="465" y="128" text-anchor="middle" fill="#675d52" font-size="13">检查权限并挂载遮罩层</text>
+
+                    <rect x="630" y="72" width="230" height="84" rx="18" fill="#f7f2df" stroke="#dbc981"></rect>
+                    <text x="745" y="102" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">attachAndStart()</text>
+                    <text x="745" y="128" text-anchor="middle" fill="#675d52" font-size="13">reset + startAnimating</text>
+
+                    <rect x="350" y="238" width="230" height="96" rx="18" fill="#eef3fb" stroke="#b7cbe6"></rect>
+                    <text x="465" y="270" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">MediaRecorder</text>
+                    <text x="465" y="296" text-anchor="middle" fill="#675d52" font-size="13">MIC / MPEG_4 / AAC</text>
+                    <text x="465" y="316" text-anchor="middle" fill="#675d52" font-size="13">临时 m4a 文件</text>
+
+                    <rect x="630" y="238" width="230" height="96" rx="18" fill="#edf7f5" stroke="#a9d4cf"></rect>
+                    <text x="745" y="270" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">sampleRunnable</text>
+                    <text x="745" y="296" text-anchor="middle" fill="#675d52" font-size="13">每 60ms getMaxAmplitude()</text>
+                    <text x="745" y="316" text-anchor="middle" fill="#675d52" font-size="13">异常时当作 0</text>
+
+                    <rect x="350" y="422" width="230" height="96" rx="18" fill="#fff4e8" stroke="#d8b795"></rect>
+                    <text x="465" y="454" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">normalizeAmplitude()</text>
+                    <text x="465" y="480" text-anchor="middle" fill="#675d52" font-size="13">sqrt(raw / 32767)</text>
+                    <text x="465" y="500" text-anchor="middle" fill="#675d52" font-size="13">输出 0..100</text>
+
+                    <rect x="630" y="422" width="230" height="96" rx="18" fill="#f7f2df" stroke="#dbc981"></rect>
+                    <text x="745" y="454" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">updateVolume(volume)</text>
+                    <text x="745" y="480" text-anchor="middle" fill="#675d52" font-size="13">只更新 targetVolume</text>
+                    <text x="745" y="500" text-anchor="middle" fill="#675d52" font-size="13">不立即绘制</text>
+
+                    <rect x="630" y="586" width="230" height="72" rx="18" fill="#eef3fb" stroke="#b7cbe6"></rect>
+                    <text x="745" y="615" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">动画帧平滑</text>
+                    <text x="745" y="640" text-anchor="middle" fill="#675d52" font-size="13">displayedVolume 追赶 targetVolume</text>
+
+                    <rect x="900" y="422" width="160" height="236" rx="18" fill="#fff9f2" stroke="#d3b99f"></rect>
+                    <text x="980" y="454" text-anchor="middle" fill="#201b16" font-size="16" font-weight="700">drawVisualizer()</text>
+                    <text x="980" y="484" text-anchor="middle" fill="#675d52" font-size="13">barCount</text>
+                    <text x="980" y="510" text-anchor="middle" fill="#675d52" font-size="13">volumeRatio</text>
+                    <text x="980" y="536" text-anchor="middle" fill="#675d52" font-size="13">envelope</text>
+                    <text x="980" y="562" text-anchor="middle" fill="#675d52" font-size="13">sin wave</text>
+                    <text x="980" y="588" text-anchor="middle" fill="#675d52" font-size="13">height + alpha</text>
+                    <text x="980" y="614" text-anchor="middle" fill="#675d52" font-size="13">drawRoundRect</text>
+                </g>
+
+                <path d="M 300 114 L 342 114" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 580 114 L 622 114" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 745 156 C 745 196 540 196 500 235" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 580 286 L 622 286" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 745 334 C 745 386 540 376 500 420" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 580 470 L 622 470" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 745 518 L 745 578" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+                <path d="M 860 622 L 892 622" fill="none" stroke="#8a6a4d" stroke-width="2.5" marker-end="url(#arrow)"></path>
+
+                <g>
+                    <rect x="80" y="236" width="220" height="282" rx="18" fill="rgba(177,75,30,0.08)" stroke="rgba(177,75,30,0.28)"></rect>
+                    <text x="190" y="270" text-anchor="middle" fill="#b14b1e" font-size="16" font-weight="700">结束与异常分支</text>
+                    <text x="190" y="304" text-anchor="middle" fill="#675d52" font-size="13">权限拒绝：onCancel()</text>
+                    <text x="190" y="334" text-anchor="middle" fill="#675d52" font-size="13">启动失败：释放并移除面板</text>
+                    <text x="190" y="364" text-anchor="middle" fill="#675d52" font-size="13">采样异常：振幅按 0 处理</text>
+                    <text x="190" y="394" text-anchor="middle" fill="#675d52" font-size="13">松手 / 取消 / detach</text>
+                    <text x="190" y="424" text-anchor="middle" fill="#675d52" font-size="13">removeCallbacks()</text>
+                    <text x="190" y="454" text-anchor="middle" fill="#675d52" font-size="13">stop / reset / release</text>
+                    <text x="190" y="484" text-anchor="middle" fill="#675d52" font-size="13">删除临时录音文件</text>
+                </g>
+            </svg>
+        </div>
+        <p class="caption">
+            读图时从左上角开始：触发入口只负责启动录音面板；真正的音量监听发生在
+            <code>PicVoiceAmplitudeRecorder.sampleRunnable</code>；音量柱的可见变化发生在
+            <code>PicVoiceRecordCanvasView.startAnimating()</code> 和 <code>drawVisualizer()</code>。
+        </p>
+    </section>
+
+    <section class="layout">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">代码切片：启动与监听</h2>
+                    <p class="panel-subtitle">来自 <code>PicVoiceRecordPanel.java</code>，注释为阅读说明。</p>
+                </div>
+            </div>
+            <div class="code-shell">
+<pre><span class="comment">// attachAndStart()：面板挂载后，先启动动画，再启动录音采样。</span>
+canvasView.reset();
+canvasView.startAnimating();
+
+recording = recorder.start(new VolumeChangedListener() {
+    @Override
+    public void onVolumeChanged(int volume) {
+        canvasView.updateVolume(volume);
+    }
+});
+
+<span class="comment">// PicVoiceAmplitudeRecorder.start()：配置 MediaRecorder 并开始轮询。</span>
+mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+mediaRecorder.setAudioEncodingBitRate(AUDIO_BIT_RATE);
+mediaRecorder.setAudioSamplingRate(AUDIO_SAMPLE_RATE);
+mediaRecorder.setOutputFile(tempFile.getAbsolutePath());
+mediaRecorder.prepare();
+mediaRecorder.start();
+recorder = mediaRecorder;
+handler.post(sampleRunnable);
+
+<span class="comment">// sampleRunnable：每 60ms 获取一次最大振幅，归一化后回调给 Canvas。</span>
+int amplitude;
+try {
+    amplitude = recorder == null ? 0 : recorder.getMaxAmplitude();
+} catch (RuntimeException ignored) {
+    amplitude = 0;
+}
+if (onVolumeChanged != null) {
+    onVolumeChanged.onVolumeChanged(normalizeAmplitude(amplitude));
+}
+handler.postDelayed(this, SAMPLE_INTERVAL_MS);</pre>
+            </div>
+            <div class="tag-row">
+                <span class="tag">主线程 Handler</span>
+                <span class="tag">临时文件只为 MediaRecorder 输出</span>
+                <span class="tag">异常采样降级为静音</span>
+            </div>
+        </article>
+
+        <aside class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">归一化模型</h2>
+                    <p class="panel-subtitle">把硬件振幅转换为 UI 音量。</p>
+                </div>
+            </div>
+            <div class="formula">
+                <p><strong>输入：</strong><code>MediaRecorder.getMaxAmplitude()</code> 返回的原始振幅。</p>
+                <p><strong>裁剪：</strong><code>min(amplitude, 32767)</code>，避免超过预期范围。</p>
+                <p><strong>曲线：</strong><code>sqrt(raw / 32767f)</code>，用平方根抬高中低振幅的视觉反馈。</p>
+                <p><strong>输出：</strong><code>(normalized * 100).toInt()</code>，再限制到 <code>0..100</code>。</p>
+            </div>
+            <p class="caption">
+                平方根曲线意味着同样的原始振幅变化，在低音量区会被视觉上放大，用户轻声说话时也能看到音量柱起伏。
+            </p>
+        </aside>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">代码切片：平滑与绘制</h2>
+                <p class="panel-subtitle">音量柱高度不是单一音量值，而是音量、波形、中心权重的组合。</p>
+            </div>
+        </div>
+        <div class="code-shell">
+<pre><span class="comment">// updateVolume()：采样回调只更新目标值，实际显示值由动画帧平滑追赶。</span>
+void updateVolume(int volume) {
+    targetVolume = coerceIn(volume, MIN_VOLUME, MAX_VOLUME);
+}
+
+<span class="comment">// startAnimating()：每帧推进 wavePhase，并把 displayedVolume 推向 targetVolume。</span>
+wavePhase = (Float) animator.getAnimatedValue();
+displayedVolume += (targetVolume - displayedVolume) * VOLUME_EASING;
+fingerX += (targetFingerX - fingerX) * FINGER_EASING;
+fingerY += (targetFingerY - fingerY) * FINGER_EASING;
+invalidate();
+
+<span class="comment">// drawVisualizer()：逐根计算柱高、透明度，然后绘制圆角矩形。</span>
+float volumeRatio = coerceIn(displayedVolume / MAX_VOLUME, 0f, 1f);
+float baselineY = panelRect.centerY();
+
+for (int index = 0; index &lt; barCount; index++) {
+    float distanceFromCenter = centerIndex == 0f ? 0f : Math.abs(index - centerIndex) / centerIndex;
+    float envelope = coerceIn(1f - distanceFromCenter * 0.72f, 0.24f, 1f);
+    float wave = (float) ((Math.sin((wavePhase * FULL_CIRCLE) + index * BAR_PHASE_STEP) + 1f) / 2f);
+    float amplifiedVolumeRatio = coerceIn(volumeRatio * VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER, 0f, 1f);
+    float activeHeight = visualizerMinBarHeight
+        + (visualizerMaxBarHeight - visualizerMinBarHeight)
+        * (0.12f + amplifiedVolumeRatio * (0.28f + 0.72f * wave) * envelope);
+    int alpha = coerceIn(
+        (int) (150 + 105 * envelope * (0.35f + volumeRatio * 0.65f)),
+        140,
+        255
+    );
+    barPaint.setColor(withAlpha(ContextCompat.getColor(getContext(), R.color.white), alpha));
+    barRect.set(x, top, x + visualizerBarWidth, bottom);
+    canvas.drawRoundRect(barRect, visualizerBarRadius, visualizerBarRadius, barPaint);
+}</pre>
+        </div>
+    </section>
+
+    <section class="layout">
+        <article class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">音量如何影响柱子</h2>
+                    <p class="panel-subtitle">按一根柱子的计算顺序拆解。</p>
+                </div>
+            </div>
+            <div class="flow-list">
+                <div class="flow-item">
+                    <code>displayedVolume / 100</code> 得到 <code>volumeRatio</code>，代表当前可视音量占比。
+                </div>
+                <div class="flow-item">
+                    <code>volumeRatio * 2</code> 后再裁剪到 <code>0..1</code>，让中等音量也可以接近满幅视觉效果。
+                </div>
+                <div class="flow-item">
+                    <code>envelope</code> 根据当前柱子离中心的距离计算，中心柱最高，边缘柱最低但不低于 <code>0.24</code>。
+                </div>
+                <div class="flow-item">
+                    <code>wave</code> 用 <code>sin(wavePhase * 2π + index * 0.42)</code> 生成，不同索引错开相位。
+                </div>
+                <div class="flow-item">
+                    柱高公式里固定保留 <code>0.12</code> 的基础起伏，所以静音时也能看到低幅度呼吸波。
+                </div>
+                <div class="flow-item">
+                    透明度随 <code>volumeRatio</code> 和 <code>envelope</code> 增加，声音越大、越靠中心越亮。
+                </div>
+            </div>
+        </article>
+
+        <aside class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">两套面板差异</h2>
+                    <p class="panel-subtitle">同一监听算法，不同视觉容器。</p>
+                </div>
+            </div>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3><code>PicVoiceRecordPanel.java</code></h3>
+                    <p>
+                        当前输入栏和 FAB 使用的实现。音量柱绘制在一个 44dp 高的胶囊面板内，
+                        面板位置可通过 <code>setRecordPanelAnchorView()</code> 锚定到底部输入栏附近。
+                    </p>
+                </div>
+                <div class="summary-card">
+                    <h3><code>VoiceRecordPanel.kt</code></h3>
+                    <p>
+                        Kotlin 版大面积录音面板，监听、归一化、平滑和音量柱算法与 Pic 版一致。
+                        额外使用 <code>recordTopCenterY()</code> 让底部录音区域高度随
+                        <code>displayedVolume</code> 上升。
+                    </p>
+                </div>
+            </div>
+            <div class="note" style="margin-top: 14px;">
+                如果排查“底部输入栏语音柱不动”，优先看 <code>PicVoiceRecordPanel.java</code>：
+                是否成功拿到录音权限、<code>recorder.start()</code> 是否返回 true、<code>sampleRunnable</code>
+                是否持续回调、<code>targetVolume</code> 是否被更新。
+            </div>
+        </aside>
+    </section>
+
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">释放路径</h2>
+                <p class="panel-subtitle">停止录音时要同时停采样、停动画、释放硬件资源。</p>
+            </div>
+        </div>
+        <div class="code-shell">
+<pre><span class="comment">// finishRecording()：根据手指是否在录音区域内决定完成或取消。</span>
+boolean wasRecording = recording;
+releaseRecording();
+removeFromParent();
+
+if (wasRecording &amp;&amp; callback != null) {
+    if (cancelled) {
+        callback.onCancel();
+    } else {
+        callback.onFinish();
+    }
+}
+
+<span class="comment">// releaseRecording()：停止 recorder 和 Canvas 动画，并重置 UI 状态。</span>
+if (recording) {
+    recorder.stop();
+}
+recording = false;
+canvasView.stopAnimating();
+canvasView.reset();
+
+<span class="comment">// PicVoiceAmplitudeRecorder.stop()：移除轮询，停止并释放 MediaRecorder。</span>
+handler.removeCallbacks(sampleRunnable);
+try {
+    if (recorder != null) {
+        recorder.stop();
+    }
+} catch (RuntimeException ignored) {
+    <span class="comment">// 录音过短时 stop 可能失败，这里吞掉异常并继续释放。</span>
+}
+releaseRecorder();</pre>
+        </div>
+        <p class="caption">
+            释放路径会把 <code>onVolumeChanged</code> 置空、删除临时文件，并把 <code>targetVolume</code>
+            和 <code>displayedVolume</code> 重置为 0，下一次长按会重新从静音状态开始。
+        </p>
+    </section>
+</main>
+</body>
+</html>

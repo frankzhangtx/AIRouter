@@ -1079,7 +1079,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private static final int MAX_VOLUME = 100;
     private static final int MAX_RAW_AMPLITUDE = 32767;
     private static final long SAMPLE_INTERVAL_MS = 35L;
-    private static final long WAVE_DURATION_MS = 520L;
+    private static final long WAVE_DURATION_MS = 743L;
     private static final long COLOR_ANIMATION_DURATION_MS = 180L;
     private static final long MODE_CHANGE_VIBRATION_DURATION_MS = 20L;
     private static final int AUDIO_BIT_RATE = 64000;
@@ -1089,7 +1089,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private static final int MIN_BAR_COUNT = 24;
     private static final float FULL_CIRCLE = (float) (Math.PI * 2);
     private static final int RANDOM_WAVE_MAX_HOTSPOTS = 9;
-    private static final long RANDOM_WAVE_PROFILE_INTERVAL_MS = 105L;
+    private static final long RANDOM_WAVE_PROFILE_INTERVAL_MS = 150L;
     private static final float RANDOM_WAVE_PROFILE_EASING = 0.72f;
     private static final float RANDOM_WAVE_SILENCE_THRESHOLD = 0.04f;
     private static final float RANDOM_WAVE_COUNT_VOLUME_POWER = 0.72f;

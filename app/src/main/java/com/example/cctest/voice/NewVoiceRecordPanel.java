@@ -37,6 +37,7 @@ import androidx.lifecycle.Lifecycle;
 import com.example.cctest.R;
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
 
 public class NewVoiceRecordPanel extends FrameLayout {
 
@@ -513,6 +514,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
         private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF panelRect = new RectF();
         private final RectF barRect = new RectF();
+        private final Random visualizerRandom = new Random();
         private final int[] anchorLocationOnScreen = new int[2];
         private final int[] canvasLocationOnScreen = new int[2];
         private final int normalPanelColor;
@@ -547,6 +549,10 @@ public class NewVoiceRecordPanel extends FrameLayout {
         private float fingerY;
         private float targetFingerX;
         private float targetFingerY;
+        private float[] currentBarProfile = new float[0];
+        private float[] targetBarProfile = new float[0];
+        private int waveProfileHotspotCount = -1;
+        private long lastWaveProfileUpdatedAt;
         private ValueAnimator pulseAnimator;
         private ValueAnimator colorAnimator;
         private View panelAnchorView;
@@ -600,6 +606,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
             fingerY = getHeight();
             targetFingerX = fingerX;
             targetFingerY = fingerY;
+            resetVisualizerProfile();
             if (colorAnimator != null) {
                 colorAnimator.cancel();
             }
@@ -726,12 +733,16 @@ public class NewVoiceRecordPanel extends FrameLayout {
             float startX = panelRect.centerX() - totalWidth / 2f;
             float centerIndex = (barCount - 1) / 2f;
             float volumeRatio = coerceIn(displayedVolume / MAX_VOLUME, 0f, 1f);
+            float pulse = (float) ((Math.sin(wavePhase * FULL_CIRCLE) + 1f) / 2f);
             float baselineY = panelRect.centerY();
+            updateRandomWaveProfile(barCount, volumeRatio);
 
             for (int index = 0; index < barCount; index++) {
                 float distanceFromCenter = centerIndex == 0f ? 0f : Math.abs(index - centerIndex) / centerIndex;
                 float envelope = coerceIn(1f - distanceFromCenter * 0.72f, 0.24f, 1f);
-                float wave = (float) ((Math.sin((wavePhase * FULL_CIRCLE) + index * BAR_PHASE_STEP) + 1f) / 2f);
+                float randomBarProfile = currentBarProfile.length == barCount
+                    ? currentBarProfile[index]
+                    : 0f;
                 float amplifiedVolumeRatio = coerceIn(
                     volumeRatio * VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER,
                     0f,
@@ -739,7 +750,12 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 );
                 float activeHeight = visualizerMinBarHeight
                     + (visualizerMaxBarHeight - visualizerMinBarHeight)
-                    * (0.12f + amplifiedVolumeRatio * (0.28f + 0.72f * wave) * envelope);
+                    * (0.12f
+                        + volumeRatio * 0.08f * envelope
+                        + amplifiedVolumeRatio
+                            * (0.46f + 0.54f * pulse)
+                            * randomBarProfile
+                            * envelope);
                 float x = startX + index * slotWidth;
                 float top = baselineY - activeHeight / 2f;
                 float bottom = baselineY + activeHeight / 2f;
@@ -752,6 +768,100 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 barRect.set(x, top, x + visualizerBarWidth, bottom);
                 canvas.drawRoundRect(barRect, visualizerBarRadius, visualizerBarRadius, barPaint);
             }
+        }
+
+        private void updateRandomWaveProfile(int barCount, float volumeRatio) {
+            boolean forceRefresh = ensureVisualizerProfileSize(barCount);
+            int hotspotCount = resolveWaveProfileHotspotCount(barCount, volumeRatio);
+            long now = System.currentTimeMillis();
+            if (forceRefresh
+                || hotspotCount != waveProfileHotspotCount
+                || now - lastWaveProfileUpdatedAt >= RANDOM_WAVE_PROFILE_INTERVAL_MS) {
+                generateRandomWaveProfile(barCount, hotspotCount);
+                waveProfileHotspotCount = hotspotCount;
+                lastWaveProfileUpdatedAt = now;
+            }
+
+            for (int index = 0; index < barCount; index++) {
+                currentBarProfile[index] += (targetBarProfile[index] - currentBarProfile[index])
+                    * RANDOM_WAVE_PROFILE_EASING;
+            }
+        }
+
+        private boolean ensureVisualizerProfileSize(int barCount) {
+            if (currentBarProfile.length == barCount && targetBarProfile.length == barCount) {
+                return false;
+            }
+            currentBarProfile = new float[barCount];
+            targetBarProfile = new float[barCount];
+            waveProfileHotspotCount = -1;
+            lastWaveProfileUpdatedAt = 0L;
+            return true;
+        }
+
+        private void resetVisualizerProfile() {
+            for (int index = 0; index < currentBarProfile.length; index++) {
+                currentBarProfile[index] = 0f;
+            }
+            for (int index = 0; index < targetBarProfile.length; index++) {
+                targetBarProfile[index] = 0f;
+            }
+            waveProfileHotspotCount = -1;
+            lastWaveProfileUpdatedAt = 0L;
+        }
+
+        private int resolveWaveProfileHotspotCount(int barCount, float volumeRatio) {
+            if (volumeRatio < RANDOM_WAVE_SILENCE_THRESHOLD) {
+                return 0;
+            }
+            int maxHotspotCount = Math.min(RANDOM_WAVE_MAX_HOTSPOTS, Math.max(1, barCount / 3));
+            float responsiveVolumeRatio = (float) Math.pow(volumeRatio, RANDOM_WAVE_COUNT_VOLUME_POWER);
+            return coerceIn(
+                1 + Math.round((maxHotspotCount - 1) * responsiveVolumeRatio),
+                1,
+                maxHotspotCount
+            );
+        }
+
+        private void generateRandomWaveProfile(int barCount, int hotspotCount) {
+            for (int index = 0; index < barCount; index++) {
+                targetBarProfile[index] = 0f;
+            }
+            for (int hotspotIndex = 0; hotspotIndex < hotspotCount; hotspotIndex++) {
+                float center = pickCenterBiasedBarIndex(barCount);
+                float span = RANDOM_WAVE_MIN_BAR_SPAN
+                    + visualizerRandom.nextFloat()
+                        * (RANDOM_WAVE_MAX_BAR_SPAN - RANDOM_WAVE_MIN_BAR_SPAN);
+                float strength = RANDOM_WAVE_MIN_STRENGTH
+                    + visualizerRandom.nextFloat()
+                        * (RANDOM_WAVE_MAX_STRENGTH - RANDOM_WAVE_MIN_STRENGTH);
+                float shapePower = RANDOM_WAVE_MIN_SHAPE_POWER
+                    + visualizerRandom.nextFloat()
+                        * (RANDOM_WAVE_MAX_SHAPE_POWER - RANDOM_WAVE_MIN_SHAPE_POWER);
+                int startIndex = Math.max(0, (int) Math.floor(center - span));
+                int endIndex = Math.min(barCount - 1, (int) Math.ceil(center + span));
+                for (int index = startIndex; index <= endIndex; index++) {
+                    float distanceRatio = Math.abs(index - center) / span;
+                    float falloff = 1f - coerceIn(distanceRatio, 0f, 1f);
+                    float profile = strength * (float) Math.pow(falloff, shapePower);
+                    targetBarProfile[index] = Math.max(targetBarProfile[index], profile);
+                }
+            }
+        }
+
+        private float pickCenterBiasedBarIndex(int barCount) {
+            if (barCount <= 1) {
+                return 0f;
+            }
+            float maxIndex = barCount - 1f;
+            float centerIndex = maxIndex / 2f;
+            if (visualizerRandom.nextFloat() < RANDOM_WAVE_CENTER_BIAS_PROBABILITY) {
+                float offset = (float) visualizerRandom.nextGaussian()
+                    * barCount
+                    * RANDOM_WAVE_CENTER_STANDARD_DEVIATION_RATIO;
+                return coerceIn(centerIndex + offset, 0f, maxIndex);
+            }
+            return visualizerRandom.nextFloat() * maxIndex;
         }
 
         private void animatePanelColors(
@@ -968,8 +1078,8 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private static final int MIN_VOLUME = 0;
     private static final int MAX_VOLUME = 100;
     private static final int MAX_RAW_AMPLITUDE = 32767;
-    private static final long SAMPLE_INTERVAL_MS = 60L;
-    private static final long WAVE_DURATION_MS = 1100L;
+    private static final long SAMPLE_INTERVAL_MS = 35L;
+    private static final long WAVE_DURATION_MS = 520L;
     private static final long COLOR_ANIMATION_DURATION_MS = 180L;
     private static final long MODE_CHANGE_VIBRATION_DURATION_MS = 20L;
     private static final int AUDIO_BIT_RATE = 64000;
@@ -978,9 +1088,21 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private static final String RECORD_FILE_SUFFIX = ".m4a";
     private static final int MIN_BAR_COUNT = 24;
     private static final float FULL_CIRCLE = (float) (Math.PI * 2);
-    private static final float BAR_PHASE_STEP = 0.42f;
-    private static final float VOLUME_EASING = 0.54f;
-    private static final float VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER = 2f;
+    private static final int RANDOM_WAVE_MAX_HOTSPOTS = 9;
+    private static final long RANDOM_WAVE_PROFILE_INTERVAL_MS = 105L;
+    private static final float RANDOM_WAVE_PROFILE_EASING = 0.72f;
+    private static final float RANDOM_WAVE_SILENCE_THRESHOLD = 0.04f;
+    private static final float RANDOM_WAVE_COUNT_VOLUME_POWER = 0.72f;
+    private static final float RANDOM_WAVE_CENTER_BIAS_PROBABILITY = 0.78f;
+    private static final float RANDOM_WAVE_CENTER_STANDARD_DEVIATION_RATIO = 0.22f;
+    private static final float RANDOM_WAVE_MIN_BAR_SPAN = 1.1f;
+    private static final float RANDOM_WAVE_MAX_BAR_SPAN = 2.8f;
+    private static final float RANDOM_WAVE_MIN_STRENGTH = 0.48f;
+    private static final float RANDOM_WAVE_MAX_STRENGTH = 1f;
+    private static final float RANDOM_WAVE_MIN_SHAPE_POWER = 0.72f;
+    private static final float RANDOM_WAVE_MAX_SHAPE_POWER = 1.65f;
+    private static final float VOLUME_EASING = 0.82f;
+    private static final float VISUALIZER_VOLUME_AMPLITUDE_MULTIPLIER = 2.15f;
     private static final float FINGER_EASING = 0.22f;
     private static final float VISUALIZER_WIDTH_RATIO = 0.64f;
 }

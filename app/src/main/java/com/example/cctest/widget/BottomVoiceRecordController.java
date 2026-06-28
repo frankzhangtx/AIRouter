@@ -5,7 +5,7 @@ import android.content.ContextWrapper;
 import android.view.View;
 import android.widget.EditText;
 import androidx.activity.ComponentActivity;
-import com.example.cctest.voice.PicVoiceRecordPanel;
+import com.example.cctest.voice.NewVoiceRecordPanel;
 import com.example.cctest.voice.VoiceRecordCallback;
 
 final class BottomVoiceRecordController {
@@ -13,7 +13,7 @@ final class BottomVoiceRecordController {
     private final EditText consultInput;
     private final View bottomInputBar;
     private final Callback callback;
-    private PicVoiceRecordPanel voiceRecordPanel;
+    private NewVoiceRecordPanel voiceRecordPanel;
 
     BottomVoiceRecordController(
         Context context,
@@ -101,12 +101,12 @@ final class BottomVoiceRecordController {
         );
     }
 
-    private PicVoiceRecordPanel createVoiceRecordPanel(Context context) {
+    private NewVoiceRecordPanel createVoiceRecordPanel(Context context) {
         ComponentActivity activity = findComponentActivity(context);
         if (activity != null) {
-            return new PicVoiceRecordPanel(activity);
+            return new NewVoiceRecordPanel(activity);
         }
-        return new PicVoiceRecordPanel(context);
+        return new NewVoiceRecordPanel(context);
     }
 
     private ComponentActivity findComponentActivity(Context context) {

@@ -23,6 +23,9 @@
     <dimen name="pic_voice_record_panel_corner_radius">22dp</dimen>
     <dimen name="pic_voice_record_prompt_bottom_offset">128dp</dimen>
     <dimen name="pic_voice_record_prompt_text_size">15sp</dimen>
+    <dimen name="new_voice_record_prompt_center_to_panel_top_gap">26dp</dimen>
+    <dimen name="new_voice_record_background_above_prompt_gap">10dp</dimen>
+    <dimen name="new_voice_record_prompt_text_size">16sp</dimen>
     <dimen name="pic_voice_record_visualizer_max_width">280dp</dimen>
     <dimen name="pic_voice_record_visualizer_bar_width">2dp</dimen>
     <dimen name="pic_voice_record_visualizer_bar_gap">3dp</dimen>

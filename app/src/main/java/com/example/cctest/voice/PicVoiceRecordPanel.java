@@ -509,12 +509,15 @@ public class PicVoiceRecordPanel extends FrameLayout {
     private static class PicVoiceRecordCanvasView extends View {
 
         private final Paint panelPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+        private final Paint backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint barPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         private final RectF panelRect = new RectF();
+        private final RectF backgroundRect = new RectF();
         private final RectF barRect = new RectF();
         private final int[] anchorLocationOnScreen = new int[2];
         private final int[] canvasLocationOnScreen = new int[2];
+        private final int panelBackgroundColor;
         private final int normalPanelColor;
         private final int normalPanelCenterColor;
         private final int cancelPanelColor;
@@ -525,7 +528,9 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private final float panelBottomOffset;
         private final float panelHeight;
         private final float panelCornerRadius;
-        private final float promptBottomOffset;
+        private final float promptCenterToPanelTopGap;
+        private final float backgroundAbovePromptGap;
+        private final float backgroundFadeHeight;
         private final float visualizerMaxWidth;
         private final float visualizerBarWidth;
         private final float visualizerBarGap;
@@ -553,6 +558,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
 
         PicVoiceRecordCanvasView(Context context) {
             super(context);
+            panelBackgroundColor = ContextCompat.getColor(
+                context,
+                R.color.baidu_web_input_container_background
+            );
             normalPanelColor = ContextCompat.getColor(context, R.color.pic_voice_record_panel);
             normalPanelCenterColor = ContextCompat.getColor(context, R.color.pic_voice_record_panel_center);
             cancelPanelColor = ContextCompat.getColor(context, R.color.pic_voice_record_cancel_panel);
@@ -563,7 +572,15 @@ public class PicVoiceRecordPanel extends FrameLayout {
             panelBottomOffset = getResources().getDimension(R.dimen.pic_voice_record_panel_bottom_offset);
             panelHeight = getResources().getDimension(R.dimen.pic_voice_record_panel_height);
             panelCornerRadius = getResources().getDimension(R.dimen.pic_voice_record_panel_corner_radius);
-            promptBottomOffset = getResources().getDimension(R.dimen.pic_voice_record_prompt_bottom_offset);
+            promptCenterToPanelTopGap = getResources().getDimension(
+                R.dimen.new_voice_record_prompt_center_to_panel_top_gap
+            );
+            backgroundAbovePromptGap = getResources().getDimension(
+                R.dimen.new_voice_record_background_above_prompt_gap
+            );
+            backgroundFadeHeight = getResources().getDimension(
+                R.dimen.new_voice_record_background_fade_height
+            );
             visualizerMaxWidth = getResources().getDimension(R.dimen.pic_voice_record_visualizer_max_width);
             visualizerBarWidth = getResources().getDimension(R.dimen.pic_voice_record_visualizer_bar_width);
             visualizerBarGap = getResources().getDimension(R.dimen.pic_voice_record_visualizer_bar_gap);
@@ -573,9 +590,12 @@ public class PicVoiceRecordPanel extends FrameLayout {
             hintSend = getResources().getString(R.string.pic_voice_record_hint_send);
             hintCancel = getResources().getString(R.string.voice_record_hint_cancel);
 
+            backgroundPaint.setColor(panelBackgroundColor);
             textPaint.setColor(normalPromptColor);
             textPaint.setTextAlign(Paint.Align.CENTER);
-            textPaint.setTextSize(getResources().getDimension(R.dimen.pic_voice_record_prompt_text_size));
+            textPaint.setTextSize(getResources().getDimension(
+                R.dimen.new_voice_record_prompt_text_size
+            ));
             currentPanelColor = normalPanelColor;
             currentPanelCenterColor = normalPanelCenterColor;
             currentPromptColor = normalPromptColor;
@@ -677,6 +697,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
             updatePanelBounds();
+            drawPanelBackground(canvas);
             drawPrompt(canvas);
             drawPanel(canvas);
             drawVisualizer(canvas);
@@ -693,13 +714,40 @@ public class PicVoiceRecordPanel extends FrameLayout {
             }
         }
 
+        private void drawPanelBackground(Canvas canvas) {
+            float promptTop = getPromptBaseline() + textPaint.getFontMetrics().ascent;
+            float solidBackgroundTop = Math.max(0f, promptTop - backgroundAbovePromptGap);
+            float fadeTop = Math.max(0f, solidBackgroundTop - backgroundFadeHeight);
+
+            if (fadeTop < solidBackgroundTop) {
+                backgroundPaint.setShader(new LinearGradient(
+                    0f,
+                    fadeTop,
+                    0f,
+                    solidBackgroundTop,
+                    withAlpha(panelBackgroundColor, 0),
+                    panelBackgroundColor,
+                    Shader.TileMode.CLAMP
+                ));
+                backgroundRect.set(0f, fadeTop, getWidth(), solidBackgroundTop);
+                canvas.drawRect(backgroundRect, backgroundPaint);
+                backgroundPaint.setShader(null);
+            }
+
+            backgroundPaint.setColor(panelBackgroundColor);
+            backgroundRect.set(0f, solidBackgroundTop, getWidth(), getHeight());
+            canvas.drawRect(backgroundRect, backgroundPaint);
+        }
+
         private void drawPrompt(Canvas canvas) {
-            float promptCenterY = panelRect.bottom
-                - (promptBottomOffset - panelBottomOffset);
-            Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
-            float centeredBaseline = promptCenterY - (fontMetrics.ascent + fontMetrics.descent) / 2f;
             textPaint.setColor(currentPromptColor);
-            canvas.drawText(promptText, getWidth() / 2f, centeredBaseline, textPaint);
+            canvas.drawText(promptText, getWidth() / 2f, getPromptBaseline(), textPaint);
+        }
+
+        private float getPromptBaseline() {
+            float promptCenterY = panelRect.top - promptCenterToPanelTopGap;
+            Paint.FontMetrics fontMetrics = textPaint.getFontMetrics();
+            return promptCenterY - (fontMetrics.ascent + fontMetrics.descent) / 2f;
         }
 
         private void drawPanel(Canvas canvas) {

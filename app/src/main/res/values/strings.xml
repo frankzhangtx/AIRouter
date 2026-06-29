@@ -18,6 +18,8 @@
     <string name="baidu_web_ai_avatar_content_description">切换人工</string>
     <string name="baidu_web_toggle_manual_enter">点击切换人工</string>
     <string name="baidu_web_toggle_manual_exit">点击退出人工</string>
+    <string name="baidu_web_switch_to_old_voice_panel">切旧语音</string>
+    <string name="baidu_web_switch_to_new_voice_panel">切新语音</string>
     <string name="baidu_web_manual_online">人工在线</string>
     <string name="baidu_web_manual_offline">人工离线</string>
     <string name="baidu_web_manual_type_online_service">普通在线客服</string>

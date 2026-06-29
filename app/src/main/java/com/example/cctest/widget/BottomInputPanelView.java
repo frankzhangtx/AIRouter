@@ -207,6 +207,12 @@ public class BottomInputPanelView extends LinearLayout {
         return voiceInputMode;
     }
 
+    public void setUseNewVoiceRecordPanel(boolean useNewVoiceRecordPanel) {
+        if (voiceRecordController != null) {
+            voiceRecordController.setUseNewVoiceRecordPanel(useNewVoiceRecordPanel);
+        }
+    }
+
     public void release() {
         detachKeyboardAvoidance();
         if (textInputController != null) {

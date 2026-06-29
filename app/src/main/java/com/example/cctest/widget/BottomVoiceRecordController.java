@@ -6,14 +6,18 @@ import android.view.View;
 import android.widget.EditText;
 import androidx.activity.ComponentActivity;
 import com.example.cctest.voice.NewVoiceRecordPanel;
+import com.example.cctest.voice.PicVoiceRecordPanel;
 import com.example.cctest.voice.VoiceRecordCallback;
 
 final class BottomVoiceRecordController {
 
+    private final Context context;
     private final EditText consultInput;
     private final View bottomInputBar;
     private final Callback callback;
-    private NewVoiceRecordPanel voiceRecordPanel;
+    private VoiceRecordPanelAdapter voiceRecordPanel;
+    private boolean useNewVoiceRecordPanel = true;
+    private boolean voiceInputMode;
 
     BottomVoiceRecordController(
         Context context,
@@ -21,6 +25,7 @@ final class BottomVoiceRecordController {
         View bottomInputBar,
         Callback callback
     ) {
+        this.context = context;
         this.consultInput = consultInput;
         this.bottomInputBar = bottomInputBar;
         this.callback = callback;
@@ -32,6 +37,7 @@ final class BottomVoiceRecordController {
     }
 
     void bindActiveHoldTrigger(boolean voiceInputMode) {
+        this.voiceInputMode = voiceInputMode;
         if (!isAvailable()) {
             return;
         }
@@ -53,6 +59,18 @@ final class BottomVoiceRecordController {
         }
     }
 
+    void setUseNewVoiceRecordPanel(boolean useNewVoiceRecordPanel) {
+        if (this.useNewVoiceRecordPanel == useNewVoiceRecordPanel) {
+            return;
+        }
+        this.useNewVoiceRecordPanel = useNewVoiceRecordPanel;
+        if (voiceRecordPanel != null) {
+            voiceRecordPanel.dismiss();
+        }
+        configureVoiceRecordPanel();
+        bindActiveHoldTrigger(voiceInputMode);
+    }
+
     void dismiss() {
         if (voiceRecordPanel != null) {
             voiceRecordPanel.dismiss();
@@ -64,6 +82,11 @@ final class BottomVoiceRecordController {
             return;
         }
         consultInput.setLongClickable(false);
+        configureVoiceRecordPanel();
+        bindTextInputHoldTrigger(consultInput);
+    }
+
+    private void configureVoiceRecordPanel() {
         voiceRecordPanel = createVoiceRecordPanel(context);
         voiceRecordPanel.setRecordPanelAnchorView(bottomInputBar);
         voiceRecordPanel.setCallback(new VoiceRecordCallback() {
@@ -88,7 +111,6 @@ final class BottomVoiceRecordController {
                 }
             }
         });
-        bindTextInputHoldTrigger(consultInput);
     }
 
     private void bindTextInputHoldTrigger(View trigger) {
@@ -101,12 +123,16 @@ final class BottomVoiceRecordController {
         );
     }
 
-    private NewVoiceRecordPanel createVoiceRecordPanel(Context context) {
+    private VoiceRecordPanelAdapter createVoiceRecordPanel(Context context) {
         ComponentActivity activity = findComponentActivity(context);
-        if (activity != null) {
-            return new NewVoiceRecordPanel(activity);
+        if (useNewVoiceRecordPanel) {
+            return new NewVoiceRecordPanelAdapter(
+                activity != null ? new NewVoiceRecordPanel(activity) : new NewVoiceRecordPanel(context)
+            );
         }
-        return new NewVoiceRecordPanel(context);
+        return new PicVoiceRecordPanelAdapter(
+            activity != null ? new PicVoiceRecordPanel(activity) : new PicVoiceRecordPanel(context)
+        );
     }
 
     private ComponentActivity findComponentActivity(Context context) {
@@ -130,5 +156,104 @@ final class BottomVoiceRecordController {
         void onCancel();
 
         void onFinish();
+    }
+
+    private interface HoldTriggerCondition {
+        boolean shouldEnableHoldTrigger();
+    }
+
+    private interface VoiceRecordPanelAdapter {
+        void setRecordPanelAnchorView(View anchorView);
+
+        void setCallback(VoiceRecordCallback callback);
+
+        void bindToImmediateHoldTrigger(View trigger);
+
+        void bindToHoldTriggerPreservingClickWhen(
+            View trigger,
+            HoldTriggerCondition condition
+        );
+
+        void dismiss();
+    }
+
+    private static final class NewVoiceRecordPanelAdapter implements VoiceRecordPanelAdapter {
+
+        private final NewVoiceRecordPanel panel;
+
+        NewVoiceRecordPanelAdapter(NewVoiceRecordPanel panel) {
+            this.panel = panel;
+        }
+
+        @Override
+        public void setRecordPanelAnchorView(View anchorView) {
+            panel.setRecordPanelAnchorView(anchorView);
+        }
+
+        @Override
+        public void setCallback(VoiceRecordCallback callback) {
+            panel.setCallback(callback);
+        }
+
+        @Override
+        public void bindToImmediateHoldTrigger(View trigger) {
+            panel.bindToImmediateHoldTrigger(trigger);
+        }
+
+        @Override
+        public void bindToHoldTriggerPreservingClickWhen(
+            View trigger,
+            HoldTriggerCondition condition
+        ) {
+            panel.bindToHoldTriggerPreservingClickWhen(
+                trigger,
+                () -> condition != null && condition.shouldEnableHoldTrigger()
+            );
+        }
+
+        @Override
+        public void dismiss() {
+            panel.dismiss();
+        }
+    }
+
+    private static final class PicVoiceRecordPanelAdapter implements VoiceRecordPanelAdapter {
+
+        private final PicVoiceRecordPanel panel;
+
+        PicVoiceRecordPanelAdapter(PicVoiceRecordPanel panel) {
+            this.panel = panel;
+        }
+
+        @Override
+        public void setRecordPanelAnchorView(View anchorView) {
+            panel.setRecordPanelAnchorView(anchorView);
+        }
+
+        @Override
+        public void setCallback(VoiceRecordCallback callback) {
+            panel.setCallback(callback);
+        }
+
+        @Override
+        public void bindToImmediateHoldTrigger(View trigger) {
+            panel.bindToImmediateHoldTrigger(trigger);
+        }
+
+        @Override
+        public void bindToHoldTriggerPreservingClickWhen(
+            View trigger,
+            HoldTriggerCondition condition
+        ) {
+            panel.bindToHoldTriggerPreservingClickWhen(
+                trigger,
+                () -> condition != null && condition.shouldEnableHoldTrigger()
+            );
+        }
+
+        @Override
+        public void dismiss() {
+            panel.dismiss();
+        }
     }
 }

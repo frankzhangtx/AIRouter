@@ -12,8 +12,11 @@ class BaiduWebManualModeManager {
     private static final String KEY_MANUAL_MODE_ENABLED = "manual_mode_enabled";
     private static final String KEY_MANUAL_AGENT_ONLINE = "manual_agent_online";
     private static final String KEY_MANUAL_AGENT_TYPE = "manual_agent_type";
+    private static final String KEY_USE_NEW_VOICE_RECORD_PANEL =
+        "use_new_voice_record_panel";
     private static final String KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE =
         "horizontal_suggestion_list_visible";
+    static final String CONTROL_TOGGLE_VOICE_RECORD_PANEL = "toggle_voice_record_panel";
     static final String CONTROL_TOGGLE_MANUAL_MODE = "toggle_manual_mode";
     static final String CONTROL_TOGGLE_MANUAL_ONLINE = "toggle_manual_online";
     static final String CONTROL_TOGGLE_MANUAL_AGENT_TYPE = "toggle_manual_agent_type";
@@ -42,6 +45,7 @@ class BaiduWebManualModeManager {
     private boolean manualModeEnabled;
     private boolean manualAgentOnline = true;
     private ManualAgentType manualAgentType = ManualAgentType.ONLINE_SERVICE;
+    private boolean useNewVoiceRecordPanel = true;
     private boolean horizontalSuggestionListVisible;
 
     BaiduWebManualModeManager(
@@ -60,6 +64,13 @@ class BaiduWebManualModeManager {
             return;
         }
         switch (controlName) {
+            case CONTROL_TOGGLE_VOICE_RECORD_PANEL:
+                useNewVoiceRecordPanel = !useNewVoiceRecordPanel;
+                if (bottomInputPanel != null) {
+                    bottomInputPanel.setUseNewVoiceRecordPanel(useNewVoiceRecordPanel);
+                }
+                notifyManualControlStateChanged();
+                break;
             case CONTROL_TOGGLE_MANUAL_MODE:
                 setManualModeEnabledFromActivity(!manualModeEnabled);
                 break;
@@ -128,6 +139,12 @@ class BaiduWebManualModeManager {
             : R.string.baidu_web_toggle_manual_enter;
     }
 
+    int getVoiceRecordPanelToggleTextResource() {
+        return useNewVoiceRecordPanel
+            ? R.string.baidu_web_switch_to_old_voice_panel
+            : R.string.baidu_web_switch_to_new_voice_panel;
+    }
+
     int getManualOnlineTextResource() {
         return manualAgentOnline
             ? R.string.baidu_web_manual_online
@@ -150,6 +167,7 @@ class BaiduWebManualModeManager {
         outState.putBoolean(KEY_MANUAL_MODE_ENABLED, manualModeEnabled);
         outState.putBoolean(KEY_MANUAL_AGENT_ONLINE, manualAgentOnline);
         outState.putString(KEY_MANUAL_AGENT_TYPE, manualAgentType.name());
+        outState.putBoolean(KEY_USE_NEW_VOICE_RECORD_PANEL, useNewVoiceRecordPanel);
         outState.putBoolean(
             KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE,
             horizontalSuggestionListVisible
@@ -171,6 +189,8 @@ class BaiduWebManualModeManager {
         manualAgentOnline = savedInstanceState == null
             || savedInstanceState.getBoolean(KEY_MANUAL_AGENT_ONLINE, true);
         manualAgentType = readManualAgentType(savedInstanceState);
+        useNewVoiceRecordPanel = savedInstanceState == null
+            || savedInstanceState.getBoolean(KEY_USE_NEW_VOICE_RECORD_PANEL, true);
         horizontalSuggestionListVisible = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_HORIZONTAL_SUGGESTION_LIST_VISIBLE);
     }
@@ -186,6 +206,7 @@ class BaiduWebManualModeManager {
         bottomInputPanel.setManualModeEnabled(manualModeEnabled);
         bottomInputPanel.setManualAgentOnline(manualAgentOnline);
         bottomInputPanel.setManualAgentType(manualAgentType);
+        bottomInputPanel.setUseNewVoiceRecordPanel(useNewVoiceRecordPanel);
         bottomInputPanel.setHorizontalSuggestionListVisible(horizontalSuggestionListVisible);
         bottomInputPanel.setActionListener(new BottomInputActionListener() {
             @Override

@@ -32,6 +32,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private View manualControls;
     private View.OnLayoutChangeListener bottomInputPanelLayoutChangeListener;
     private BaiduWebManualModeManager manualModeManager;
+    private MaterialButton voiceRecordPanelToggleButton;
     private MaterialButton manualToggleButton;
     private MaterialButton manualOnlineToggleButton;
     private MaterialButton manualAgentTypeToggleButton;
@@ -57,6 +58,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         bottomInputPanel = findViewById(R.id.bottom_input_container);
         bottomInputOverlay = findViewById(R.id.bottom_input_overlay);
         manualControls = findViewById(R.id.manual_controls);
+        voiceRecordPanelToggleButton = findViewById(R.id.button_toggle_voice_record_panel);
         manualToggleButton = findViewById(R.id.button_toggle_manual);
         manualOnlineToggleButton = findViewById(R.id.button_toggle_manual_online);
         manualAgentTypeToggleButton = findViewById(R.id.button_toggle_manual_agent_type);
@@ -140,6 +142,10 @@ public class BaiduWebViewActivity extends AppCompatActivity {
 
     private void configureManualControls() {
         bindManualControlClick(
+            voiceRecordPanelToggleButton,
+            BaiduWebManualModeManager.CONTROL_TOGGLE_VOICE_RECORD_PANEL
+        );
+        bindManualControlClick(
             manualToggleButton,
             BaiduWebManualModeManager.CONTROL_TOGGLE_MANUAL_MODE
         );
@@ -200,6 +206,11 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         }
         if (manualToggleButton != null) {
             manualToggleButton.setText(manualModeManager.getManualToggleTextResource());
+        }
+        if (voiceRecordPanelToggleButton != null) {
+            voiceRecordPanelToggleButton.setText(
+                manualModeManager.getVoiceRecordPanelToggleTextResource()
+            );
         }
         if (manualOnlineToggleButton != null) {
             manualOnlineToggleButton.setText(manualModeManager.getManualOnlineTextResource());
@@ -428,6 +439,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
             bottomInputPanel = null;
         }
         bottomInputOverlay = null;
+        voiceRecordPanelToggleButton = null;
         manualToggleButton = null;
         manualOnlineToggleButton = null;
         manualAgentTypeToggleButton = null;

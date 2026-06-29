@@ -19,7 +19,6 @@ import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
@@ -303,7 +302,7 @@ class VoiceRecordPanel : FrameLayout {
                 show()
             }
         }.also { runnable ->
-            gestureHandler.postDelayed(runnable, ViewConfiguration.getLongPressTimeout().toLong())
+            gestureHandler.postDelayed(runnable, HOLD_START_DELAY_MS)
         }
     }
 
@@ -847,6 +846,7 @@ class VoiceRecordPanel : FrameLayout {
         private const val MAX_VOLUME = 100
         private const val MAX_RAW_AMPLITUDE = 32767
         private const val SAMPLE_INTERVAL_MS = 60L
+        private const val HOLD_START_DELAY_MS = 100L
         private const val WAVE_DURATION_MS = 1100L
         private const val COLOR_ANIMATION_DURATION_MS = 180L
         private const val AUDIO_BIT_RATE = 64000

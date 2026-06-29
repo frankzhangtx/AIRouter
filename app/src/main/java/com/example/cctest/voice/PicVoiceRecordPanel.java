@@ -22,7 +22,6 @@ import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.animation.DecelerateInterpolator;
@@ -405,7 +404,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         };
         gestureHandler.postDelayed(
             holdStartRunnable,
-            ViewConfiguration.getLongPressTimeout()
+            HOLD_START_DELAY_MS
         );
     }
 
@@ -1017,6 +1016,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
     private static final int MAX_VOLUME = 100;
     private static final int MAX_RAW_AMPLITUDE = 32767;
     private static final long SAMPLE_INTERVAL_MS = 60L;
+    private static final long HOLD_START_DELAY_MS = 100L;
     private static final long WAVE_DURATION_MS = 1100L;
     private static final long COLOR_ANIMATION_DURATION_MS = 180L;
     private static final long MODE_CHANGE_VIBRATION_DURATION_MS = 20L;

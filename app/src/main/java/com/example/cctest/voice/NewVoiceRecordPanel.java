@@ -532,6 +532,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
         private final float panelCornerRadius;
         private final float promptCenterToPanelTopGap;
         private final float backgroundAbovePromptGap;
+        private final float backgroundFadeHeight;
         private final float visualizerMaxWidth;
         private final float visualizerBarWidth;
         private final float visualizerBarGap;
@@ -582,6 +583,9 @@ public class NewVoiceRecordPanel extends FrameLayout {
             );
             backgroundAbovePromptGap = getResources().getDimension(
                 R.dimen.new_voice_record_background_above_prompt_gap
+            );
+            backgroundFadeHeight = getResources().getDimension(
+                R.dimen.new_voice_record_background_fade_height
             );
             visualizerMaxWidth = getResources().getDimension(R.dimen.pic_voice_record_visualizer_max_width);
             visualizerBarWidth = getResources().getDimension(R.dimen.pic_voice_record_visualizer_bar_width);
@@ -719,8 +723,26 @@ public class NewVoiceRecordPanel extends FrameLayout {
 
         private void drawPanelBackground(Canvas canvas) {
             float promptTop = getPromptBaseline() + textPaint.getFontMetrics().ascent;
-            float backgroundTop = Math.max(0f, promptTop - backgroundAbovePromptGap);
-            backgroundRect.set(0f, backgroundTop, getWidth(), getHeight());
+            float solidBackgroundTop = Math.max(0f, promptTop - backgroundAbovePromptGap);
+            float fadeTop = Math.max(0f, solidBackgroundTop - backgroundFadeHeight);
+
+            if (fadeTop < solidBackgroundTop) {
+                backgroundPaint.setShader(new LinearGradient(
+                    0f,
+                    fadeTop,
+                    0f,
+                    solidBackgroundTop,
+                    withAlpha(panelBackgroundColor, 0),
+                    panelBackgroundColor,
+                    Shader.TileMode.CLAMP
+                ));
+                backgroundRect.set(0f, fadeTop, getWidth(), solidBackgroundTop);
+                canvas.drawRect(backgroundRect, backgroundPaint);
+                backgroundPaint.setShader(null);
+            }
+
+            backgroundPaint.setColor(panelBackgroundColor);
+            backgroundRect.set(0f, solidBackgroundTop, getWidth(), getHeight());
             canvas.drawRect(backgroundRect, backgroundPaint);
         }
 

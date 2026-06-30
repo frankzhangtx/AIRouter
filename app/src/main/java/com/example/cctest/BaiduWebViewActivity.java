@@ -3,7 +3,6 @@ package com.example.cctest;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +12,6 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.cctest.widget.BottomInputPanelView;
-import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
 public class BaiduWebViewActivity extends AppCompatActivity {
@@ -53,7 +51,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_baidu_web_view);
 
-        MaterialToolbar toolbar = findViewById(R.id.toolbar);
         webView = findViewById(R.id.web_view);
         bottomInputPanel = findViewById(R.id.bottom_input_container);
         bottomInputOverlay = findViewById(R.id.bottom_input_overlay);
@@ -100,13 +97,6 @@ public class BaiduWebViewActivity extends AppCompatActivity {
                 }
             }
         );
-
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle(R.string.baidu_web_view_title);
-        }
-        toolbar.setNavigationOnClickListener(view -> finish());
 
         configureWebView(webView);
         configureManualControls();
@@ -458,12 +448,4 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 }

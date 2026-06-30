@@ -145,10 +145,8 @@ final class BottomKeyboardController {
             ? inputBarKeyboardBottomMargin
             : panelView.getResources().getDimensionPixelSize(R.dimen.baidu_web_input_bottom_margin);
         setInputBottomFillVisible(!isAttachmentPanelVisible(), inputBottomFillHeight);
-        int inputBarBottomMargin = keyboardVisible
-            ? currentKeyboardHeight
-            : inputBarBaseBottomMargin;
-        setBottomMargin(panelView, inputBarBottomMargin);
+        // adjustResize already moves the panel above the IME; only keep the designed gap.
+        setBottomMargin(panelView, inputBarBaseBottomMargin);
     }
 
     private boolean isAttachmentPanelVisible() {

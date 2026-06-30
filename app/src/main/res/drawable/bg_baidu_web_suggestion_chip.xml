@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/baidu_web_suggestion_chip_background" />
+    <gradient
+        android:angle="270"
+        android:endColor="@color/baidu_web_suggestion_chip_gradient_bottom"
+        android:startColor="@color/baidu_web_suggestion_chip_gradient_top" />
     <stroke
         android:width="1dp"
-        android:color="@color/baidu_web_input_stroke" />
+        android:color="@color/baidu_web_suggestion_chip_stroke" />
     <corners android:radius="@dimen/baidu_web_suggestion_chip_radius" />
 </shape>

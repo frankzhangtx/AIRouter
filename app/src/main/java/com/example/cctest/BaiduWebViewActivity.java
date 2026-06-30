@@ -44,7 +44,7 @@ public class BaiduWebViewActivity extends AppCompatActivity {
     private MaterialButton bottomPanelVisibilityToggleButton;
     private MaterialButton bottomPanelLayerToggleButton;
     private boolean bottomOverlayVisible;
-    private boolean bottomPanelVisible = true;
+    private boolean bottomPanelVisible;
     private boolean bottomPanelLayerAboveWebView = true;
     private boolean bottomPanelAttachmentVisibleWhenHidden;
 
@@ -72,8 +72,8 @@ public class BaiduWebViewActivity extends AppCompatActivity {
         bottomPanelLayerToggleButton = findViewById(R.id.button_toggle_bottom_panel_layer);
         bottomOverlayVisible = savedInstanceState != null
             && savedInstanceState.getBoolean(KEY_BOTTOM_OVERLAY_VISIBLE);
-        bottomPanelVisible = savedInstanceState == null
-            || savedInstanceState.getBoolean(KEY_BOTTOM_PANEL_VISIBLE, true);
+        bottomPanelVisible = savedInstanceState != null
+            && savedInstanceState.getBoolean(KEY_BOTTOM_PANEL_VISIBLE, false);
         bottomPanelLayerAboveWebView = savedInstanceState == null
             || savedInstanceState.getBoolean(KEY_BOTTOM_PANEL_LAYER_ABOVE_WEB_VIEW, true);
         bottomPanelAttachmentVisibleWhenHidden = savedInstanceState != null

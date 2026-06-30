@@ -235,7 +235,7 @@
                 android:minHeight="0dp"
                 android:paddingStart="13dp"
                 android:paddingEnd="13dp"
-                android:text="@string/baidu_web_hide_bottom_panel"
+                android:text="@string/baidu_web_show_bottom_panel"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="8sp"
@@ -270,7 +270,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:clipChildren="false"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:visibility="gone" />
 
         <View
             android:id="@+id/bottom_input_overlay"

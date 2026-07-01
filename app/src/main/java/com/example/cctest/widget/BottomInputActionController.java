@@ -11,16 +11,19 @@ import com.example.cctest.R;
 final class BottomInputActionController {
 
     private final ImageButton buttonVoiceInput;
+    private final ImageButton buttonAiPlusContent;
     private final ImageButton buttonAddContent;
     private final Callback callback;
     private boolean trailingActionStartedWithTextInputInteraction;
 
     BottomInputActionController(
         ImageButton buttonVoiceInput,
+        ImageButton buttonAiPlusContent,
         ImageButton buttonAddContent,
         Callback callback
     ) {
         this.buttonVoiceInput = buttonVoiceInput;
+        this.buttonAiPlusContent = buttonAiPlusContent;
         this.buttonAddContent = buttonAddContent;
         this.callback = callback;
         configure();
@@ -49,7 +52,10 @@ final class BottomInputActionController {
     }
 
     void updateState() {
-        if (buttonVoiceInput == null || buttonAddContent == null || callback == null) {
+        if (buttonVoiceInput == null
+            || buttonAiPlusContent == null
+            || buttonAddContent == null
+            || callback == null) {
             return;
         }
 
@@ -58,6 +64,7 @@ final class BottomInputActionController {
 
         buttonVoiceInput.setVisibility(hasInputText ? View.GONE : View.VISIBLE);
         if (showSendAction) {
+            buttonAiPlusContent.setVisibility(View.GONE);
             callback.setAttachmentPanelVisible(false);
             applyTrailingActionIconStyle(true);
             buttonAddContent.setImageResource(R.mipmap.ic_zhixiaoan_send);
@@ -69,6 +76,7 @@ final class BottomInputActionController {
             );
         } else {
             boolean gridIconVisible = !callback.isManualModeEnabled();
+            buttonAiPlusContent.setVisibility(gridIconVisible ? View.VISIBLE : View.GONE);
             int iconResource = gridIconVisible
                 ? R.mipmap.ic_zhixiaoan_more
                 : R.drawable.ic_baidu_web_plus;
@@ -93,10 +101,14 @@ final class BottomInputActionController {
     }
 
     private void configure() {
-        if (buttonVoiceInput == null || buttonAddContent == null || callback == null) {
+        if (buttonVoiceInput == null
+            || buttonAiPlusContent == null
+            || buttonAddContent == null
+            || callback == null) {
             return;
         }
         buttonVoiceInput.setOnClickListener(view -> callback.onVoiceInputToggleRequested());
+        buttonAiPlusContent.setOnClickListener(view -> handleAiPlusActionClick());
         buttonAddContent.setOnTouchListener((view, event) -> {
             if (event == null) {
                 return false;
@@ -209,6 +221,17 @@ final class BottomInputActionController {
         } finally {
             trailingActionStartedWithTextInputInteraction = false;
         }
+    }
+
+    private void handleAiPlusActionClick() {
+        callback.refreshKeyboardVisibilityForAction();
+        if (callback.isManualModeEnabled() || isSendActionVisible()) {
+            buttonAiPlusContent.setVisibility(View.GONE);
+            callback.setAttachmentPanelVisible(false);
+            return;
+        }
+
+        callback.setAttachmentPanelVisible(!callback.isAttachmentPanelVisible());
     }
 
     private boolean isPlusActionVisible() {

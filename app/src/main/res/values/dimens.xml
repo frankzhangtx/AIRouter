@@ -49,6 +49,7 @@
     <dimen name="baidu_web_input_text_left_gap">16dp</dimen>
     <dimen name="baidu_web_input_hint_icon_gap">8dp</dimen>
     <dimen name="baidu_web_input_text_trailing_icon_gap">8dp</dimen>
+    <dimen name="baidu_web_input_action_icon_gap">8dp</dimen>
     <dimen name="baidu_web_input_multiline_text_vertical_gap">15dp</dimen>
     <dimen name="baidu_web_ai_avatar_size">44dp</dimen>
     <dimen name="baidu_web_ai_avatar_gap">6dp</dimen>

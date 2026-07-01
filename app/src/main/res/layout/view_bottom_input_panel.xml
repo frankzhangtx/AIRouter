@@ -138,6 +138,21 @@
                     android:textSize="@dimen/baidu_web_input_text_size" />
 
                 <ImageButton
+                    android:id="@+id/button_ai_plus_content"
+                    android:layout_width="@dimen/baidu_web_input_compact_icon_size"
+                    android:layout_height="@dimen/baidu_web_input_compact_icon_size"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="@dimen/baidu_web_input_action_icon_gap"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="@string/baidu_web_plus_content_description"
+                    android:minWidth="0dp"
+                    android:minHeight="0dp"
+                    android:padding="0dp"
+                    android:scaleType="fitCenter"
+                    android:src="@mipmap/ic_zhixiaoan_plus"
+                    android:visibility="gone" />
+
+                <ImageButton
                     android:id="@+id/button_add_content"
                     android:layout_width="@dimen/baidu_web_input_compact_icon_size"
                     android:layout_height="@dimen/baidu_web_input_compact_icon_size"

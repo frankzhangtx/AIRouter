@@ -18,6 +18,7 @@ public class BottomInputPanelView extends LinearLayout {
     private View aiAvatarButton;
     private View bottomInputBar;
     private ImageButton buttonVoiceInput;
+    private ImageButton buttonAiPlusContent;
     private ImageButton buttonAddContent;
     private EditText consultInput;
     private BottomSuggestionListController suggestionListController;
@@ -255,6 +256,7 @@ public class BottomInputPanelView extends LinearLayout {
         aiAvatarButton = findViewById(R.id.button_ai_avatar);
         bottomInputBar = findViewById(R.id.bottom_input_bar);
         buttonVoiceInput = findViewById(R.id.button_voice_input);
+        buttonAiPlusContent = findViewById(R.id.button_ai_plus_content);
         buttonAddContent = findViewById(R.id.button_add_content);
         consultInput = findViewById(R.id.edit_text_consult_content);
 
@@ -402,6 +404,7 @@ public class BottomInputPanelView extends LinearLayout {
     private void configureVoiceInputToggle() {
         if (
             buttonVoiceInput == null
+                || buttonAiPlusContent == null
                 || buttonAddContent == null
                 || consultInput == null
                 || voiceRecordController == null
@@ -412,6 +415,7 @@ public class BottomInputPanelView extends LinearLayout {
 
         inputActionController = new BottomInputActionController(
             buttonVoiceInput,
+            buttonAiPlusContent,
             buttonAddContent,
             new BottomInputPanelActionCallback(this)
         );

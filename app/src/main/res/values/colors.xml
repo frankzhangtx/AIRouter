@@ -29,8 +29,8 @@
     <color name="baidu_web_attachment_icon">#3F4043</color>
     <color name="baidu_web_attachment_text">#2F3237</color>
     <color name="baidu_web_suggestion_chip_background">#FFFFFFFF</color>
-    <color name="baidu_web_suggestion_chip_gradient_top">#00F6F2F0</color>
-    <color name="baidu_web_suggestion_chip_gradient_bottom">#0DFFFFFF</color>
+    <color name="baidu_web_suggestion_chip_gradient_top">#F6F2F0</color>
+    <color name="baidu_web_suggestion_chip_gradient_bottom">#F2FFFFFF</color>
     <color name="baidu_web_suggestion_chip_stroke">#FFFFFFFF</color>
     <color name="baidu_web_suggestion_chip_text">#1A1A1A</color>
     <color name="baidu_web_suggestion_chip_badge_background">#FF0000</color>

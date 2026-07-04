@@ -16,6 +16,8 @@ import java.util.List;
 
 final class BottomSuggestionListController {
 
+    private static final int LARGE_ICON_SUGGESTION_POSITION = 2;
+
     private final RecyclerView suggestionListView;
     private final HorizontalSuggestionAdapter suggestionAdapter;
 
@@ -220,7 +222,11 @@ final class BottomSuggestionListController {
 
         @Override
         public void onBindViewHolder(HorizontalSuggestionViewHolder holder, int position) {
-            holder.bind(items.get(position), toastRequestListener);
+            holder.bind(
+                items.get(position),
+                position == LARGE_ICON_SUGGESTION_POSITION,
+                toastRequestListener
+            );
         }
 
         @Override
@@ -230,19 +236,23 @@ final class BottomSuggestionListController {
     }
 
     private static class HorizontalSuggestionViewHolder extends RecyclerView.ViewHolder {
+        private final View chipBodyView;
         private final ImageView iconView;
         private final TextView textView;
 
         private HorizontalSuggestionViewHolder(View itemView) {
             super(itemView);
+            chipBodyView = itemView.findViewById(R.id.suggestion_chip_body);
             iconView = itemView.findViewById(R.id.suggestion_chip_icon);
             textView = itemView.findViewById(R.id.suggestion_chip_text);
         }
 
         private void bind(
             HorizontalSuggestionItem item,
+            boolean useLargeIconStyle,
             ToastRequestListener toastRequestListener
         ) {
+            applyBubbleItemStyle(useLargeIconStyle);
             iconView.setImageResource(item.iconResource);
             textView.setText(item.textResource);
             itemView.setContentDescription(textView.getText());
@@ -251,6 +261,41 @@ final class BottomSuggestionListController {
                     toastRequestListener.onToastRequested(item.textResource);
                 }
             });
+        }
+
+        private void applyBubbleItemStyle(boolean useLargeIconStyle) {
+            int iconSize = itemView.getResources().getDimensionPixelSize(
+                useLargeIconStyle
+                    ? R.dimen.baidu_web_suggestion_chip_large_icon_size
+                    : R.dimen.baidu_web_suggestion_chip_icon_size
+            );
+            ViewGroup.LayoutParams iconLayoutParams = iconView.getLayoutParams();
+            if (
+                iconLayoutParams.width != iconSize
+                    || iconLayoutParams.height != iconSize
+            ) {
+                iconLayoutParams.width = iconSize;
+                iconLayoutParams.height = iconSize;
+                iconView.setLayoutParams(iconLayoutParams);
+            }
+
+            if (chipBodyView == null) {
+                return;
+            }
+            int startPadding = itemView.getResources().getDimensionPixelSize(
+                useLargeIconStyle
+                    ? R.dimen.baidu_web_suggestion_chip_large_start_padding
+                    : R.dimen.baidu_web_suggestion_chip_start_padding
+            );
+            int endPadding = itemView.getResources().getDimensionPixelSize(
+                R.dimen.baidu_web_suggestion_chip_end_padding
+            );
+            chipBodyView.setPadding(
+                startPadding,
+                chipBodyView.getPaddingTop(),
+                endPadding,
+                chipBodyView.getPaddingBottom()
+            );
         }
     }
 }

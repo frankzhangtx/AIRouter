@@ -72,7 +72,7 @@
     <dimen name="baidu_web_manual_toggle_top_margin">16dp</dimen>
     <dimen name="baidu_web_suggestion_list_height">44dp</dimen>
     <dimen name="baidu_web_suggestion_list_bottom_padding">12dp</dimen>
-    <dimen name="baidu_web_suggestion_chip_item_height">40dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_item_height">32dp</dimen>
     <dimen name="baidu_web_suggestion_chip_height">32dp</dimen>
     <dimen name="baidu_web_suggestion_chip_radius">16dp</dimen>
     <dimen name="baidu_web_suggestion_chip_gap">8dp</dimen>
@@ -80,8 +80,11 @@
     <dimen name="baidu_web_suggestion_chip_start_padding">10dp</dimen>
     <dimen name="baidu_web_suggestion_chip_end_padding">14dp</dimen>
     <dimen name="baidu_web_suggestion_chip_icon_size">20dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_large_icon_size">30dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_large_start_padding">6dp</dimen>
     <dimen name="baidu_web_suggestion_chip_icon_gap">4dp</dimen>
-    <dimen name="baidu_web_suggestion_chip_text_size">12dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_text_size">12sp</dimen>
+    <dimen name="baidu_web_suggestion_chip_shadow_elevation">1dp</dimen>
     <dimen name="baidu_web_suggestion_chip_badge_height">14dp</dimen>
     <dimen name="baidu_web_suggestion_chip_badge_horizontal_padding">4dp</dimen>
     <dimen name="baidu_web_suggestion_chip_badge_stroke_width">1dp</dimen>

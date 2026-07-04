@@ -9,11 +9,13 @@
     android:focusable="true">
 
     <LinearLayout
+        android:id="@+id/suggestion_chip_body"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/baidu_web_suggestion_chip_height"
         android:layout_gravity="bottom|start"
         android:background="@drawable/bg_baidu_web_suggestion_chip"
-        android:gravity="center_vertical"
+        android:elevation="@dimen/baidu_web_suggestion_chip_shadow_elevation"
+        android:gravity="center"
         android:orientation="horizontal"
         android:paddingStart="@dimen/baidu_web_suggestion_chip_start_padding"
         android:paddingEnd="@dimen/baidu_web_suggestion_chip_end_padding">
@@ -30,25 +32,10 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/baidu_web_suggestion_chip_icon_gap"
             android:ellipsize="end"
+            android:fontFamily="sans-serif"
             android:includeFontPadding="false"
             android:maxLines="1"
             android:textColor="@color/baidu_web_suggestion_chip_text"
             android:textSize="@dimen/baidu_web_suggestion_chip_text_size" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/suggestion_chip_badge"
-        android:layout_width="wrap_content"
-        android:layout_height="@dimen/baidu_web_suggestion_chip_badge_height"
-        android:layout_gravity="top|end"
-        android:background="@drawable/bg_baidu_web_suggestion_chip_badge"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center"
-        android:includeFontPadding="false"
-        android:minWidth="@dimen/baidu_web_suggestion_chip_badge_height"
-        android:paddingStart="@dimen/baidu_web_suggestion_chip_badge_horizontal_padding"
-        android:paddingEnd="@dimen/baidu_web_suggestion_chip_badge_horizontal_padding"
-        android:text="@string/baidu_web_suggestion_chip_badge"
-        android:textColor="@color/baidu_web_suggestion_chip_badge_text"
-        android:textSize="@dimen/baidu_web_suggestion_chip_badge_text_size" />
 </FrameLayout>

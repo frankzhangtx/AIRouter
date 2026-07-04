@@ -72,8 +72,8 @@
     <dimen name="baidu_web_manual_toggle_top_margin">16dp</dimen>
     <dimen name="baidu_web_suggestion_list_height">44dp</dimen>
     <dimen name="baidu_web_suggestion_list_bottom_padding">12dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_item_height">40dp</dimen>
     <dimen name="baidu_web_suggestion_chip_height">32dp</dimen>
-    <dimen name="baidu_web_suggestion_chip_min_width">106.2dp</dimen>
     <dimen name="baidu_web_suggestion_chip_radius">16dp</dimen>
     <dimen name="baidu_web_suggestion_chip_gap">8dp</dimen>
     <dimen name="baidu_web_suggestion_chip_horizontal_padding">12.6dp</dimen>
@@ -82,4 +82,9 @@
     <dimen name="baidu_web_suggestion_chip_icon_size">20dp</dimen>
     <dimen name="baidu_web_suggestion_chip_icon_gap">4dp</dimen>
     <dimen name="baidu_web_suggestion_chip_text_size">12dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_badge_height">14dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_badge_horizontal_padding">4dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_badge_stroke_width">1dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_badge_radius">7dp</dimen>
+    <dimen name="baidu_web_suggestion_chip_badge_text_size">8sp</dimen>
 </resources>

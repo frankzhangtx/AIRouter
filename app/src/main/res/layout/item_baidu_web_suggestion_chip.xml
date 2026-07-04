@@ -1,30 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="@dimen/baidu_web_suggestion_chip_height"
+    android:layout_height="@dimen/baidu_web_suggestion_chip_item_height"
     android:layout_marginEnd="@dimen/baidu_web_suggestion_chip_gap"
-    android:background="@drawable/bg_baidu_web_suggestion_chip"
     android:clickable="true"
-    android:focusable="true"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
-    android:paddingStart="@dimen/baidu_web_suggestion_chip_start_padding"
-    android:paddingEnd="@dimen/baidu_web_suggestion_chip_end_padding">
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:focusable="true">
 
-    <ImageView
-        android:id="@+id/suggestion_chip_icon"
-        android:layout_width="@dimen/baidu_web_suggestion_chip_icon_size"
-        android:layout_height="@dimen/baidu_web_suggestion_chip_icon_size"
-        android:importantForAccessibility="no" />
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/baidu_web_suggestion_chip_height"
+        android:layout_gravity="bottom|start"
+        android:background="@drawable/bg_baidu_web_suggestion_chip"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/baidu_web_suggestion_chip_start_padding"
+        android:paddingEnd="@dimen/baidu_web_suggestion_chip_end_padding">
+
+        <ImageView
+            android:id="@+id/suggestion_chip_icon"
+            android:layout_width="@dimen/baidu_web_suggestion_chip_icon_size"
+            android:layout_height="@dimen/baidu_web_suggestion_chip_icon_size"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/suggestion_chip_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/baidu_web_suggestion_chip_icon_gap"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:textColor="@color/baidu_web_suggestion_chip_text"
+            android:textSize="@dimen/baidu_web_suggestion_chip_text_size" />
+    </LinearLayout>
 
     <TextView
-        android:id="@+id/suggestion_chip_text"
+        android:id="@+id/suggestion_chip_badge"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="@dimen/baidu_web_suggestion_chip_icon_gap"
-        android:ellipsize="end"
+        android:layout_height="@dimen/baidu_web_suggestion_chip_badge_height"
+        android:layout_gravity="top|end"
+        android:background="@drawable/bg_baidu_web_suggestion_chip_badge"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
         android:includeFontPadding="false"
-        android:maxLines="1"
-        android:textColor="@color/baidu_web_suggestion_chip_text"
-        android:textSize="@dimen/baidu_web_suggestion_chip_text_size" />
-</LinearLayout>
+        android:minWidth="@dimen/baidu_web_suggestion_chip_badge_height"
+        android:paddingStart="@dimen/baidu_web_suggestion_chip_badge_horizontal_padding"
+        android:paddingEnd="@dimen/baidu_web_suggestion_chip_badge_horizontal_padding"
+        android:text="@string/baidu_web_suggestion_chip_badge"
+        android:textColor="@color/baidu_web_suggestion_chip_badge_text"
+        android:textSize="@dimen/baidu_web_suggestion_chip_badge_text_size" />
+</FrameLayout>

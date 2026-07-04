@@ -33,4 +33,7 @@
     <color name="baidu_web_suggestion_chip_gradient_bottom">#0DFFFFFF</color>
     <color name="baidu_web_suggestion_chip_stroke">#FFFFFFFF</color>
     <color name="baidu_web_suggestion_chip_text">#1A1A1A</color>
+    <color name="baidu_web_suggestion_chip_badge_background">#FF0000</color>
+    <color name="baidu_web_suggestion_chip_badge_stroke">#FFFFFFFF</color>
+    <color name="baidu_web_suggestion_chip_badge_text">#FFFFFFFF</color>
 </resources>

@@ -47,6 +47,7 @@
     <string name="baidu_web_suggestion_policy_review">保单体检</string>
     <string name="baidu_web_suggestion_budget_plan">预算规划</string>
     <string name="baidu_web_suggestion_renewal_reminder">续保提醒</string>
+    <string name="baidu_web_suggestion_chip_badge">推荐</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">第一页</string>
     <string name="first_fragment_routing_hint">例如：查看第 12 条记录、查看张雨桐的信息、打开 Work 看板</string>

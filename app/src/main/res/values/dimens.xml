@@ -25,6 +25,7 @@
     <dimen name="pic_voice_record_prompt_text_size">15sp</dimen>
     <dimen name="new_voice_record_prompt_center_to_panel_top_gap">26dp</dimen>
     <dimen name="new_voice_record_background_above_prompt_gap">10dp</dimen>
+    <dimen name="new_voice_record_background_bottom_gap">10dp</dimen>
     <dimen name="new_voice_record_background_fade_height">5dp</dimen>
     <dimen name="new_voice_record_prompt_text_size">16sp</dimen>
     <dimen name="pic_voice_record_visualizer_max_width">280dp</dimen>

@@ -529,6 +529,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private final float panelCornerRadius;
         private final float promptCenterToPanelTopGap;
         private final float backgroundAbovePromptGap;
+        private final float backgroundBottomGap;
         private final float backgroundFadeHeight;
         private final float visualizerMaxWidth;
         private final float visualizerBarWidth;
@@ -576,6 +577,9 @@ public class PicVoiceRecordPanel extends FrameLayout {
             );
             backgroundAbovePromptGap = getResources().getDimension(
                 R.dimen.new_voice_record_background_above_prompt_gap
+            );
+            backgroundBottomGap = getResources().getDimension(
+                R.dimen.new_voice_record_background_bottom_gap
             );
             backgroundFadeHeight = getResources().getDimension(
                 R.dimen.new_voice_record_background_fade_height
@@ -884,7 +888,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
             float anchorBottom = anchorLocationOnScreen[1]
                 - canvasLocationOnScreen[1]
                 + anchorView.getHeight();
-            return coerceIn(anchorBottom, 0f, getHeight());
+            return coerceIn(anchorBottom + backgroundBottomGap, 0f, getHeight());
         }
 
         private boolean isPointInsideRoundedRect(float x, float y) {

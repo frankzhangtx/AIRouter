@@ -716,6 +716,10 @@ public class PicVoiceRecordPanel extends FrameLayout {
         private void drawPanelBackground(Canvas canvas) {
             float promptTop = getPromptBaseline() + textPaint.getFontMetrics().ascent;
             float solidBackgroundTop = Math.max(0f, promptTop - backgroundAbovePromptGap);
+            float backgroundBottom = resolveBackgroundBottom();
+            if (solidBackgroundTop >= backgroundBottom) {
+                return;
+            }
             float fadeTop = Math.max(0f, solidBackgroundTop - backgroundFadeHeight);
 
             if (fadeTop < solidBackgroundTop) {
@@ -734,7 +738,7 @@ public class PicVoiceRecordPanel extends FrameLayout {
             }
 
             backgroundPaint.setColor(panelBackgroundColor);
-            backgroundRect.set(0f, solidBackgroundTop, getWidth(), getHeight());
+            backgroundRect.set(0f, solidBackgroundTop, getWidth(), backgroundBottom);
             canvas.drawRect(backgroundRect, backgroundPaint);
         }
 
@@ -866,6 +870,21 @@ public class PicVoiceRecordPanel extends FrameLayout {
             float top = anchorCenterY - panelHeight / 2f;
             float clampedTop = coerceIn(top, 0f, Math.max(0f, getHeight() - panelHeight));
             return clampedTop + panelHeight;
+        }
+
+        private float resolveBackgroundBottom() {
+            View anchorView = panelAnchorView;
+            if (anchorView == null
+                || anchorView.getHeight() <= 0
+                || getHeight() <= 0) {
+                return getHeight();
+            }
+            anchorView.getLocationOnScreen(anchorLocationOnScreen);
+            getLocationOnScreen(canvasLocationOnScreen);
+            float anchorBottom = anchorLocationOnScreen[1]
+                - canvasLocationOnScreen[1]
+                + anchorView.getHeight();
+            return coerceIn(anchorBottom, 0f, getHeight());
         }
 
         private boolean isPointInsideRoundedRect(float x, float y) {

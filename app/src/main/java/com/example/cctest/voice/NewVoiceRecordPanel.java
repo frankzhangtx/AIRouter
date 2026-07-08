@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -50,10 +51,13 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private Float pendingStartRawX;
     private Float pendingStartRawY;
     private Runnable holdStartRunnable;
+    private Runnable commitShowRunnable;
+    private View commitShowRunnableView;
     private boolean holdPointerDown;
     private boolean holdTriggered;
     private boolean recording;
     private boolean ending;
+    private View currentTrigger;
 
     public NewVoiceRecordPanel(Context context) {
         super(context);
@@ -124,6 +128,10 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 if (!alreadyHandlingHold
                     && condition != null
                     && !condition.shouldEnableHoldTrigger()) {
+                    if (!holdTriggered && !recording) {
+                        cancelHoldStart();
+                        holdPointerDown = false;
+                    }
                     return false;
                 }
                 return handleHoldTriggerTouch(view, event, false, false);
@@ -281,8 +289,10 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 canvasView.updateVolume(volume);
             }
         });
+        Log.e("lztest", "attachAndStart in recording:" + recording);
         if (recording) {
             vibrateForVoicePanelFeedback();
+            Log.e("lztest", "attachAndStart in recording");
             if (callback != null) {
                 callback.onStart();
             }
@@ -334,11 +344,13 @@ public class NewVoiceRecordPanel extends FrameLayout {
         boolean wasHoldGesture = recording || holdTriggered;
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                Log.e("lztest", "down MotionEvent:" + event.getActionMasked());
                 holdPointerDown = true;
                 holdTriggered = false;
-                view.setPressed(true);
-                requestDisallowParentIntercept(view, true);
+                currentTrigger = view;
                 if (startImmediately) {
+                    view.setPressed(true);
+                    requestDisallowParentIntercept(view, true);
                     holdTriggered = true;
                     show();
                 } else {
@@ -352,32 +364,44 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_POINTER_UP:
+                Log.e("lztest", "up MotionEvent:" + event.getActionMasked() + "; recording:" + recording + "; holdTriggered:" + holdTriggered + "; consumeTouchBeforeHold:" + consumeTouchBeforeHold);
                 wasHoldGesture = recording || holdTriggered;
                 boolean shouldCancel = recording ? !updateFingerFromScreen(event.getRawX(), event.getRawY()) : true;
                 cancelHoldStart();
-                view.setPressed(false);
-                requestDisallowParentIntercept(view, false);
                 holdPointerDown = false;
                 if (recording) {
+                    view.setPressed(false);
+                    requestDisallowParentIntercept(view, false);
                     finishRecording(shouldCancel);
-                } else if (!holdTriggered && consumeTouchBeforeHold) {
-                    pendingShowAfterPermission = false;
-                    view.performClick();
+                } else if (holdTriggered) {
+                    view.setPressed(false);
+                    requestDisallowParentIntercept(view, false);
+                } else {
+                    if (consumeTouchBeforeHold) {
+                        pendingShowAfterPermission = false;
+                        view.performClick();
+                        Log.e("lztest", "view.performClick()");
+                    }
                 }
                 holdTriggered = false;
+                currentTrigger = null;
                 break;
             case MotionEvent.ACTION_CANCEL:
                 wasHoldGesture = recording || holdTriggered;
                 cancelHoldStart();
-                view.setPressed(false);
-                requestDisallowParentIntercept(view, false);
                 holdPointerDown = false;
                 if (recording) {
+                    view.setPressed(false);
+                    requestDisallowParentIntercept(view, false);
                     finishRecording(true);
+                } else if (holdTriggered) {
+                    view.setPressed(false);
+                    requestDisallowParentIntercept(view, false);
                 } else {
                     pendingShowAfterPermission = false;
                 }
                 holdTriggered = false;
+                currentTrigger = null;
                 break;
             default:
                 break;
@@ -397,9 +421,16 @@ public class NewVoiceRecordPanel extends FrameLayout {
         holdStartRunnable = new Runnable() {
             @Override
             public void run() {
+                holdStartRunnable = null;
+                Log.e("lztest", "scheduleHoldStart holdPointerDown:" + holdPointerDown + "; recording:" + recording);
                 if (holdPointerDown && !recording) {
                     holdTriggered = true;
-                    show();
+                    View v = currentTrigger;
+                    if (v != null) {
+                        v.setPressed(true);
+                        requestDisallowParentIntercept(v, true);
+                    }
+                    scheduleCommitShow(v);
                 }
             }
         };
@@ -409,11 +440,44 @@ public class NewVoiceRecordPanel extends FrameLayout {
         );
     }
 
+    private void scheduleCommitShow(View trigger) {
+        cancelCommitShow();
+        commitShowRunnable = new Runnable() {
+            @Override
+            public void run() {
+                commitShowRunnable = null;
+                commitShowRunnableView = null;
+                if (holdPointerDown && holdTriggered && !recording) {
+                    show();
+                }
+            }
+        };
+        if (trigger != null) {
+            commitShowRunnableView = trigger;
+            trigger.postOnAnimation(commitShowRunnable);
+        } else {
+            gestureHandler.post(commitShowRunnable);
+        }
+    }
+
     private void cancelHoldStart() {
         if (holdStartRunnable != null) {
             gestureHandler.removeCallbacks(holdStartRunnable);
         }
         holdStartRunnable = null;
+        cancelCommitShow();
+    }
+
+    private void cancelCommitShow() {
+        if (commitShowRunnable != null) {
+            if (commitShowRunnableView != null) {
+                commitShowRunnableView.removeCallbacks(commitShowRunnable);
+            } else {
+                gestureHandler.removeCallbacks(commitShowRunnable);
+            }
+        }
+        commitShowRunnable = null;
+        commitShowRunnableView = null;
     }
 
     private void updateFinger(float x, float y, boolean active) {
@@ -1169,7 +1233,7 @@ public class NewVoiceRecordPanel extends FrameLayout {
     private static final int MAX_VOLUME = 100;
     private static final int MAX_RAW_AMPLITUDE = 32767;
     private static final long SAMPLE_INTERVAL_MS = 35L;
-    private static final long HOLD_START_DELAY_MS = 100L;
+    private static final long HOLD_START_DELAY_MS = 250L;
     private static final long WAVE_DURATION_MS = 1061L;
     private static final long COLOR_ANIMATION_DURATION_MS = 180L;
     private static final long MODE_CHANGE_VIBRATION_DURATION_MS = 20L;

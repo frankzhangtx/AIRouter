@@ -633,10 +633,10 @@ public class NewVoiceRecordPanel extends FrameLayout {
                 context,
                 R.color.baidu_web_input_container_background
             );
-            normalPanelColor = ContextCompat.getColor(context, R.color.pic_voice_record_panel);
-            normalPanelCenterColor = ContextCompat.getColor(context, R.color.pic_voice_record_panel_center);
-            cancelPanelColor = ContextCompat.getColor(context, R.color.pic_voice_record_cancel_panel);
-            cancelPanelCenterColor = ContextCompat.getColor(context, R.color.pic_voice_record_cancel_panel_center);
+            normalPanelColor = ContextCompat.getColor(context, R.color.new_voice_record_panel);
+            normalPanelCenterColor = ContextCompat.getColor(context, R.color.new_voice_record_panel_center);
+            cancelPanelColor = ContextCompat.getColor(context, R.color.new_voice_record_cancel_panel);
+            cancelPanelCenterColor = ContextCompat.getColor(context, R.color.new_voice_record_cancel_panel_center);
             normalPromptColor = ContextCompat.getColor(context, R.color.pic_voice_record_prompt);
             cancelPromptColor = ContextCompat.getColor(context, R.color.pic_voice_record_cancel_prompt);
             panelHorizontalMargin = getResources().getDimension(R.dimen.pic_voice_record_panel_horizontal_margin);

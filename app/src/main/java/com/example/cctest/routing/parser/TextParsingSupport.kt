@@ -18,6 +18,10 @@ private val chineseNumberMap = mapOf(
 
 private val knownCities = listOf("上海", "北京", "深圳", "杭州", "成都", "南京", "武汉", "苏州", "厦门", "广州")
 private val knownOccupations = listOf("设计师", "工程师", "教师", "产品经理", "医生", "律师", "分析师", "顾问", "作家", "建筑师")
+private val mainlandMobilePhonePattern = Regex(
+    "(?<![0-9])(?:1[0-9]{10}|1[0-9]{2}-[0-9]{4}-[0-9]{4}|" +
+        "1[0-9]{2} [0-9]{4} [0-9]{4})(?![0-9])"
+)
 
 fun String.normalizedInput(): String {
     return trim()
@@ -40,7 +44,7 @@ fun extractPosition(text: String): Int? {
 }
 
 fun extractPhone(text: String): String? {
-    return Regex("1\\d{10}").find(text)?.value
+    return mainlandMobilePhonePattern.find(text)?.value?.filter(Char::isDigit)
 }
 
 fun extractEmail(text: String): String? {

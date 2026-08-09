@@ -5,8 +5,10 @@ import com.example.cctest.routing.parser.ParseOutcome
 import com.example.cctest.routing.parser.ParseRequest
 import com.example.cctest.routing.parser.RuleBasedIntentParser
 import com.example.cctest.routing.parser.UserGoal
+import com.example.cctest.routing.parser.extractPhone
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -45,5 +47,40 @@ class RuleBasedIntentParserTest {
         assertEquals("李晨曦", result.slots.personalInfoFields.name)
         assertEquals(29, result.slots.personalInfoFields.age)
         assertEquals("13800001022", result.slots.personalInfoFields.phone)
+    }
+
+    @Test
+    fun parseFormIntent_normalizesHyphenatedPhone() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(
+                inputText = "帮我更新个人资料，电话 138-0000-1022",
+                entrySource = "test"
+            )
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.FillPersonalInfo, result.userGoal)
+        assertEquals("13800001022", result.slots.personalInfoFields.phone)
+    }
+
+    @Test
+    fun parseFormIntent_normalizesSpaceSeparatedPhone() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(
+                inputText = "帮我更新个人资料，电话 138 0000 1022",
+                entrySource = "test"
+            )
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.FillPersonalInfo, result.userGoal)
+        assertEquals("13800001022", result.slots.personalInfoFields.phone)
+    }
+
+    @Test
+    fun extractPhone_rejectsMalformedSeparatedNumbers() {
+        assertNull(extractPhone("电话 138-000-1022"))
+        assertNull(extractPhone("电话 138-0000-10222"))
+        assertNull(extractPhone("电话 138a0000a1022"))
     }
 }

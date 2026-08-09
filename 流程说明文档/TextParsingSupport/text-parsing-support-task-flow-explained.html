@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TextParsingSupport 手机号归一化任务全流程与 Harness 作用说明</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4efe7;
+            --surface: rgba(255, 250, 244, 0.94);
+            --surface-strong: #fffaf4;
+            --ink: #201b16;
+            --muted: #675d52;
+            --line: rgba(84, 66, 47, 0.16);
+            --line-strong: rgba(84, 66, 47, 0.30);
+            --accent: #b14b1e;
+            --accent-soft: rgba(177, 75, 30, 0.12);
+            --teal: #176b63;
+            --teal-soft: rgba(23, 107, 99, 0.12);
+            --gold: #9d6918;
+            --gold-soft: rgba(157, 105, 24, 0.12);
+            --blue: #365e7a;
+            --blue-soft: #eaf4f8;
+            --purple: #5d4b79;
+            --purple-soft: #f0ebf7;
+            --danger: #934238;
+            --danger-soft: #fff0ed;
+            --gray-soft: #eee9e2;
+            --shadow: 0 26px 72px rgba(47, 31, 20, 0.12);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --max: 1280px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            color: var(--ink);
+            font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(177, 75, 30, 0.16), transparent 30%),
+                radial-gradient(circle at top right, rgba(23, 107, 99, 0.12), transparent 28%),
+                linear-gradient(180deg, #fcf8f2 0%, var(--bg) 44%, #eee3d5 100%);
+        }
+
+        h1, h2, h3, h4, p {
+            margin: 0;
+        }
+
+        a {
+            color: var(--teal);
+            text-decoration-thickness: 1px;
+            text-underline-offset: 3px;
+        }
+
+        code {
+            padding: 0.12em 0.38em;
+            border-radius: 8px;
+            background: rgba(42, 33, 26, 0.06);
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 0.92em;
+            overflow-wrap: anywhere;
+        }
+
+        .page {
+            width: min(calc(100% - 32px), var(--max));
+            margin: 0 auto;
+            padding: 28px 0 72px;
+        }
+
+        .hero,
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .hero {
+            position: relative;
+            overflow: hidden;
+            padding: 36px;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: auto -80px -120px auto;
+            width: 300px;
+            height: 300px;
+            border-radius: 999px;
+            background: radial-gradient(circle, rgba(23, 107, 99, 0.18), transparent 68%);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin-top: 18px;
+            max-width: 940px;
+            font-size: clamp(32px, 4.8vw, 58px);
+            line-height: 1.06;
+        }
+
+        .hero .lead {
+            margin-top: 16px;
+            max-width: 920px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.75;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .meta-item {
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.48);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .status-pass {
+            color: var(--teal);
+            background: var(--teal-soft);
+            border-color: rgba(23, 107, 99, 0.24);
+            font-weight: 800;
+        }
+
+        .status-pending {
+            color: var(--gold);
+            background: var(--gold-soft);
+            border-color: rgba(157, 105, 24, 0.24);
+            font-weight: 800;
+        }
+
+        .panel {
+            margin-top: 22px;
+            padding: 28px;
+        }
+
+        .section-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .section-head h2 {
+            margin-top: 8px;
+            font-size: clamp(26px, 3vw, 36px);
+        }
+
+        .section-head p {
+            margin-top: 8px;
+            max-width: 880px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .section-no {
+            flex: 0 0 auto;
+            color: rgba(177, 75, 30, 0.18);
+            font-size: 54px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .toc {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toc a {
+            padding: 10px 14px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.52);
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+            border-color: rgba(177, 75, 30, 0.35);
+        }
+
+        .verdict {
+            padding: 20px 22px;
+            border: 1px solid rgba(23, 107, 99, 0.25);
+            border-radius: var(--radius-lg);
+            background: var(--teal-soft);
+        }
+
+        .verdict strong {
+            display: block;
+            color: var(--teal);
+            font-size: 20px;
+        }
+
+        .verdict p {
+            margin-top: 10px;
+            color: #365f59;
+            line-height: 1.75;
+        }
+
+        .grid-2,
+        .grid-3,
+        .grid-4,
+        .metric-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .grid-4,
+        .metric-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .card,
+        .metric,
+        .step-card {
+            padding: 18px;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.52);
+        }
+
+        .card h3,
+        .step-card h3 {
+            font-size: 18px;
+        }
+
+        .card p,
+        .step-card p {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.72;
+        }
+
+        .kicker {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .metric strong {
+            display: block;
+            color: var(--accent);
+            font-size: 34px;
+            line-height: 1;
+        }
+
+        .metric span {
+            display: block;
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.55;
+        }
+
+        .callout {
+            margin-top: 18px;
+            padding: 17px 20px;
+            border-left: 4px solid var(--gold);
+            border-radius: 14px;
+            background: var(--gold-soft);
+            color: #4f3917;
+            line-height: 1.74;
+            font-size: 14px;
+        }
+
+        .callout strong {
+            color: #6f4c14;
+        }
+
+        .callout.info {
+            border-left-color: var(--blue);
+            background: var(--blue-soft);
+            color: #365e7a;
+        }
+
+        .callout.info strong {
+            color: #284d67;
+        }
+
+        .callout.danger {
+            border-left-color: var(--danger);
+            background: var(--danger-soft);
+            color: #6f3b35;
+        }
+
+        .callout.danger strong {
+            color: var(--danger);
+        }
+
+        .table-wrap {
+            overflow: auto;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 15px 16px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            vertical-align: top;
+            line-height: 1.65;
+            font-size: 14px;
+        }
+
+        th {
+            color: #4c4035;
+            background: rgba(157, 105, 24, 0.08);
+            font-size: 13px;
+            letter-spacing: 0.02em;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .badge.used {
+            color: var(--teal);
+            background: var(--teal-soft);
+        }
+
+        .badge.manual {
+            color: var(--gold);
+            background: var(--gold-soft);
+        }
+
+        .badge.inactive {
+            color: #6c6258;
+            background: var(--gray-soft);
+        }
+
+        .badge.skip {
+            color: var(--blue);
+            background: var(--blue-soft);
+        }
+
+        .code-shell {
+            overflow: auto;
+            padding: 20px;
+            border: 1px solid rgba(33, 27, 22, 0.08);
+            border-radius: var(--radius-lg);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(249, 243, 234, 0.90) 100%);
+        }
+
+        pre {
+            margin: 0;
+            font-family: "SFMono-Regular", "Menlo", "Monaco", monospace;
+            font-size: 13.5px;
+            line-height: 1.76;
+            color: #1e1a15;
+            white-space: pre;
+        }
+
+        .comment {
+            color: var(--teal);
+        }
+
+        .removed {
+            color: var(--danger);
+            background: rgba(147, 66, 56, 0.08);
+        }
+
+        .added {
+            color: var(--teal);
+            background: rgba(23, 107, 99, 0.08);
+        }
+
+        .diagram-wrap {
+            overflow: auto;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(180deg, rgba(255, 253, 250, 0.76), rgba(244, 236, 227, 0.94));
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            min-width: 1080px;
+            height: auto;
+        }
+
+        .caption {
+            margin-top: 14px;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.72;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 12px;
+        }
+
+        .timeline-row {
+            display: grid;
+            grid-template-columns: 130px minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+
+        .timeline-tag {
+            padding: 10px 12px;
+            border-radius: 13px;
+            color: var(--accent);
+            background: var(--accent-soft);
+            font-size: 13px;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .timeline-body {
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.46);
+        }
+
+        .timeline-body strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .timeline-body p {
+            color: var(--muted);
+            line-height: 1.68;
+            font-size: 14px;
+        }
+
+        .file-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .file-item {
+            padding: 14px 16px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.48);
+        }
+
+        .file-item strong {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .file-item p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.65;
+        }
+
+        .footer-note {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border: 1px dashed var(--line-strong);
+            border-radius: 18px;
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.36);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        @media (max-width: 1040px) {
+            .grid-4,
+            .metric-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page {
+                width: min(calc(100% - 20px), var(--max));
+                padding: 18px 0 52px;
+            }
+
+            .hero,
+            .panel {
+                padding: 21px;
+                border-radius: 22px;
+            }
+
+            .hero .lead {
+                font-size: 16px;
+            }
+
+            .grid-2,
+            .grid-4,
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-no {
+                display: none;
+            }
+
+            .timeline-row {
+                grid-template-columns: 1fr;
+                gap: 7px;
+            }
+
+            .timeline-tag {
+                text-align: left;
+            }
+
+            pre {
+                font-size: 12.5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <div class="eyebrow">TASK-PHONE-NORMALIZATION-001</div>
+            <h1>TextParsingSupport 手机号归一化任务<br>从需求到验收的完整流程</h1>
+            <p class="lead">
+                本文复盘“让规则解析器识别带空格或短横线的 3-4-4 手机号，并统一输出纯数字”这一小型编程任务，
+                覆盖需求分析、任务拆解、TDD 实现、校验、边界补强和技术验收。同时逐项说明
+                <code>scheduled-coding-quality-gate-explained-v1</code> harness 在本次手工演练中真正发挥的作用，
+                以及仍未启用的定时调度、证据落盘、独立审查与人工合并边界。
+            </p>
+            <div class="meta-list">
+                <div class="meta-item">目标源码：<code>TextParsingSupport.kt</code></div>
+                <div class="meta-item">目标测试：<code>RuleBasedIntentParserTest</code></div>
+                <div class="meta-item">执行日期：2026-08-09</div>
+                <div class="meta-item status-pass">技术验收：通过</div>
+                <div class="meta-item status-pending">提交 / 独立审查 / 合并：待人工处理</div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Reading Guide</span>
+                    <h2>阅读导航</h2>
+                    <p>先看结论与真实时间线，再深入实现和 harness 门禁对照。</p>
+                </div>
+                <span class="section-no">00</span>
+            </div>
+            <nav class="toc" aria-label="文档目录">
+                <a href="#verdict">结论与口径</a>
+                <a href="#requirement">需求分析</a>
+                <a href="#decomposition">任务拆解</a>
+                <a href="#actual-flow">实际流程图</a>
+                <a href="#implementation">实现说明</a>
+                <a href="#red-green">校验与修改</a>
+                <a href="#acceptance">验收结果</a>
+                <a href="#harness">Harness 作用</a>
+                <a href="#gates">门禁逐项对照</a>
+                <a href="#full-run">完整自动化应如何运行</a>
+            </nav>
+        </section>
+
+        <section class="panel" id="verdict">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Core Verdict</span>
+                    <h2>本次是“受 harness 约束的手工演练”</h2>
+                    <p>结果真实通过，但不能把它描述成完整的定时自动化闭环。</p>
+                </div>
+                <span class="section-no">01</span>
+            </div>
+            <div class="verdict">
+                <strong>需求、实现和确定性验证均已完成；V1 harness 提供了边界、顺序和验收标准。</strong>
+                <p>
+                    本次真实使用了计划文件、任务契约、契约校验、TDD 的 RED→GREEN 顺序，以及与
+                    <code>verify-task.sh</code> 相同的单测、构建、Lint 验证组合。与此同时，
+                    <code>automation/config.json</code> 仍为 <code>enabled: false</code>、
+                    <code>mode: shadow</code>，因此 Scheduler 没有触发任务，状态机没有推进，
+                    <code>record-red.sh</code> 没有写入正式证据，独立 Reviewer 也没有执行。
+                </p>
+            </div>
+            <div class="metric-grid" style="margin-top: 18px;">
+                <div class="metric">
+                    <strong>2</strong>
+                    <span>实现前聚焦测试的预期失败数</span>
+                </div>
+                <div class="metric">
+                    <strong>2</strong>
+                    <span>产品代码与测试代码的实际变更文件数</span>
+                </div>
+                <div class="metric">
+                    <strong>6 / 0</strong>
+                    <span>最终聚焦测试：6 个执行、0 失败</span>
+                </div>
+                <div class="metric">
+                    <strong>3</strong>
+                    <span>新增测试：短横线、空格、非法格式</span>
+                </div>
+            </div>
+            <div class="callout">
+                <strong>验收口径：</strong>这里的“验收通过”指目标行为、聚焦测试、全量单测、Debug 构建、Android Lint
+                和契约校验均通过。V1 设计中的 G7 独立只读审查与 H1 人工合并尚未发生，所以当前仍是“技术验收通过、最终合并待人工决定”。
+            </div>
+        </section>
+
+        <section class="panel" id="requirement">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Requirement Analysis</span>
+                    <h2>需求分析：从现有代码缺口出发</h2>
+                    <p>任务不是凭空编造，而是从已有解析函数的可观察限制中提取。</p>
+                </div>
+                <span class="section-no">02</span>
+            </div>
+            <div class="grid-2">
+                <article class="card">
+                    <span class="kicker">Existing behavior</span>
+                    <h3>旧逻辑只接受连续 11 位数字</h3>
+                    <p>
+                        原来的 <code>extractPhone</code> 使用 <code>Regex("1\\d{10}")</code>。
+                        它能识别 <code>13800001022</code>，但遇到
+                        <code>138-0000-1022</code> 或 <code>138 0000 1022</code> 时返回空，
+                        导致表单解析结果缺少手机号槽位。
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Observable goal</span>
+                    <h3>输入形式更宽容，输出形式仍唯一</h3>
+                    <p>
+                        新能力只扩展输入格式，不改变下游数据契约。无论用户输入连续、短横线分组还是空格分组，
+                        <code>personalInfoFields.phone</code> 都必须得到同一个纯数字值
+                        <code>13800001022</code>。
+                    </p>
+                </article>
+            </div>
+
+            <div class="table-wrap" style="margin-top: 18px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>输入示例</th>
+                            <th>预期结果</th>
+                            <th>原因</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>13800001022</code></td>
+                            <td><code>13800001022</code></td>
+                            <td>保持已有连续格式兼容性。</td>
+                        </tr>
+                        <tr>
+                            <td><code>138-0000-1022</code></td>
+                            <td><code>13800001022</code></td>
+                            <td>接受 ASCII 短横线的 3-4-4 分组。</td>
+                        </tr>
+                        <tr>
+                            <td><code>138 0000 1022</code></td>
+                            <td><code>13800001022</code></td>
+                            <td>接受 ASCII 空格的 3-4-4 分组。</td>
+                        </tr>
+                        <tr>
+                            <td><code>138-000-1022</code></td>
+                            <td><code>null</code></td>
+                            <td>分组位数不完整，不能把近似文本误认为手机号。</td>
+                        </tr>
+                        <tr>
+                            <td><code>138-0000-10222</code></td>
+                            <td><code>null</code></td>
+                            <td>总位数超长，必须被数字边界拒绝。</td>
+                        </tr>
+                        <tr>
+                            <td><code>138a0000a1022</code></td>
+                            <td><code>null</code></td>
+                            <td>字母不是本任务允许的分隔符。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="callout info">
+                <strong>范围控制：</strong>本任务不修改 UI、导航、Gradle、依赖或远程解析；不处理国际号码，也不新增运营商号段校验。
+                这是一个输入抽取规则的原子变更，适合用本地 JVM 测试完成，不需要设备或模拟器。
+            </div>
+        </section>
+
+        <section class="panel" id="decomposition">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Task Decomposition</span>
+                    <h2>任务拆解：把自然语言变成可执行合同</h2>
+                    <p>拆解的核心不是增加步骤，而是让每一步都有明确输入、输出和停止条件。</p>
+                </div>
+                <span class="section-no">03</span>
+            </div>
+            <div class="grid-4">
+                <article class="step-card">
+                    <span class="kicker">Step 1</span>
+                    <h3>冻结行为</h3>
+                    <p>把三种合法格式、统一输出、三种非法格式和非目标写入需求计划。</p>
+                </article>
+                <article class="step-card">
+                    <span class="kicker">Step 2</span>
+                    <h3>冻结范围</h3>
+                    <p>只允许修改 <code>TextParsingSupport.kt</code> 与对应测试，生产与测试合计最多 2 个文件。</p>
+                </article>
+                <article class="step-card">
+                    <span class="kicker">Step 3</span>
+                    <h3>定义证据</h3>
+                    <p>目标测试类必须先出现需求相关失败，再通过聚焦测试、全量测试、构建与 Lint。</p>
+                </article>
+                <article class="step-card">
+                    <span class="kicker">Step 4</span>
+                    <h3>明确停机线</h3>
+                    <p>歧义转 <code>BLOCKED</code>，最多一次修复循环，禁止借任务修改规则或构建配置。</p>
+                </article>
+            </div>
+
+            <div class="grid-2" style="margin-top: 18px;">
+                <article class="card">
+                    <span class="kicker">Human-readable plan</span>
+                    <h3><code>docs/plans/TASK-PHONE-NORMALIZATION-001.md</code></h3>
+                    <p>
+                        面向人类说明背景、合法输入、边界条件、验收标准、允许路径、非目标和验证命令。
+                        它解决“为什么做、做到什么程度”的问题。
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Machine-readable contract</span>
+                    <h3><code>automation/tasks/TASK-PHONE-NORMALIZATION-001.json</code></h3>
+                    <p>
+                        面向脚本冻结 <code>maxChangedFiles: 2</code>、路径白名单、测试过滤器、
+                        <code>deviceTestsRequired: false</code>、技能白名单和修复次数。
+                        它解决“机器如何拒绝越界”的问题。
+                    </p>
+                </article>
+            </div>
+
+            <div class="code-shell" style="margin-top: 18px;">
+<pre><code>{
+  "id": "TASK-PHONE-NORMALIZATION-001",
+  <span class="comment">// 需求存在歧义时停止，不允许无人值守代理自行扩大解释。</span>
+  "ambiguityPolicy": "BLOCKED",
+  <span class="comment">// 产品实现阶段最多改 2 个文件：一个源码、一个测试。</span>
+  "maxChangedFiles": 2,
+  "allowedPaths": [
+    "app/src/main/java/com/example/cctest/routing/parser/TextParsingSupport.kt",
+    "app/src/test/java/com/example/cctest/routing/RuleBasedIntentParserTest.kt"
+  ],
+  <span class="comment">// 只允许 TDD、系统化调试与完成前验证三种执行纪律。</span>
+  "allowedSuperpowers": [
+    "test-driven-development",
+    "systematic-debugging",
+    "verification-before-completion"
+  ],
+  "targetTests": [
+    "com.example.cctest.routing.RuleBasedIntentParserTest"
+  ],
+  "deviceTestsRequired": false
+}</code></pre>
+            </div>
+            <p class="caption">
+                上面的注释只用于本文阅读，未写入实际 JSON。真实合同通过
+                <code>./scripts/automation/validate-contract.sh TASK-PHONE-NORMALIZATION-001</code> 校验。
+            </p>
+        </section>
+
+        <section class="panel" id="actual-flow">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Actual Execution Flow</span>
+                    <h2>实际发生的端到端流程</h2>
+                    <p>图中绿色节点表示通过，红色节点表示预期 RED，金色节点表示范围补强，灰色节点表示本次未激活。</p>
+                </div>
+                <span class="section-no">04</span>
+            </div>
+            <div class="diagram-wrap">
+                <svg viewBox="0 0 1240 900" role="img" aria-labelledby="actual-title actual-desc">
+                    <title id="actual-title">手机号归一化任务的实际执行流程</title>
+                    <desc id="actual-desc">从检查现有代码开始，经需求与合同、TDD RED、最小实现、边界测试和最终验证，到技术验收通过。</desc>
+                    <defs>
+                        <marker id="actual-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#6c5a48"></path>
+                        </marker>
+                        <filter id="actual-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#6d5138" flood-opacity="0.12"></feDropShadow>
+                        </filter>
+                        <style>
+                            .af-line { stroke: #6c5a48; stroke-width: 2.5; fill: none; marker-end: url(#actual-arrow); }
+                            .af-box { fill: #fffaf4; stroke: #c9b49e; stroke-width: 2; }
+                            .af-blue { fill: #eaf4f8; stroke: #7daec7; stroke-width: 2; }
+                            .af-red { fill: #fff0ed; stroke: #c87569; stroke-width: 2; }
+                            .af-green { fill: #e8f5ef; stroke: #65a281; stroke-width: 2; }
+                            .af-gold { fill: #fff5dc; stroke: #d0ab65; stroke-width: 2; }
+                            .af-gray { fill: #eee9e2; stroke: #b2a79a; stroke-width: 2; }
+                            .af-title { fill: #201b16; font: 700 17px "Avenir Next", "PingFang SC", sans-serif; }
+                            .af-sub { fill: #675d52; font: 13px "Avenir Next", "PingFang SC", sans-serif; }
+                            .af-label { fill: #8a5b17; font: 800 13px "Avenir Next", "PingFang SC", sans-serif; }
+                        </style>
+                    </defs>
+
+                    <rect x="20" y="20" width="1200" height="126" rx="22" fill="#fff1cb" stroke="#d9b665"></rect>
+                    <text x="46" y="50" class="af-label">需求与合同层 · C0</text>
+
+                    <rect class="af-box" x="52" y="72" width="220" height="52" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="162" y="95" text-anchor="middle">检查现有解析代码</text>
+                    <text class="af-sub" x="162" y="114" text-anchor="middle">发现仅支持连续 11 位</text>
+
+                    <path class="af-line" d="M272 98 L330 98"></path>
+
+                    <rect class="af-box" x="340" y="72" width="230" height="52" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="455" y="95" text-anchor="middle">定义原子行为</text>
+                    <text class="af-sub" x="455" y="114" text-anchor="middle">3 种合法 + 3 种非法格式</text>
+
+                    <path class="af-line" d="M570 98 L628 98"></path>
+
+                    <rect class="af-blue" x="638" y="66" width="260" height="64" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="768" y="92" text-anchor="middle">写计划 + 任务合同</text>
+                    <text class="af-sub" x="768" y="113" text-anchor="middle">范围、非目标、测试、门禁</text>
+
+                    <path class="af-line" d="M898 98 L956 98"></path>
+
+                    <rect class="af-green" x="966" y="72" width="220" height="52" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="1076" y="95" text-anchor="middle">契约校验通过</text>
+                    <text class="af-sub" x="1076" y="114" text-anchor="middle">validate-contract.sh</text>
+
+                    <path class="af-line" d="M1076 124 L1076 188 L188 188 L188 230"></path>
+
+                    <rect x="20" y="204" width="1200" height="312" rx="22" fill="#eef6f8" stroke="#9fc0d4"></rect>
+                    <text x="46" y="235" fill="#365e7a" font-size="13" font-weight="800">TDD 与实现层 · G1 → GREEN</text>
+
+                    <rect class="af-blue" x="60" y="266" width="220" height="72" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="170" y="294" text-anchor="middle">先新增两个行为测试</text>
+                    <text class="af-sub" x="170" y="316" text-anchor="middle">短横线格式 / 空格格式</text>
+
+                    <path class="af-line" d="M280 302 L344 302"></path>
+
+                    <rect class="af-red" x="354" y="258" width="232" height="88" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="470" y="286" text-anchor="middle">聚焦测试失败</text>
+                    <text class="af-sub" x="470" y="308" text-anchor="middle">5 tests · 2 failed</text>
+                    <text class="af-sub" x="470" y="329" text-anchor="middle">失败位置正是 phone 断言</text>
+
+                    <path class="af-line" d="M586 302 L650 302"></path>
+
+                    <rect class="af-green" x="660" y="258" width="246" height="88" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="783" y="286" text-anchor="middle">最小实现</text>
+                    <text class="af-sub" x="783" y="308" text-anchor="middle">三种明确 Regex 分支</text>
+                    <text class="af-sub" x="783" y="329" text-anchor="middle">匹配后 filter(isDigit)</text>
+
+                    <path class="af-line" d="M906 302 L970 302"></path>
+
+                    <rect class="af-green" x="980" y="266" width="202" height="72" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="1081" y="294" text-anchor="middle">聚焦测试转绿</text>
+                    <text class="af-sub" x="1081" y="316" text-anchor="middle">第一次 GREEN</text>
+
+                    <path class="af-line" d="M1081 338 L1081 402 L845 402"></path>
+
+                    <rect class="af-gold" x="588" y="378" width="257" height="92" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="716" y="406" text-anchor="middle">补强异常格式测试</text>
+                    <text class="af-sub" x="716" y="428" text-anchor="middle">位数不足 / 超长 / 字母分隔</text>
+                    <text class="af-sub" x="716" y="449" text-anchor="middle">没有扩大产品实现范围</text>
+
+                    <path class="af-line" d="M588 424 L506 424"></path>
+
+                    <rect class="af-green" x="274" y="384" width="232" height="80" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="390" y="414" text-anchor="middle">最终聚焦测试通过</text>
+                    <text class="af-sub" x="390" y="436" text-anchor="middle">6 tests · 0 failures</text>
+
+                    <path class="af-line" d="M390 464 L390 552 L170 552 L170 594"></path>
+
+                    <rect x="20" y="548" width="1200" height="204" rx="22" fill="#eaf4ec" stroke="#79a88b"></rect>
+                    <text x="46" y="578" fill="#285f48" font-size="13" font-weight="800">确定性验证层 · G2–G6</text>
+
+                    <rect class="af-green" x="58" y="610" width="210" height="78" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="163" y="639" text-anchor="middle">G2 单元测试</text>
+                    <text class="af-sub" x="163" y="661" text-anchor="middle">聚焦 + 全量通过</text>
+
+                    <path class="af-line" d="M268 649 L326 649"></path>
+
+                    <rect class="af-green" x="336" y="610" width="210" height="78" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="441" y="639" text-anchor="middle">G3 Debug 构建</text>
+                    <text class="af-sub" x="441" y="661" text-anchor="middle">assembleDebug 通过</text>
+
+                    <path class="af-line" d="M546 649 L604 649"></path>
+
+                    <rect class="af-green" x="614" y="610" width="210" height="78" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="719" y="639" text-anchor="middle">G4 Android Lint</text>
+                    <text class="af-sub" x="719" y="661" text-anchor="middle">lint 通过</text>
+
+                    <path class="af-line" d="M824 649 L882 649"></path>
+
+                    <rect class="af-blue" x="892" y="610" width="278" height="78" rx="14" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="1031" y="639" text-anchor="middle">范围与格式复核</text>
+                    <text class="af-sub" x="1031" y="661" text-anchor="middle">合同再校验 + diff --check</text>
+
+                    <path class="af-line" d="M1031 688 L1031 784 L818 784"></path>
+
+                    <rect class="af-green" x="480" y="770" width="338" height="84" rx="18" filter="url(#actual-shadow)"></rect>
+                    <text class="af-title" x="649" y="802" text-anchor="middle">技术验收通过</text>
+                    <text class="af-sub" x="649" y="826" text-anchor="middle">需求行为满足 · 构建质量满足 · diff 未提交</text>
+
+                    <rect class="af-gray" x="60" y="782" width="292" height="60" rx="14"></rect>
+                    <text class="af-title" x="206" y="807" text-anchor="middle">未执行：Scheduler / G7 / H1</text>
+                    <text class="af-sub" x="206" y="829" text-anchor="middle">shadow 模式，等待独立审查与人工合并</text>
+
+                    <path class="af-line" d="M352 812 L470 812"></path>
+                </svg>
+            </div>
+            <p class="caption">
+                这条时间线展示的是实际执行，而不是理想化流程。第一次 Gradle 调用曾因沙箱不能写
+                <code>~/.gradle</code> 缓存而失败；该环境问题经显式授权后重跑，随后得到的两个断言失败才是有效的 TDD RED。
+                环境错误没有被冒充为需求失败证据。
+            </p>
+        </section>
+
+        <section class="panel" id="implementation">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Implementation</span>
+                    <h2>实现：明确匹配，统一归一化</h2>
+                    <p>产品实现只增加一个预编译正则并替换一行抽取逻辑。</p>
+                </div>
+                <span class="section-no">05</span>
+            </div>
+            <div class="grid-2">
+                <article>
+                    <div class="code-shell">
+<pre><code><span class="comment">// 三个分支只覆盖合同批准的格式：</span>
+<span class="comment">// 1) 连续 11 位；2) 短横线 3-4-4；3) 空格 3-4-4。</span>
+private val mainlandMobilePhonePattern = Regex(
+    "(?&lt;![0-9])(?:1[0-9]{10}|" +
+        "1[0-9]{2}-[0-9]{4}-[0-9]{4}|" +
+        "1[0-9]{2} [0-9]{4} [0-9]{4})" +
+        "(?![0-9])"
+)
+
+fun extractPhone(text: String): String? {
+    <span class="comment">// 未命中返回 null；命中后移除空格或短横线，只向下游交付数字。</span>
+    return mainlandMobilePhonePattern
+        .find(text)
+        ?.value
+        ?.filter(Char::isDigit)
+}</code></pre>
+                    </div>
+                    <p class="caption">
+                        为便于阅读，代码在 HTML 中被换行并加入解释性注释；源码中的语义与这里一致，但注释没有回写到 Kotlin 文件。
+                    </p>
+                </article>
+                <aside class="grid-2" style="grid-template-columns: 1fr;">
+                    <article class="card">
+                        <span class="kicker">Boundary</span>
+                        <h3>前后数字边界</h3>
+                        <p>
+                            <code>(?&lt;![0-9])</code> 和 <code>(?![0-9])</code>
+                            防止从更长数字串中截取一个“看起来合法”的 11 位子串。
+                        </p>
+                    </article>
+                    <article class="card">
+                        <span class="kicker">Compatibility</span>
+                        <h3>保留旧输入</h3>
+                        <p><code>1[0-9]{10}</code> 仍是第一个分支，原来的连续格式不受影响。</p>
+                    </article>
+                    <article class="card">
+                        <span class="kicker">Normalization</span>
+                        <h3>输出只有一种形态</h3>
+                        <p>
+                            <code>filter(Char::isDigit)</code> 去掉空格或短横线，避免下游每个消费者重复处理格式差异。
+                        </p>
+                    </article>
+                </aside>
+            </div>
+
+            <div class="table-wrap" style="margin-top: 18px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>正则分支</th>
+                            <th>接受内容</th>
+                            <th>为什么不做更宽泛匹配</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>1[0-9]{10}</code></td>
+                            <td>连续 11 位、以 1 开头</td>
+                            <td>保持旧行为。</td>
+                        </tr>
+                        <tr>
+                            <td><code>1[0-9]{2}-[0-9]{4}-[0-9]{4}</code></td>
+                            <td>ASCII 短横线 3-4-4</td>
+                            <td>不接受任意数量短横线，避免误识别。</td>
+                        </tr>
+                        <tr>
+                            <td><code>1[0-9]{2} [0-9]{4} [0-9]{4}</code></td>
+                            <td>ASCII 空格 3-4-4</td>
+                            <td>只实现合同明确批准的常见输入。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel" id="red-green">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Validation And Revision</span>
+                    <h2>校验、修改与边界补强</h2>
+                    <p>先让测试说明缺口，再做最小实现；转绿后补充负向用例，防止正则过宽。</p>
+                </div>
+                <span class="section-no">06</span>
+            </div>
+
+            <div class="timeline">
+                <div class="timeline-row">
+                    <div class="timeline-tag">RED 准备</div>
+                    <div class="timeline-body">
+                        <strong>新增两个可观察行为测试</strong>
+                        <p>
+                            <code>parseFormIntent_normalizesHyphenatedPhone</code> 与
+                            <code>parseFormIntent_normalizesSpaceSeparatedPhone</code>
+                            均通过完整的 <code>RuleBasedIntentParser</code> 路径断言最终槽位，不只测试正则内部细节。
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">有效 RED</div>
+                    <div class="timeline-body">
+                        <strong>5 个目标测试中 2 个失败</strong>
+                        <p>
+                            失败发生在新增测试的手机号断言处，和需求缺口一致。这证明测试确实能在旧实现上失败，
+                            而不是先写实现后补一个永远通过的测试。
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">最小修改</div>
+                    <div class="timeline-body">
+                        <strong>只修改手机号模式与抽取返回值</strong>
+                        <p>
+                            没有改路由优先级、数据模型或 UI。实现后重新运行同一目标测试类并获得第一次 GREEN。
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">补强</div>
+                    <div class="timeline-body">
+                        <strong>新增非法格式负向测试</strong>
+                        <p>
+                            <code>extractPhone_rejectsMalformedSeparatedNumbers</code>
+                            覆盖位数不足、超长和字母分隔，确保“支持更多输入”不会演变为“任意文本都可能被当作手机号”。
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">最终 GREEN</div>
+                    <div class="timeline-body">
+                        <strong>聚焦测试 6 个执行、0 失败</strong>
+                        <p>最终 XML 结果记录 <code>tests="6"</code>、<code>failures="0"</code>、<code>errors="0"</code>。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-top: 18px;">
+                <div class="code-shell">
+<pre><code><span class="comment">// 正向：端到端解析并统一输出纯数字。</span>
+assertEquals(
+    "13800001022",
+    result.slots.personalInfoFields.phone
+)
+
+<span class="comment">// 负向：近似但不合规的输入必须保持 null。</span>
+assertNull(extractPhone("电话 138-000-1022"))
+assertNull(extractPhone("电话 138-0000-10222"))
+assertNull(extractPhone("电话 138a0000a1022"))</code></pre>
+                </div>
+                <div class="callout danger" style="margin-top: 0;">
+                    <strong>环境失败与产品 RED 必须区分：</strong>第一次运行 Gradle 时出现
+                    <code>~/.gradle/...zip.lck (Operation not permitted)</code>，这是沙箱权限问题，
+                    不能证明旧代码不满足需求。获得明确授权并让 Gradle 正常启动后，新增断言出现的两处失败才是有效 RED。
+                    这一点符合 harness “证据必须与验收目标相关”的原则。
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" id="acceptance">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Acceptance</span>
+                    <h2>验收：用新鲜命令证明完成</h2>
+                    <p>最终结论来自实际命令结果，而不是根据代码外观推断。</p>
+                </div>
+                <span class="section-no">07</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>检查项</th>
+                            <th>实际命令或证据</th>
+                            <th>结果</th>
+                            <th>覆盖的风险</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>任务合同</td>
+                            <td><code>validate-contract.sh TASK-PHONE-NORMALIZATION-001</code></td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>字段缺失、路径不安全、计划不存在、技能列表或修复次数不合规。</td>
+                        </tr>
+                        <tr>
+                            <td>聚焦测试</td>
+                            <td><code>testDebugUnitTest --tests ...RuleBasedIntentParserTest</code></td>
+                            <td><span class="badge used">6 / 0</span></td>
+                            <td>目标行为与非法输入边界回归。</td>
+                        </tr>
+                        <tr>
+                            <td>全量单元测试</td>
+                            <td><code>./gradlew testDebugUnitTest</code></td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>其他本地逻辑被新正则破坏。</td>
+                        </tr>
+                        <tr>
+                            <td>Debug 构建</td>
+                            <td><code>./gradlew assembleDebug</code></td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>Kotlin 编译、资源处理、打包链路错误。</td>
+                        </tr>
+                        <tr>
+                            <td>Android Lint</td>
+                            <td><code>./gradlew lint</code></td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>静态 Android 质量问题。</td>
+                        </tr>
+                        <tr>
+                            <td>设备测试</td>
+                            <td><code>deviceTestsRequired: false</code></td>
+                            <td><span class="badge skip">按合同跳过</span></td>
+                            <td>本任务是纯 JVM 可验证逻辑，不伪装成已运行设备测试。</td>
+                        </tr>
+                        <tr>
+                            <td>Diff 格式</td>
+                            <td><code>git diff --check</code></td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>尾随空白等补丁格式问题。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grid-3" style="margin-top: 18px;">
+                <article class="card">
+                    <span class="kicker">Behavior</span>
+                    <h3>功能验收通过</h3>
+                    <p>连续、短横线和空格三种格式输出一致；异常格式保持拒绝。</p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Regression</span>
+                    <h3>回归验收通过</h3>
+                    <p>目标测试、全量单测、Debug 构建和 Lint 全部成功。</p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Delivery</span>
+                    <h3>交付尚未闭环</h3>
+                    <p>当前修改尚未提交，独立 Reviewer 与人工合并也未执行。</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="panel" id="harness">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Harness Role</span>
+                    <h2>V1 harness 在本任务中发挥了什么作用</h2>
+                    <p>它不是业务实现器，而是把“如何做、允许做什么、如何证明完成”变成可审计约束。</p>
+                </div>
+                <span class="section-no">08</span>
+            </div>
+
+            <div class="grid-4">
+                <article class="card">
+                    <span class="kicker">Layer 1 · Contract</span>
+                    <h3>把需求冻结</h3>
+                    <p>
+                        计划与 JSON 合同固定输入、输出、边界、非目标、最多 2 个实现文件和目标测试，
+                        防止开发过程中顺手扩大范围。
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Layer 2 · Discipline</span>
+                    <h3>把顺序固定</h3>
+                    <p>
+                        技能白名单要求 TDD、系统化调试和完成前验证。本次真实执行了先 RED、后最小实现、再新鲜验证。
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Layer 3 · Scripts</span>
+                    <h3>把结论客观化</h3>
+                    <p>
+                        契约校验脚本被实际调用；最终命令集合与 <code>verify-task.sh</code> 一致，
+                        让“完成”依赖退出码而不是代理自述。
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="kicker">Layer 4 · Separation</span>
+                    <h3>保留最终裁决</h3>
+                    <p>
+                        V1 设计把 Reviewer 设为只读，把合并留给人类。本次未启动这两层，因此没有越权声称完整闭环。
+                    </p>
+                </article>
+            </div>
+
+            <div class="diagram-wrap" style="margin-top: 20px;">
+                <svg viewBox="0 0 1180 510" role="img" aria-labelledby="harness-title harness-desc">
+                    <title id="harness-title">V1 harness 的四层作用与本次启用状态</title>
+                    <desc id="harness-desc">合同层、技能纪律层和部分确定性验证在本次使用，调度状态层与独立裁决层仍未激活。</desc>
+                    <defs>
+                        <marker id="harness-arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+                            <path d="M0,0 L10,5 L0,10 z" fill="#6c5a48"></path>
+                        </marker>
+                        <style>
+                            .hr-line { stroke: #6c5a48; stroke-width: 2.5; marker-end: url(#harness-arrow); }
+                            .hr-title { fill: #201b16; font: 800 18px "Avenir Next", "PingFang SC", sans-serif; }
+                            .hr-sub { fill: #675d52; font: 13px "Avenir Next", "PingFang SC", sans-serif; }
+                            .hr-state { font: 800 12px "Avenir Next", "PingFang SC", sans-serif; }
+                        </style>
+                    </defs>
+
+                    <rect x="28" y="24" width="1124" height="102" rx="20" fill="#fff1cb" stroke="#d9b665"></rect>
+                    <text x="55" y="52" fill="#835711" font-size="13" font-weight="800">C0 · 人类与合同层</text>
+                    <text class="hr-title" x="55" y="82">需求计划 + 机器合同 + validate-contract.sh</text>
+                    <text class="hr-sub" x="55" y="106">本次实际使用：冻结任务范围、验收条件、测试策略与非目标。</text>
+                    <rect x="980" y="53" width="136" height="42" rx="21" fill="#e8f5ef" stroke="#65a281"></rect>
+                    <text class="hr-state" x="1048" y="79" text-anchor="middle" fill="#176b63">实际使用</text>
+
+                    <line class="hr-line" x1="590" y1="126" x2="590" y2="158"></line>
+
+                    <rect x="28" y="166" width="1124" height="102" rx="20" fill="#eaf4f8" stroke="#9fc0d4"></rect>
+                    <text x="55" y="194" fill="#365e7a" font-size="13" font-weight="800">G1 · Superpowers 内层纪律</text>
+                    <text class="hr-title" x="55" y="224">test-driven-development + verification-before-completion</text>
+                    <text class="hr-sub" x="55" y="248">本次手工执行 RED→GREEN 和新鲜命令验证；systematic-debugging 未因产品缺陷而触发。</text>
+                    <rect x="980" y="195" width="136" height="42" rx="21" fill="#fff5dc" stroke="#d0ab65"></rect>
+                    <text class="hr-state" x="1048" y="221" text-anchor="middle" fill="#9d6918">手工落实</text>
+
+                    <line class="hr-line" x1="590" y1="268" x2="590" y2="300"></line>
+
+                    <rect x="28" y="308" width="1124" height="102" rx="20" fill="#e8f5ef" stroke="#65a281"></rect>
+                    <text x="55" y="336" fill="#285f48" font-size="13" font-weight="800">G2–G6 · 确定性门禁层</text>
+                    <text class="hr-title" x="55" y="366">目标测试 + 全量测试 + Debug 构建 + Lint + 范围检查</text>
+                    <text class="hr-sub" x="55" y="390">命令真实通过；但未由 quality-gate.sh 统一落盘、封存 diff 哈希或推进状态。</text>
+                    <rect x="980" y="337" width="136" height="42" rx="21" fill="#fff5dc" stroke="#d0ab65"></rect>
+                    <text class="hr-state" x="1048" y="363" text-anchor="middle" fill="#9d6918">部分使用</text>
+
+                    <line class="hr-line" x1="590" y1="410" x2="590" y2="442"></line>
+
+                    <rect x="28" y="450" width="1124" height="48" rx="18" fill="#eee9e2" stroke="#b2a79a"></rect>
+                    <text class="hr-title" x="55" y="480">Scheduler / 状态机 / G7 Reviewer / H1 Human Merge</text>
+                    <rect x="980" y="456" width="136" height="36" rx="18" fill="#ded8d0"></rect>
+                    <text class="hr-state" x="1048" y="479" text-anchor="middle" fill="#675d52">本次未激活</text>
+                </svg>
+            </div>
+            <p class="caption">
+                Harness 的价值不在于替代开发者写正则，而在于把一次修改置于合同、证据、权限与责任分离的框架中。
+                本次证明了合同和验证路径可用于真实小任务，同时也暴露出：shadow 模式下仍需要人工执行和人工保存上下文。
+            </p>
+
+            <div class="table-wrap" style="margin-top: 20px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Harness 组件</th>
+                            <th>设计职责</th>
+                            <th>本次实际作用</th>
+                            <th>本次边界</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>docs/plans/...</code></td>
+                            <td>保存人类可读设计、验收标准和非目标。</td>
+                            <td><span class="badge used">已使用</span> 先写需求，再改代码。</td>
+                            <td>由交互会话创建，没有经过独立签署流程。</td>
+                        </tr>
+                        <tr>
+                            <td><code>automation/tasks/...</code></td>
+                            <td>把范围、测试、技能和修复次数机器化。</td>
+                            <td><span class="badge used">已使用</span> 合同已创建并校验。</td>
+                            <td>尚未进入队列或状态机。</td>
+                        </tr>
+                        <tr>
+                            <td><code>validate-contract.sh</code></td>
+                            <td>拒绝缺字段、占位符、不安全路径和缺失计划。</td>
+                            <td><span class="badge used">已使用</span> 实现前后各校验一次。</td>
+                            <td>只校验合同，不证明产品行为正确。</td>
+                        </tr>
+                        <tr>
+                            <td>Superpowers TDD 纪律</td>
+                            <td>要求真实 RED，再写最小实现。</td>
+                            <td><span class="badge manual">手工落实</span> 2 个新增测试先失败。</td>
+                            <td>不是由 OpenCode scheduled-coder 自动调用。</td>
+                        </tr>
+                        <tr>
+                            <td><code>record-red.sh</code></td>
+                            <td>验证任务处于 CODING，运行目标测试并生成 <code>red.log</code>/<code>red.json</code>。</td>
+                            <td><span class="badge inactive">未调用</span> RED 只存在于本次交互执行记录。</td>
+                            <td>缺少正式 baseline、CODING 状态与证据目录元数据。</td>
+                        </tr>
+                        <tr>
+                            <td><code>verify-task.sh</code></td>
+                            <td>按合同依次运行范围门禁、聚焦测试、全量测试、构建和 Lint。</td>
+                            <td><span class="badge manual">命令等价执行</span> 最终 Gradle 组合全部通过。</td>
+                            <td>未通过脚本统一读取 baseline/red 证据。</td>
+                        </tr>
+                        <tr>
+                            <td><code>scope-gate.sh</code></td>
+                            <td>检查 HEAD 基线、文件数、白名单、测试删除与测试弱化。</td>
+                            <td><span class="badge manual">人工复核</span> 产品 diff 正好 2 个允许文件。</td>
+                            <td>未正式调用；当前同一工作树还包含计划和合同两个准备文件。</td>
+                        </tr>
+                        <tr>
+                            <td><code>quality-gate.sh</code></td>
+                            <td>限制验证尝试次数、归档日志、封存 diff 哈希并推进 <code>READY_FOR_REVIEW</code>。</td>
+                            <td><span class="badge inactive">未调用</span></td>
+                            <td>没有正式门禁状态与可复查哈希证据。</td>
+                        </tr>
+                        <tr>
+                            <td><code>scheduled-coder</code></td>
+                            <td>在专用工作树和白名单路径内无人值守编码。</td>
+                            <td><span class="badge inactive">未调用</span></td>
+                            <td>本次由当前交互式 Codex 会话实现。</td>
+                        </tr>
+                        <tr>
+                            <td><code>scheduled-reviewer</code></td>
+                            <td>只读审查合同、diff、测试质量并独立重跑。</td>
+                            <td><span class="badge inactive">未调用</span></td>
+                            <td>尚无 G7 第二视角，不能声称“独立审查通过”。</td>
+                        </tr>
+                        <tr>
+                            <td>OpenCode Scheduler</td>
+                            <td>按时间触发 coder/reviewer，但不替代状态机。</td>
+                            <td><span class="badge inactive">未调用</span></td>
+                            <td>配置保持 shadow/disabled，未新增定时 Job。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel" id="gates">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Gate Mapping</span>
+                    <h2>C0 到 H1：本任务逐项对照</h2>
+                    <p>这张表是理解 harness 实际覆盖率的关键：通过某些 Gradle 命令，不等于整个 V1 生命周期已经完成。</p>
+                </div>
+                <span class="section-no">09</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>门禁</th>
+                            <th>V1 要求</th>
+                            <th>本任务状态</th>
+                            <th>证据与解释</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>C0</strong><br>批准合同</td>
+                            <td>人类批准设计、路径和验收条件。</td>
+                            <td><span class="badge used">已落实</span></td>
+                            <td>用户明确要求创建并实现小任务；计划记录批准日期，JSON 为 <code>designApproved: true</code>。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>S0</strong><br>技能预检</td>
+                            <td>插件、包装技能与权限可发现。</td>
+                            <td><span class="badge inactive">本次未重跑</span></td>
+                            <td>Harness 安装阶段曾验证，但本任务没有通过 scheduled-coder 启动，因此不是本任务的新鲜 S0 证据。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G0</strong><br>任务基线</td>
+                            <td>修改前全量单测通过并记录 HEAD。</td>
+                            <td><span class="badge inactive">未形成任务证据</span></td>
+                            <td>仓库此前验证通过，但本任务没有生成专属 <code>baseline.json</code>。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G1</strong><br>RED</td>
+                            <td>新增目标测试在旧实现上按预期失败。</td>
+                            <td><span class="badge manual">实际观察</span></td>
+                            <td>目标类 5 个测试中 2 个失败，失败点是新增 phone 断言；未写 <code>red.json</code>。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G2</strong><br>测试</td>
+                            <td>聚焦测试与全量单测通过。</td>
+                            <td><span class="badge used">通过</span></td>
+                            <td>最终聚焦测试 6/0；<code>testDebugUnitTest</code> 成功。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G3</strong><br>构建</td>
+                            <td>Debug APK 构建成功。</td>
+                            <td><span class="badge used">通过</span></td>
+                            <td><code>assembleDebug</code> 成功并生成 <code>app-debug.apk</code>。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G4</strong><br>Lint</td>
+                            <td>Android Lint 成功。</td>
+                            <td><span class="badge used">通过</span></td>
+                            <td><code>lint</code> 成功并保留本地 HTML 报告。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G5</strong><br>设备测试</td>
+                            <td>合同要求时必须运行。</td>
+                            <td><span class="badge skip">不要求</span></td>
+                            <td>合同明确 <code>deviceTestsRequired: false</code>，这是合规跳过而非遗漏。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G6</strong><br>范围完整性</td>
+                            <td>白名单、文件数、测试完整性与规则保护全部合规。</td>
+                            <td><span class="badge manual">部分证明</span></td>
+                            <td>产品实现只改允许的 2 个文件，测试未删除且 <code>git diff --check</code> 通过；正式 scope-gate 未运行。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>G7</strong><br>独立审查</td>
+                            <td>只读 Reviewer 检查并独立重跑。</td>
+                            <td><span class="badge inactive">未执行</span></td>
+                            <td>当前结论来自实现会话本身，没有第二会话裁决。</td>
+                        </tr>
+                        <tr>
+                            <td><strong>H1</strong><br>人工合并</td>
+                            <td>人类检查最终 diff、证据与剩余风险。</td>
+                            <td><span class="badge inactive">待处理</span></td>
+                            <td>文件尚未提交或合并；V1 不允许自动越过这一步。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="callout">
+                <strong>范围计数说明：</strong>合同中的 <code>maxChangedFiles: 2</code> 针对编码阶段的产品源码与测试 diff。
+                本次同一交互工作树还新增了计划和任务合同两个“编码前准备文件”，所以 <code>git status</code> 总共显示 4 个相关文件。
+                在完整 V1 中，计划和合同应先进入已提交基线，再由专用工作树只产生那 2 个允许的实现文件。
+            </div>
+        </section>
+
+        <section class="panel" id="full-run">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Full Harness Run</span>
+                    <h2>如果按完整 V1 自动化执行，同一任务应怎样流转</h2>
+                    <p>下面是从本次手工演练迈向真正定时运行仍需补齐的步骤。</p>
+                </div>
+                <span class="section-no">10</span>
+            </div>
+            <div class="timeline">
+                <div class="timeline-row">
+                    <div class="timeline-tag">1 · 基线</div>
+                    <div class="timeline-body">
+                        <strong>先提交计划、合同和 harness 配置</strong>
+                        <p>建立干净、不可变的 Git HEAD；创建专用 worktree，并在配置中填入绝对路径。</p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">2 · 激活</div>
+                    <div class="timeline-body">
+                        <strong>人工把 shadow 切换为 active 并排队</strong>
+                        <p>通过 <code>queue-task.sh</code> 产生 <code>PENDING</code>，而不是让代理自行认领任意自然语言任务。</p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">3 · 预检</div>
+                    <div class="timeline-body">
+                        <strong>S0 与 G0 必须新鲜通过</strong>
+                        <p>确认插件、技能、权限、干净 worktree 和全量基线测试，并保存 HEAD 与测试证据。</p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">4 · 编码</div>
+                    <div class="timeline-body">
+                        <strong>scheduled-coder 获取锁并进入 CODING</strong>
+                        <p>在两个白名单文件中按 TDD 实现；<code>record-red.sh</code> 正式保存失败日志和结构化元数据。</p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">5 · 门禁</div>
+                    <div class="timeline-body">
+                        <strong>quality-gate.sh 唯一有权推进 READY_FOR_REVIEW</strong>
+                        <p>
+                            它调用 scope 与 verify 脚本，限制最多一次修复，归档退出码，计算最终 diff SHA-256；
+                            任一范围或证据门禁失败都进入 BLOCKED / TEST_FAILED。
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">6 · 审查</div>
+                    <div class="timeline-body">
+                        <strong>scheduled-reviewer 只读复核</strong>
+                        <p>在独立会话重跑关键命令、检查测试强度与语义风险，只能给出 APPROVED 或 CHANGES_REQUESTED，不能改代码。</p>
+                    </div>
+                </div>
+                <div class="timeline-row">
+                    <div class="timeline-tag">7 · 人工</div>
+                    <div class="timeline-body">
+                        <strong>H1 决定提交、合并、退回或放弃</strong>
+                        <p>定时自动化到 <code>AWAITING_HUMAN</code> 为止；V1 不自动 push，不自动 merge。</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout info">
+                <strong>本次演练的价值：</strong>它验证了一个真实的小任务可以被拆成计划 + 合同，并沿 TDD 与 Gradle 门禁完成；
+                也明确证明 shadow 配置确实没有越权启动 Scheduler。下一次若要测试完整 harness，应先把当前文件提交为基线，
+                再在专用 worktree 中运行状态机与证据脚本，而不是直接在当前脏工作树强行激活。
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="section-head">
+                <div>
+                    <span class="eyebrow">Files And Outcome</span>
+                    <h2>本次产物与最终结论</h2>
+                    <p>四个任务文件构成需求、实现与测试闭环；本 HTML 负责保存可阅读的复盘。</p>
+                </div>
+                <span class="section-no">11</span>
+            </div>
+            <div class="file-list">
+                <div class="file-item">
+                    <strong><code>docs/plans/TASK-PHONE-NORMALIZATION-001.md</code></strong>
+                    <p>人类可读需求：场景、合法输入、边界、验收、非目标与验证命令。</p>
+                </div>
+                <div class="file-item">
+                    <strong><code>automation/tasks/TASK-PHONE-NORMALIZATION-001.json</code></strong>
+                    <p>机器可读合同：路径白名单、最多变更文件数、技能、测试和设备策略。</p>
+                </div>
+                <div class="file-item">
+                    <strong><code>app/src/main/java/com/example/cctest/routing/parser/TextParsingSupport.kt</code></strong>
+                    <p>新增三分支手机号模式，并在抽取后统一保留数字。</p>
+                </div>
+                <div class="file-item">
+                    <strong><code>app/src/test/java/com/example/cctest/routing/RuleBasedIntentParserTest.kt</code></strong>
+                    <p>新增短横线、空格和非法格式三组回归测试。</p>
+                </div>
+            </div>
+
+            <div class="verdict" style="margin-top: 20px;">
+                <strong>最终结论：业务需求已实现，技术门禁已通过，自动化交付链仍停在人工接管边界。</strong>
+                <p>
+                    从工程质量角度，本任务已经具备可重复的需求、测试与构建证据；从 V1 harness 生命周期角度，
+                    仍需补齐正式 baseline、RED 证据落盘、scope-gate、diff 封存、独立 Reviewer 和 H1 人工合并。
+                    这种区分正是 harness 的核心价值：它让“代码能跑”和“流程可审计”成为两个都必须被明确回答的问题。
+                </p>
+            </div>
+        </section>
+
+        <div class="footer-note">
+            文档依据当前仓库中的任务计划、任务合同、<code>TextParsingSupport.kt</code>、
+            <code>RuleBasedIntentParserTest.kt</code>、automation 脚本、V1 设计文档和本次实际命令结果生成。
+            本页为说明性 HTML，不修改 Android 业务源码；页面中的注释与流程图用于阅读，不代表额外运行时代码。
+        </div>
+    </main>
+</body>
+</html>

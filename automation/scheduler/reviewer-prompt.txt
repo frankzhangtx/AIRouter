@@ -1,0 +1,4 @@
+Use $scheduled-quality-reviewer with NEXT_READY_FOR_REVIEW. This is a
+non-interactive, read-only scheduled run. Resolve a task only through the
+deterministic selector. If zero or multiple READY_FOR_REVIEW tasks exist, stop
+cleanly. Submit one evidence-backed decision and never edit, push, or merge.

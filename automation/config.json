@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "enabled": false,
+  "mode": "shadow",
+  "requireDedicatedWorktree": true,
+  "dedicatedWorktree": "",
+  "maxFixLoops": 1,
+  "plugins": {
+    "scheduler": "opencode-scheduler@1.3.0",
+    "superpowers": "superpowers@git+https://github.com/obra/superpowers.git#v6.2.0"
+  },
+  "requiredSkills": [
+    "scheduled-quality-coder",
+    "scheduled-quality-reviewer",
+    "test-driven-development",
+    "systematic-debugging",
+    "verification-before-completion"
+  ],
+  "protectedPaths": [
+    ".opencode/",
+    "automation/",
+    "scripts/automation/",
+    "opencode.json",
+    "AGENTS.md",
+    "gradle/",
+    "gradlew",
+    "gradlew.bat",
+    "settings.gradle.kts",
+    "build.gradle.kts",
+    "app/build.gradle.kts"
+  ]
+}

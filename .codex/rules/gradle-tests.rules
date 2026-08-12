@@ -1,0 +1,16 @@
+# Allow this trusted Android project to run local JVM unit tests without
+# prompting for each invocation. Keep the rule limited to test task aliases.
+prefix_rule(
+    pattern = [
+        "./gradlew",
+        ["test", "testDebugUnitTest", ":app:testDebugUnitTest"],
+    ],
+    decision = "allow",
+    justification = "Run local JVM unit tests for the cctest Android project",
+    match = [
+        "./gradlew test",
+        "./gradlew testDebugUnitTest",
+        "./gradlew testDebugUnitTest --no-daemon",
+        "./gradlew :app:testDebugUnitTest",
+    ],
+)

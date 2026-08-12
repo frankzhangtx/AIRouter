@@ -9,8 +9,9 @@ Verified on 2026-08-09 in `/Users/zhanglong/files/program/cctest`.
 - OpenCode downloaded the pinned Superpowers package and discovered the two
   project wrapper skills plus `test-driven-development`,
   `systematic-debugging`, and `verification-before-completion`.
-- `scheduled-coder` and `scheduled-reviewer` resolve as separate primary
-  agents.
+- `scheduled-planner`, `scheduled-coder`, and `scheduled-reviewer` resolve as
+  separate primary agents. The planner accepts a natural-language request,
+  requires interactive C0 approval, and can write only plan/contract files.
 - Both agents default every unlisted tool to `deny`; Scheduler management tools
   and subagents are disabled. The coder can edit only Android source/test
   paths, while the reviewer cannot edit any repository file.

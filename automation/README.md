@@ -6,7 +6,7 @@ This directory implements the state and evidence layer described in
 The implementation is intentionally installed in **shadow mode**:
 
 - `automation/config.json` has `enabled: false` and `mode: "shadow"`;
-- there is no active task contract;
+- there is no queued runtime task;
 - no launchd job is installed by the repository files;
 - no scheduled job may edit code until a dedicated clean worktree exists and a
   human-approved task is queued.
@@ -15,8 +15,8 @@ The implementation is intentionally installed in **shadow mode**:
 
 - `../opencode.json` pins OpenCode Scheduler 1.3.0 and Superpowers 6.2.0 for
   this project.
-- `../.opencode/agents/` separates the write-capable coder from the read-only
-  reviewer.
+- `../.opencode/agents/` separates the interactive planning role, write-capable
+  coder, and read-only reviewer.
 - `../.opencode/skills/` wraps the general Superpowers workflow in project
   rules.
 - `tasks/` contains versioned, human-approved JSON contracts.
@@ -33,6 +33,7 @@ JSON contracts are used instead of YAML because this machine already provides
    ```bash
    opencode debug config
    opencode debug skill
+   opencode debug agent scheduled-planner
    opencode debug agent scheduled-coder
    opencode debug agent scheduled-reviewer
    ```
@@ -44,24 +45,35 @@ JSON contracts are used instead of YAML because this machine already provides
    ./scripts/automation/shadow-run.sh
    ```
 
-3. Commit or otherwise establish an immutable baseline containing these
-   automation files. Do not use the current dirty main worktree for scheduling.
+3. Start an interactive OpenCode planning session in the current project.
+   Enter only the natural
+   language task description; `scheduled-planner` inspects the repository,
+   asks clarifying questions, presents the C0 proposal, and creates the plan
+   and contract only after explicit approval:
 
-4. Create a dedicated worktree outside this repository directory and set its
-   absolute path in `config.json`.
+   ```bash
+   opencode --agent scheduled-planner .
+   ```
 
-5. Copy `TASK-TEMPLATE.json.example` to `tasks/TASK-<ID>.json`, replace every
-   placeholder, obtain human design approval, and validate it:
+   After approval, validate the generated contract again from the shell:
 
    ```bash
    ./scripts/automation/validate-contract.sh TASK-<ID>
    ```
 
-6. In the dedicated worktree only, change `enabled` to `true` and `mode` to
-   `active`, then queue the task:
+4. Review and commit the approved plan, contract, and automation files to
+   establish an immutable baseline. Preserve unrelated user changes and do not
+   use the current dirty main worktree for coding or review.
+
+5. Create a dedicated worktree outside this repository directory from that
+   baseline. In the dedicated worktree, set its absolute path in `config.json`,
+   change `enabled` to `true` and `mode` to `active`, and commit that activation
+   configuration on the disposable task branch so the worktree is clean.
+
+6. Queue the approved task from the clean dedicated worktree:
 
    ```bash
-   ./scripts/automation/queue-task.sh TASK-<ID>
+   AUTOMATION_HUMAN_APPROVED=1 ./scripts/automation/queue-task.sh TASK-<ID>
    ```
 
 7. Manually invoke coder and reviewer once before creating recurring Scheduler

@@ -94,6 +94,23 @@ else
         automation_die "scheduled-coder agent is not discoverable"
     opencode debug agent scheduled-reviewer > "$discovery_dir/reviewer-agent.json" 2> "$discovery_dir/reviewer-agent.err" || \
         automation_die "scheduled-reviewer agent is not discoverable"
+    opencode debug agent scheduled-planner > "$discovery_dir/planner-agent.json" 2> "$discovery_dir/planner-agent.err" || \
+        automation_die "scheduled-planner agent is not discoverable"
+
+    jq -e '
+        def last_rule($permission; $pattern):
+            [.permission[] | select(.permission == $permission and .pattern == $pattern) | .action][-1];
+        (last_rule("*"; "*") == "deny") and
+        (last_rule("edit"; "docs/plans/**") == "allow") and
+        (last_rule("edit"; "automation/tasks/**") == "allow") and
+        (last_rule("edit"; "app/**") == "deny") and
+        (last_rule("bash"; "./scripts/automation/queue-task.sh *") == "deny") and
+        (last_rule("schedule_job"; "*") == "deny") and
+        (last_rule("task"; "*") == "deny") and
+        (.tools.question == true) and
+        (.tools.schedule_job == false) and
+        (.tools.task == false)
+    ' "$discovery_dir/planner-agent.json" >/dev/null || automation_die "scheduled-planner resolved permissions are unsafe"
 
     jq -e '
         def last_rule($permission; $pattern):

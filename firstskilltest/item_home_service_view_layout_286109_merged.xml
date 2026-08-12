@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/view_ai_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <!-- 背景：使用普通版作为默认，至尊版时切换 -->
+    <View
+        android:id="@+id/view_search_bg"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 折叠态 -->
+    <RelativeLayout
+        android:id="@+id/rl_simple_ai"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="12dp"
+        android:alpha="0"
+        android:background="@drawable/ic_ai_simple_bg"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/iv_simple_ai_album"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"
+            android:src="@drawable/ic_ai_customer"
+            android:visibility="visible"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            />
+
+        <ImageView
+            android:id="@+id/iv_simple_fold"
+            android:layout_width="36dp"
+            android:layout_height="28dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10.5dp"
+            android:src="@drawable/ic_simple_arrow" />
+
+        <ImageView
+            android:id="@+id/iv_simple_voice"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/iv_simple_fold"
+            android:src="@drawable/ic_simple_voice" />
+
+        <TextView
+            android:id="@+id/tv_ai_simple_intro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:includeFontPadding="false"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="58dp"
+            android:layout_marginRight="72dp"
+            android:singleLine="true"
+            android:text="Hi！有保险问题，随时来问我"
+            android:textColor="#222222"
+            android:textFontWeight="600"
+            android:paddingTop="2dp"
+            android:textSize="@dimen/font_14"
+            />
+    </RelativeLayout>
+
+    <!-- 更多按钮 -->
+    <ImageView
+        android:id="@+id/iv_ai_more"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="8dp"
+        android:src="@drawable/ic_ai_more"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 积分按钮 -->
+    <ImageView
+        android:id="@+id/iv_ai_points"
+        android:layout_width="62dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_ai_getpoint"
+        app:layout_constraintStart_toEndOf="@id/iv_ai_more"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/content_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="40dp">
+        
+        <!-- 介绍区域 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/fl_intro"
+            android:layout_width="wrap_content"
+            android:layout_height="80dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:paddingHorizontal="12dp">
+            <LinearLayout
+                android:id="@+id/ll_intro"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <TextView
+                    android:id="@+id/tv_ai_intro"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:textColor="#222222"
+                    android:textFontWeight="600"
+                    android:text="Hi！有保险问题，随时来问我Hi！"
+                    android:textSize="@dimen/font_17"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/tv_human_intro"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:includeFontPadding="false"
+                    android:singleLine="true"
+                    android:textColor="#999999"
+                    android:textSize="@dimen/font_12"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <RelativeLayout
+                android:id="@+id/ll_ai_album"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                app:layout_constraintStart_toEndOf="@+id/ll_intro"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/iv_ai_album"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:adjustViewBounds="true"
+                    android:scaleType="fitXY"
+                    android:src="@drawable/ic_ai_customer"
+                    android:visibility="visible" />
+            </RelativeLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- 人工图标 -->
+        <ImageView
+            android:id="@+id/iv_artificial_album"
+            android:layout_width="21dp"
+            android:src="@drawable/ic_artificial"
+            android:adjustViewBounds="true"
+            android:layout_marginTop="10dp"
+            android:layout_height="14dp"
+            android:layout_alignParentStart="true"
+            app:layout_constraintLeft_toRightOf="@id/fl_intro"
+            app:layout_constraintTop_toTopOf="parent"
+            android:visibility="gone"
+            android:translationX="-28.5dp"
+            />
+
+        <!-- 聊天容器 -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/chat_container"
+            android:layout_width="match_parent"
+            android:layout_height="210dp"
+            android:layout_marginHorizontal="12dp"
+            android:background="@drawable/bg_ai_chat_rect"
+            android:paddingVertical="12dp"
+            android:paddingLeft="12dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/fl_intro">
+            
+            <ImageView
+                android:id="@+id/iv_ai_star"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_ai_star"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_ai_recommend"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:layout_marginTop="4dp"
+                android:includeFontPadding="false"
+                android:text="保险怎么选？我来帮你挑"
+                android:textColor="#222222"
+                android:textFontWeight="700"
+                android:textSize="@dimen/font_14"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@id/iv_ai_star"
+                app:layout_constraintTop_toTopOf="@id/iv_ai_star" />
+
+            <ImageView
+                android:id="@+id/iv_ai_refresh"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_ai_refresh_tag"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/iv_ai_star"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/ll_tag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="1dp"
+                android:orientation="vertical"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/iv_ai_star">
+
+            </LinearLayout>
+
+            <View
+                android:id="@+id/diver"
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:layout_marginTop="13dp"
+                android:layout_marginEnd="12dp"
+                android:background="#E5E5E5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ll_tag" />
+
+            <LinearLayout
+                android:id="@+id/ll_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="80dp"
+                android:orientation="vertical"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/diver">
+
+                <TextView
+                    android:id="@+id/et_ai_content"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@null"
+                    android:ellipsize="end"
+                    android:gravity="top|left"
+                    android:lines="2"
+                    android:paddingBottom="40dp"
+                    android:textColor="#a5a5a5"
+                    android:textSize="@dimen/font_13"
+                    android:visibility="gone" />
+
+                <com.pingan.lifecircle.home.homepage.view.AnimatorTextView
+                    android:id="@+id/ts_ai_question"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="12dp"
+                    android:ellipsize="end"
+                    android:paddingVertical="0dp"
+                    android:textColor="#CCCCCC"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_ai_search"
+                android:layout_width="56dp"
+                android:layout_height="28dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/bg_btn_ai_search"
+                android:gravity="center"
+                android:text="搜索"
+                android:textColor="#ffffff"
+                android:textFontWeight="700"
+                android:textSize="@dimen/font_12"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <ImageView
+                android:id="@+id/iv_ai_voice"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginEnd="12dp"
+                android:src="@drawable/ic_ai_voice"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/tv_ai_search" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent">
+
+                <TextView
+                    android:id="@+id/tv_deep_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_rect_e5"
+                    android:drawableStart="@drawable/ic_deep_unchecked"
+                    android:drawablePadding="5dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="深度问答"
+                    android:textColor="#222222"
+                    android:textFontWeight="700"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_ai_change"
+                    android:layout_width="wrap_content"
+                    android:layout_height="28dp"
+                    android:background="@drawable/bg_rect_e5"
+                    android:drawableStart="@drawable/ic_to_human"
+                    android:drawablePadding="5dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:text="转人工"
+                    android:textColor="#222222"
+                    android:textFontWeight="700"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+        
+        <View
+            android:id="@+id/view_ai_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@drawable/bg_white_to_gray"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/chat_container" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

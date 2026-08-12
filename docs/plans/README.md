@@ -4,6 +4,12 @@ Every scheduled coding contract must reference one plan in this directory.
 Planning is interactive and happens before a task is queued; unattended agents
 must not create, broaden, or reinterpret these plans.
 
+The normal entry point is a natural-language task description entered in an
+interactive `scheduled-planner` OpenCode session. The planner must inspect the
+repository, present the proposed scope and acceptance criteria, and receive
+explicit human approval before it creates this plan and the matching JSON
+contract.
+
 A plan should contain:
 
 - one observable behavior change;

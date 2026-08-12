@@ -23,6 +23,11 @@ Run commands from the repository root. Example:
 ./gradlew assembleDebug testDebugUnitTest
 ```
 
+For automated local unit-test verification, run `./gradlew testDebugUnitTest`
+as a standalone command. Do not prepend environment assignments or wrap it in
+another script; this keeps the invocation aligned with the project's trusted
+Codex rule and avoids repeated approval prompts.
+
 ## Coding Style & Naming Conventions
 Use Kotlin with 4-space indentation and keep files ASCII unless the file already contains localized text. Follow Android naming conventions:
 

@@ -25,6 +25,24 @@ class RuleBasedIntentParserTest {
     }
 
     @Test
+    fun parseListIntent_extractsChongqingCity() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "查看重庆的记录列表", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.BrowsePersonalInfoList, result.userGoal)
+        assertEquals("重庆", result.slots.city)
+    }
+
+    @Test
+    fun parseListIntent_keepsShanghaiCity() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "查看上海的记录列表", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.BrowsePersonalInfoList, result.userGoal)
+        assertEquals("上海", result.slots.city)
+    }
+
+    @Test
     fun parseDashboardIntent_extractsWorkTab() = runBlocking {
         val outcome = parser.parse(ParseRequest(inputText = "打开 Work 看板", entrySource = "test"))
         assertTrue(outcome is ParseOutcome.Success)

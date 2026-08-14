@@ -16,7 +16,7 @@ private val chineseNumberMap = mapOf(
     '九' to 9
 )
 
-private val knownCities = listOf("上海", "北京", "深圳", "杭州", "成都", "南京", "武汉", "苏州", "厦门", "广州")
+private val knownCities = listOf("上海", "北京", "深圳", "杭州", "成都", "南京", "武汉", "苏州", "厦门", "广州", "重庆")
 private val knownOccupations = listOf("设计师", "工程师", "教师", "产品经理", "医生", "律师", "分析师", "顾问", "作家", "建筑师")
 private val mainlandMobilePhonePattern = Regex(
     "(?<![0-9])(?:1[0-9]{10}|1[0-9]{2}-[0-9]{4}-[0-9]{4}|" +

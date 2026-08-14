@@ -1,6 +1,6 @@
 ---
 name: scheduled-quality-coder
-description: Use when an unattended OpenCode coder must execute exactly one human-approved Android task under project state, scope, TDD, and quality gates
+description: Use when an orchestrated OpenCode coder must execute or repair exactly one human-approved Android task under state, scope, TDD, and quality gates
 compatibility: opencode
 metadata:
   audience: automation
@@ -16,7 +16,7 @@ your prose is never proof of completion.
 ## Required input
 
 The prompt must contain either one task ID matching `TASK-[A-Z0-9-]+` or the
-exact selector token `NEXT_PENDING`. For `NEXT_PENDING`, first run
+compatibility selector token `NEXT_PENDING`. For `NEXT_PENDING`, first run
 `./scripts/automation/select-task.sh PENDING`; continue only if it returns one
 task ID. Zero or multiple matches are a clean stop, not permission to choose.
 The resolved contract must exist at `automation/tasks/<TASK-ID>.json` and must
@@ -32,11 +32,20 @@ it with `./scripts/automation/block-task.sh <TASK-ID> <reason>` before stopping.
    `verification-before-completion`. Do not load any other implementation
    workflow skill.
 2. Run `./scripts/automation/status.sh <TASK-ID>` and read the contract.
-3. Run `./scripts/automation/claim-task.sh <TASK-ID>`. This command performs
-   preflight, requires a clean dedicated worktree, captures the baseline, and
-   atomically changes `PENDING` to `CODING`. If it fails, stop.
-4. Add or change the smallest behavior test permitted by `allowedPaths`.
-5. Capture a genuine RED result with:
+3. Branch by deterministic state:
+
+   - For `PENDING`, run `./scripts/automation/claim-task.sh <TASK-ID>`. It
+     performs preflight, verifies the orchestrator-created worktree, captures
+     the green baseline, and changes the task to `CODING`.
+   - For `CODING` with reviewer feedback, read `review.json` and implement only
+     the requested in-contract repair. Do not claim again and do not replace
+     the original RED evidence.
+   - For `CODING` after an interrupted initial run, inspect existing evidence
+     and continue from the first incomplete mandatory action.
+
+4. On the initial coding cycle, add or change the smallest behavior test
+   permitted by `allowedPaths`.
+5. If RED evidence does not already exist, capture a genuine RED result with:
 
    `./scripts/automation/record-red.sh <TASK-ID> <expected-failure-text> -- <test-filter>`
 
@@ -47,7 +56,8 @@ it with `./scripts/automation/block-task.sh <TASK-ID> <reason>` before stopping.
    inside the contract's path and file-count limits. Do not refactor unrelated
    code.
 7. Run `./scripts/automation/quality-gate.sh <TASK-ID>`.
-8. If the first gate attempt fails while state remains `CODING`, load
+8. If the first gate attempt in the current coding cycle fails while state
+   remains `CODING`, load
    `systematic-debugging`, diagnose the root cause, and make at most one fix
    loop. Then run the gate once more. If it fails again, stop in
    `TEST_FAILED`.
@@ -69,12 +79,12 @@ Stop immediately when any of these occur:
 - the contract asks for push, merge, rebase, worktree creation, dependency
   upgrades, or automation-rule changes.
 
-Do not ask a question during a scheduled run. State the blocker and stop so a
+Do not ask a question during an orchestrated run. State the blocker and stop so a
 human can revise and requeue the contract.
 
-## Forbidden capabilities in V1
+## Forbidden capabilities
 
 Do not invoke `brainstorming`, `writing-plans`, `using-git-worktrees`,
 `finishing-a-development-branch`, `requesting-code-review`, parallel agents, or
-subagent-driven development. Planning and approval happen before scheduling;
-review happens in a separate read-only session.
+subagent-driven development. Planning and approval happen before this session;
+review happens in a separate fresh read-only session.

@@ -9,6 +9,7 @@ automation_info "starting read-only shadow preflight"
 "$SCRIPT_DIR/preflight.sh" --shadow
 
 task_count="$(find "$AUTOMATION_TASKS_DIR" -maxdepth 1 -type f -name 'TASK-*.json' | wc -l | tr -d ' ')"
+automation_ensure_runtime_layout
 state_count="$(find "$AUTOMATION_STATE_DIR" -maxdepth 1 -type f -name 'TASK-*.json' | wc -l | tr -d ' ')"
 
 jq -n \

@@ -18,12 +18,12 @@ fi
 automation_validate_task_id "$task_id"
 [[ "$decision" == "APPROVED" || "$decision" == "CHANGES_REQUESTED" ]] || automation_die "invalid review decision: $decision"
 [[ ${#summary} -ge 20 ]] || automation_die "review summary must contain at least 20 characters"
-[[ "$(automation_read_state "$task_id")" == "READY_FOR_REVIEW" ]] || automation_die "$task_id is not READY_FOR_REVIEW"
+[[ "$(automation_read_state "$task_id")" == "REVIEWING" ]] || automation_die "$task_id is not REVIEWING"
 
 evidence_dir="$(automation_evidence_path "$task_id")"
 ready_meta="$evidence_dir/ready.json"
 [[ -f "$ready_meta" ]] || automation_die "ready evidence is missing"
-current_diff_sha="$(git -C "$AUTOMATION_ROOT" diff --binary HEAD -- | shasum -a 256 | awk '{print $1}')"
+current_diff_sha="$(automation_worktree_diff_sha)"
 ready_diff_sha="$(jq -er '.diffSha256' "$ready_meta")"
 
 if [[ "$current_diff_sha" != "$ready_diff_sha" ]]; then
@@ -53,12 +53,21 @@ jq -n \
     --argjson verificationExitCode "$verification_status" \
     '{taskId: $taskId, decision: $decision, summary: $summary, reviewedAt: $reviewedAt, diffSha256: $diffSha256, verificationExitCode: $verificationExitCode}' \
     | automation_record_json "$evidence_dir/review.json"
+jq -nc \
+    --arg taskId "$task_id" \
+    --arg decision "$decision" \
+    --arg summary "$summary" \
+    --arg reviewedAt "$(automation_now)" \
+    --arg diffSha256 "$current_diff_sha" \
+    --argjson verificationExitCode "$verification_status" \
+    '{taskId: $taskId, decision: $decision, summary: $summary, reviewedAt: $reviewedAt, diffSha256: $diffSha256, verificationExitCode: $verificationExitCode}' \
+    | automation_append_json "$evidence_dir/reviews.jsonl"
 
 if [[ "$decision" == "APPROVED" ]]; then
-    automation_transition_state "$task_id" "READY_FOR_REVIEW" "AWAITING_HUMAN" "reviewer" "independent review approved; human merge required"
-    automation_info "$task_id approved and awaiting human merge"
+    automation_transition_state "$task_id" "REVIEWING" "AWAITING_HUMAN" "reviewer" "independent review approved; human acceptance required"
+    automation_info "$task_id approved and awaiting human acceptance"
 else
-    automation_transition_state "$task_id" "READY_FOR_REVIEW" "CHANGES_REQUESTED" "reviewer" "$summary"
+    automation_transition_state "$task_id" "REVIEWING" "CHANGES_REQUESTED" "reviewer" "$summary"
     automation_warn "$task_id requires changes"
     exit 1
 fi

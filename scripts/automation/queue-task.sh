@@ -12,13 +12,13 @@ automation_require_layout
 
 [[ "${AUTOMATION_HUMAN_APPROVED:-0}" == "1" ]] || automation_die "set AUTOMATION_HUMAN_APPROVED=1 after explicit human approval"
 [[ "$(automation_config_value '.enabled')" == "true" ]] || automation_die "automation is disabled"
-[[ "$(automation_config_value '.mode')" == "active" ]] || automation_die "automation mode is not active"
+[[ "$(automation_config_value '.mode')" == "orchestrated" ]] || automation_die "automation mode is not orchestrated"
 
 "$SCRIPT_DIR/validate-contract.sh" "$task_id"
 state_file="$(automation_state_path "$task_id")"
 
 if [[ ! -f "$state_file" ]]; then
-    automation_initialize_state "$task_id" "human" "human-approved contract initialized"
+    automation_initialize_state "$task_id" "APPROVED_CONTRACT" "human" "legacy manual queue initialized"
 fi
 
 current="$(automation_read_state "$task_id")"

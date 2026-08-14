@@ -1,95 +1,101 @@
-# Scheduled coding quality gate V1
+# OpenCode coding orchestration V2
 
-This directory implements the state and evidence layer described in
-`代码结构文档/scheduled-coding-quality-gate-explained-v1.html`.
+This directory contains the versioned policy for a low-intervention coding
+flow. The user stays in one `scheduled-planner` conversation; deterministic
+scripts own worktree creation, state transitions, evidence, agent launches,
+commits, and local integration.
 
-The implementation is intentionally installed in **shadow mode**:
+## One-time setup
 
-- `automation/config.json` has `enabled: false` and `mode: "shadow"`;
-- there is no queued runtime task;
-- no launchd job is installed by the repository files;
-- no scheduled job may edit code until a dedicated clean worktree exists and a
-  human-approved task is queued.
+Start OpenCode from a clean, attached branch with the Android SDK exported in
+the same Terminal session:
+
+```bash
+cd /Users/zhanglong/files/program/cctest
+export ANDROID_HOME=/Users/zhanglong/Library/Android/sdk
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin:$PATH"
+./scripts/automation/preflight.sh --source
+opencode --agent scheduled-planner .
+```
+
+To persist the SDK variables for future Terminal windows, put the two `export`
+lines in `~/.zshrc` and run `source ~/.zshrc` once. The automation never writes
+`local.properties` and never prepends environment assignments to Gradle.
+
+## Normal interaction
+
+Inside OpenCode, enter one natural-language requirement. The three intentional
+human gates are:
+
+1. `批准方案，生成计划和任务合同。`
+2. `合同已复核，批准自动执行到人工验收阶段。`
+3. `验收通过，提交到原分支。`
+
+After gate 1, Planner creates and seals exactly one plan and one JSON contract.
+After gate 2, `approve-and-run.sh` commits those planning artifacts, records the
+actual current branch, creates an outside task worktree, and continuously runs
+the restricted Coder and a fresh read-only Reviewer. It stops at
+`AWAITING_HUMAN` or a hard failure state. After gate 3,
+`accept-and-integrate.sh` creates one product commit, verifies it in a separate
+integration-candidate worktree, and fast-forwards the recorded original branch
+only if all checks pass.
+
+There is no normal-path Terminal command for worktree creation, queueing,
+Coder launch, Reviewer launch, commit, or merge. Final acceptance never grants
+push permission; successful integration records `pushed: false`.
 
 ## Components
 
-- `../opencode.json` pins OpenCode Scheduler 1.3.0 and Superpowers 6.2.0 for
-  this project.
-- `../.opencode/agents/` separates the interactive planning role, write-capable
-  coder, and read-only reviewer.
-- `../.opencode/skills/` wraps the general Superpowers workflow in project
-  rules.
-- `tasks/` contains versioned, human-approved JSON contracts.
-- `state/`, `evidence/`, and `locks/` are ignored runtime directories.
-- `../scripts/automation/` contains deterministic state and quality gates.
+- `config.json` is portable versioned policy. It contains no per-task absolute
+  worktree path.
+- `config.schema.json` and `task-contract.schema.json` document configuration
+  and task-contract formats.
+- `tasks/` contains approved contracts; `docs/plans/` contains their plans.
+- `.opencode/agents/` separates interactive Planner, write-limited Coder, and
+  read-only Reviewer permissions.
+- `.opencode/skills/scheduled-quality-orchestrator/` defines the three approval
+  boundaries; the coder/reviewer skills define their narrower workflows.
+- `scripts/automation/` implements all state, scope, evidence, worktree, and
+  integration operations.
 
-JSON contracts are used instead of YAML because this machine already provides
-`jq`; this keeps scheduled parsing deterministic without adding `yq`.
+Runtime data is shared by all linked worktrees under:
 
-## Safe activation order
+```text
+<git-common-dir>/automation-runtime/
+├── state/
+├── evidence/
+├── locks/
+└── workspaces/
+```
 
-1. Verify plugin and agent discovery:
-
-   ```bash
-   opencode debug config
-   opencode debug skill
-   opencode debug agent scheduled-planner
-   opencode debug agent scheduled-coder
-   opencode debug agent scheduled-reviewer
-   ```
-
-2. Run script tests and the shadow preflight:
-
-   ```bash
-   ./scripts/automation/tests/run-tests.sh
-   ./scripts/automation/shadow-run.sh
-   ```
-
-3. Start an interactive OpenCode planning session in the current project.
-   Enter only the natural
-   language task description; `scheduled-planner` inspects the repository,
-   asks clarifying questions, presents the C0 proposal, and creates the plan
-   and contract only after explicit approval:
-
-   ```bash
-   opencode --agent scheduled-planner .
-   ```
-
-   After approval, validate the generated contract again from the shell:
-
-   ```bash
-   ./scripts/automation/validate-contract.sh TASK-<ID>
-   ```
-
-4. Review and commit the approved plan, contract, and automation files to
-   establish an immutable baseline. Preserve unrelated user changes and do not
-   use the current dirty main worktree for coding or review.
-
-5. Create a dedicated worktree outside this repository directory from that
-   baseline. In the dedicated worktree, set its absolute path in `config.json`,
-   change `enabled` to `true` and `mode` to `active`, and commit that activation
-   configuration on the disposable task branch so the worktree is clean.
-
-6. Queue the approved task from the clean dedicated worktree:
-
-   ```bash
-   AUTOMATION_HUMAN_APPROVED=1 ./scripts/automation/queue-task.sh TASK-<ID>
-   ```
-
-7. Manually invoke coder and reviewer once before creating recurring Scheduler
-   jobs. Use the prompts under `scheduler/` and pass the matching OpenCode
-   agents with `--agent scheduled-coder` and `--agent scheduled-reviewer`.
-
-8. Create Scheduler jobs only after the manual success and intentional-failure
-   drills pass. Keep push and merge manual in V1.
+The default task worktree base is a sibling directory named
+`<repository>-worktrees`. Absolute paths are discovered at runtime and are not
+committed to `config.json`.
 
 ## State ownership
 
-`APPROVED_CONTRACT -> PENDING` is a human queue action. The coder launcher owns
-`PENDING -> CODING`. Only `quality-gate.sh` can produce
-`READY_FOR_REVIEW`. Only the independent review submission can produce
-`AWAITING_HUMAN`. There is no automated transition after that state.
+```text
+CONTRACT_REVIEW → APPROVED_CONTRACT → PREPARING → PENDING → CODING
+→ READY_FOR_REVIEW → REVIEWING → AWAITING_HUMAN → INTEGRATING → COMPLETED
+```
 
-Runtime transitions are append-only in `evidence/<TASK-ID>/transitions.jsonl`.
-State, locks, and generated evidence are local runtime data and are not intended
-for source control.
+Hard failures stop in `BLOCKED`, `TEST_FAILED`, `NEEDS_HUMAN`, or
+`INTEGRATION_BLOCKED`. Coder and Reviewer cannot create worktrees, commit,
+merge, rebase, or push. The integrator cannot update a different branch,
+accept a changed diff, skip candidate verification, resolve conflicts
+automatically, or push.
+
+## Verification
+
+```bash
+./scripts/automation/tests/run-tests.sh
+./scripts/automation/shadow-run.sh
+./gradlew testDebugUnitTest
+./gradlew assembleDebug
+./gradlew lint
+```
+
+The shell suite exercises approval rejection, shared runtime state, TDD gates,
+diff sealing (including untracked files), reviewer handoff, outside worktree
+creation, product commit, candidate verification, original-branch integration,
+cleanup, and the no-push invariant.

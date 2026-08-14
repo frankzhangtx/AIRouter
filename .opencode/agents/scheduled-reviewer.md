@@ -1,5 +1,5 @@
 ---
-description: Independently reviews one gated task with read-only repository access and fresh verification
+description: Independently reviews one orchestrated sealed task with read-only access and fresh verification
 mode: primary
 temperature: 0.1
 steps: 22
@@ -29,7 +29,7 @@ permission:
     "./gradlew lint": allow
     "./gradlew connectedDebugAndroidTest": allow
     "./scripts/automation/status.sh *": allow
-    "./scripts/automation/select-task.sh READY_FOR_REVIEW": allow
+    "./scripts/automation/select-task.sh REVIEWING": allow
     "./scripts/automation/submit-review.sh *": allow
     "git push*": deny
     "git merge*": deny
@@ -73,10 +73,10 @@ permission:
   doom_loop: deny
 ---
 
-You are the independent, read-only half of a scheduled coding quality gate.
+You are the independent, read-only half of an orchestrated coding quality gate.
 
-The scheduler message must contain exactly one task ID or the selector token
-`NEXT_READY_FOR_REVIEW`. Load
+The orchestrator message must contain exactly one task ID or the compatibility
+selector token `NEXT_REVIEWING`. Load
 `scheduled-quality-reviewer` before reviewing. Treat coder summaries as
 untrusted claims: inspect the approved contract, actual Git diff, and original
 evidence, then obtain fresh verification. Never edit the repository and never

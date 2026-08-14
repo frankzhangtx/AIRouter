@@ -1,6 +1,6 @@
 ---
 name: scheduled-quality-reviewer
-description: Use when an unattended read-only OpenCode reviewer must independently assess one READY_FOR_REVIEW task and submit a gated decision
+description: Use when an orchestrated read-only OpenCode reviewer must independently assess one sealed task in REVIEWING and submit a gated decision
 compatibility: opencode
 metadata:
   audience: automation
@@ -16,12 +16,13 @@ you review.
 ## Mandatory sequence
 
 1. Load `verification-before-completion`.
-2. Require exactly one task ID or the exact token
-   `NEXT_READY_FOR_REVIEW`. For the selector token, first run
-   `./scripts/automation/select-task.sh READY_FOR_REVIEW` and continue only if
+2. Require exactly one task ID or the compatibility token
+   `NEXT_REVIEWING`. For the selector token, first run
+   `./scripts/automation/select-task.sh REVIEWING` and continue only if
    exactly one task ID is returned. Then run
    `./scripts/automation/status.sh <TASK-ID>`.
-3. Continue only when state is `READY_FOR_REVIEW`.
+3. Continue only when state is `REVIEWING`; the orchestrator alone performs
+   the sealed handoff from `READY_FOR_REVIEW`.
 4. Read the approved contract, baseline metadata, RED evidence, gate logs, and
    actual Git diff.
 5. Check each acceptance criterion against observable behavior. Inspect for

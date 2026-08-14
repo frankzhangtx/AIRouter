@@ -1,7 +1,7 @@
 # Human-approved automation plans
 
-Every scheduled coding contract must reference one plan in this directory.
-Planning is interactive and happens before a task is queued; unattended agents
+Every orchestrated coding contract must reference one plan in this directory.
+Planning is interactive and happens before a task is approved for execution; unattended agents
 must not create, broaden, or reinterpret these plans.
 
 The normal entry point is a natural-language task description entered in an
@@ -20,6 +20,7 @@ A plan should contain:
 - device/emulator requirements, if any;
 - a dated human approval statement.
 
+After proposal approval, Planner seals both artifacts in `CONTRACT_REVIEW`.
 The matching contract belongs in `automation/tasks/TASK-<ID>.json`. A missing
 plan, placeholder text, or mismatched task ID causes contract validation to
 fail.

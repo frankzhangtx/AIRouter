@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task 2 详细操作：在 OpenCode 中执行并验收“重庆城市识别”任务</title>
+    <title>Task 2 自动编排方案：从需求确认到原分支提交</title>
     <style>
         :root {
             color-scheme: light;
@@ -567,25 +567,27 @@
 <body>
     <div class="page">
         <header class="hero">
-            <div class="eyebrow">Task 2 · Manual OpenCode Runbook</div>
-            <h1>在 OpenCode 中手工执行并验收<br>“重庆城市识别”编程任务</h1>
+            <div class="eyebrow">Task 2 · Automated OpenCode Delivery</div>
+            <h1>从需求确认自动执行到<br>人工验收与原分支提交</h1>
             <p class="lead">
-                这是一份可以逐步照做的详细操作手册。正确顺序是：Planner 先检查代码并生成经人类批准的任务合同，
-                然后在专用 worktree 中由 Coder 完成 TDD 和 G0–G6，再由全新只读 Reviewer 完成 G7，最后由人执行 H1 验收。
+                用户只需在 OpenCode 中完成三次明确确认：批准方案、批准任务合同、批准最终验收。
+                合同批准后，由受控编排器自动建立专用 worktree、运行 Coder 和独立 Reviewer；最终验收通过后，
+                再由确定性集成器把已验证的产品提交安全带回任务开始时记录的原分支。
             </p>
             <div class="meta-list">
                 <div class="meta-item">工程：<code>/Users/zhanglong/files/program/cctest</code></div>
                 <div class="meta-item">任务：为城市精确识别增加“重庆”</div>
-                <div class="meta-item">测试类型：本地 JVM 单测</div>
-                <div class="meta-item">设备测试：不需要</div>
-                <div class="meta-item">依据：<code>taskdescriptions/task2.html</code></div>
+                <div class="meta-item">人工关口：方案 · 合同 · 最终验收</div>
+                <div class="meta-item">自动阶段：准备 · 编码 · 门禁 · 审查 · 集成</div>
+                <div class="meta-item">业务参考：<code>taskdescriptions/task2.html</code> · 自动流程以本页为准</div>
             </div>
         </header>
 
         <nav class="toc" aria-label="文档目录">
             <a href="#overview">阅读指南</a>
             <a href="#flow">完整流程</a>
-            <a href="#steps">执行步骤</a>
+            <a href="#steps">交互步骤</a>
+            <a href="#implementation">落地要求</a>
             <a href="#acceptance">人工验收</a>
             <a href="#evidence">证据目录</a>
             <a href="#failures">失败处理</a>
@@ -595,33 +597,51 @@
             <section class="panel" id="overview">
                 <div class="section-head">
                     <div>
-                        <span class="kicker">Reading Guide</span>
-                        <h2>开始操作前先记住四条边界</h2>
-                        <p>这些边界决定任务是否真正通过质量门禁，而不只是“代码看起来能用”。</p>
+                        <span class="kicker">Operating Model</span>
+                        <h2>正常路径只保留三个必要人工关口</h2>
+                        <p>人工负责需求含义、合同授权和最终风险接受；机械操作与重复验证全部交给可审计的自动化。</p>
                     </div>
                     <span class="section-no">01</span>
                 </div>
 
-                <div class="grid-4">
+                <div class="grid-3">
                     <article class="card">
-                        <span class="badge green">入口</span>
-                        <h3 style="margin-top: 10px;">先找 Planner</h3>
-                        <p>用户只输入业务描述。不要预先创建 TASK-ID、计划或 JSON 合同。</p>
+                        <span class="badge gold">人工关口 1</span>
+                        <h3 style="margin-top: 10px;">批准方案</h3>
+                        <p>Planner 先展示范围、验收条件、测试与非目标。用户确认后，才生成计划和任务合同。</p>
                     </article>
                     <article class="card">
-                        <span class="badge gold">审批</span>
-                        <h3 style="margin-top: 10px;">C0 必须明确批准</h3>
-                        <p>初始需求不等于批准。只有用户明确回复批准后，Planner 才能生成合同。</p>
+                        <span class="badge gold">人工关口 2</span>
+                        <h3 style="margin-top: 10px;">批准合同并执行</h3>
+                        <p>人工复核生成的 Markdown 计划和 JSON 合同。明确批准后，自动编排持续运行到人工验收。</p>
                     </article>
                     <article class="card">
-                        <span class="badge red">审查边界</span>
-                        <h3 style="margin-top: 10px;">Reviewer 前不提交</h3>
-                        <p>Coder 产生的产品 diff 在 Reviewer 完成前不能提交或改变，否则 SHA 校验失败。</p>
+                        <span class="badge green">人工关口 3</span>
+                        <h3 style="margin-top: 10px;">验收并提交原分支</h3>
+                        <p>Reviewer 通过后停在 <code>AWAITING_HUMAN</code>。用户确认验收，集成器才更新原分支。</p>
+                    </article>
+                </div>
+
+                <div class="grid-4" style="margin-top: 16px;">
+                    <article class="card">
+                        <span class="badge green">原分支锚定</span>
+                        <h3 style="margin-top: 10px;">不硬编码 main</h3>
+                        <p>合同批准时记录当前原分支和 HEAD；最终只能集成回这条分支。</p>
                     </article>
                     <article class="card">
-                        <span class="badge green">最终状态</span>
-                        <h3 style="margin-top: 10px;">只到 AWAITING_HUMAN</h3>
-                        <p>V1 不自动提交、push 或 merge，最终风险接受和合入决定始终由人负责。</p>
+                        <span class="badge green">中段全自动</span>
+                        <h3 style="margin-top: 10px;">不再手敲十一组命令</h3>
+                        <p>worktree、排队、Coder、Reviewer、状态检查和证据汇总由编排器连续完成。</p>
+                    </article>
+                    <article class="card">
+                        <span class="badge red">职责隔离</span>
+                        <h3 style="margin-top: 10px;">模型不直接操作 Git 集成</h3>
+                        <p>Coder 只改合同允许文件；Reviewer 只读；提交与集成仅由确定性脚本执行。</p>
+                    </article>
+                    <article class="card">
+                        <span class="badge gold">交付边界</span>
+                        <h3 style="margin-top: 10px;">默认只提交，不自动 push</h3>
+                        <p>完成状态表示本地原分支已有产品提交。远端 push 仍需单独、明确授权。</p>
                     </article>
                 </div>
 
@@ -634,22 +654,27 @@
                     <strong>最终目标：</strong><code>查看重庆的记录列表</code> 解析成功，
                     <code>userGoal == BrowsePersonalInfoList</code>，并且 <code>slots.city == "重庆"</code>。
                 </div>
+
+                <div class="callout">
+                    <strong>自动化不等于放宽门禁：</strong>原工作区不干净、合同含糊、环境缺失、测试失败、审查不通过或集成冲突时，
+                    编排器必须停止并保留证据；正常路径不需要人工接力，异常路径不能静默猜测。
+                </div>
             </section>
 
             <section class="panel" id="flow">
                 <div class="section-head">
                     <div>
                         <span class="kicker">End-to-end Flow</span>
-                        <h2>从自然语言输入到 H1 验收</h2>
-                        <p>绿色主线表示可以继续推进；红色支路表示必须停止并交还人类处理。</p>
+                        <h2>从自然语言输入到原分支完成提交</h2>
+                        <p>绿色主线为自动推进；金色菱形是人工确认；红色支路只在硬门禁失败时出现。</p>
                     </div>
                     <span class="section-no">02</span>
                 </div>
 
                 <div class="diagram-wrap">
-                    <svg viewBox="0 0 1120 1280" role="img" aria-labelledby="flow-title flow-desc">
-                        <title id="flow-title">重庆城市识别任务的 OpenCode 手工执行流程</title>
-                        <desc id="flow-desc">用户输入自然语言，由 Planner 提出并等待批准，随后生成合同、建立专用工作树、排队、编码、评审和人工验收；任一门禁失败都停止。</desc>
+                    <svg viewBox="0 0 1120 1830" role="img" aria-labelledby="flow-title flow-desc">
+                        <title id="flow-title">重庆城市识别任务的 OpenCode 自动编排流程</title>
+                        <desc id="flow-desc">用户输入需求并批准方案，Planner 生成计划和合同；合同批准后编排器自动准备工作树、编码、验证和评审；人工最终验收后，集成器将产品提交带回原分支。</desc>
                         <defs>
                             <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
                                 <path d="M0,0 L0,6 L9,3 z" fill="#ad4b23"></path>
@@ -663,301 +688,335 @@
                         </defs>
 
                         <rect x="320" y="35" width="480" height="80" rx="22" fill="#fffaf4" stroke="#ad4b23" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="68" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">用户启动 scheduled-planner</text>
+                        <text x="560" y="68" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">用户在 OpenCode 输入自然语言需求</text>
                         <text x="560" y="94" text-anchor="middle" fill="#6c6055" font-size="14">只输入“重庆城市识别”的自然语言需求</text>
 
                         <line x1="560" y1="115" x2="560" y2="155" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
                         <rect x="320" y="160" width="480" height="90" rx="22" fill="#f1eaf7" stroke="#655181" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="194" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Planner 读取代码和测试，展示 C0 提案</text>
+                        <text x="560" y="194" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Planner 读取代码和测试，展示方案提案</text>
                         <text x="560" y="221" text-anchor="middle" fill="#6c6055" font-size="14">ID、验收条件、允许路径、测试、非目标</text>
 
                         <line x1="560" y1="250" x2="560" y2="291" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
                         <polygon points="560,296 720,365 560,434 400,365" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
-                        <text x="560" y="359" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人类明确批准？</text>
-                        <text x="560" y="384" text-anchor="middle" fill="#6c6055" font-size="14">初始描述不能视为批准</text>
+                        <text x="560" y="359" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工批准方案？</text>
+                        <text x="560" y="384" text-anchor="middle" fill="#6c6055" font-size="14">未批准前不生成任务文件</text>
 
                         <line x1="400" y1="365" x2="220" y2="365" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <text x="315" y="348" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
                         <rect x="30" y="320" width="185" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
-                        <text x="122" y="356" text-anchor="middle" fill="#63312d" font-size="16" font-weight="800">继续澄清</text>
-                        <text x="122" y="381" text-anchor="middle" fill="#7e4b47" font-size="13">不创建合同文件</text>
+                        <text x="122" y="356" text-anchor="middle" fill="#63312d" font-size="16" font-weight="800">继续澄清方案</text>
+                        <text x="122" y="381" text-anchor="middle" fill="#7e4b47" font-size="13">保持 DRAFT</text>
 
                         <line x1="560" y1="434" x2="560" y2="477" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
                         <text x="580" y="461" fill="#176c63" font-size="14" font-weight="800">是</text>
 
                         <rect x="300" y="482" width="520" height="92" rx="22" fill="#eaf5f2" stroke="#176c63" stroke-width="2" filter="url(#soft-shadow)"></rect>
                         <text x="560" y="517" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">生成计划与任务合同并校验</text>
-                        <text x="560" y="544" text-anchor="middle" fill="#6c6055" font-size="14">人工提交规划产物，建立不可变基线</text>
+                        <text x="560" y="544" text-anchor="middle" fill="#6c6055" font-size="14">进入 CONTRACT_REVIEW，等待人工复核</text>
 
                         <line x1="560" y1="574" x2="560" y2="617" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
-                        <rect x="300" y="622" width="520" height="92" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="657" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">建立干净的专用 worktree</text>
-                        <text x="560" y="684" text-anchor="middle" fill="#6c6055" font-size="14">启用 active 模式，提交激活配置，人工排队</text>
+                        <polygon points="560,622 730,691 560,760 390,691" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
+                        <text x="560" y="685" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工批准合同并执行？</text>
+                        <text x="560" y="710" text-anchor="middle" fill="#6c6055" font-size="14">这是自动执行授权边界</text>
 
-                        <line x1="560" y1="714" x2="560" y2="757" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <line x1="390" y1="691" x2="220" y2="691" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
+                        <text x="305" y="674" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
+                        <rect x="30" y="646" width="185" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
+                        <text x="122" y="682" text-anchor="middle" fill="#63312d" font-size="16" font-weight="800">修改合同</text>
+                        <text x="122" y="707" text-anchor="middle" fill="#7e4b47" font-size="13">不启动自动化</text>
 
-                        <rect x="300" y="762" width="520" height="102" rx="22" fill="#fffaf4" stroke="#ad4b23" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="797" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Coder：G0 → RED → 最小实现 → G2–G6</text>
-                        <text x="560" y="824" text-anchor="middle" fill="#6c6055" font-size="14">成功状态只能由脚本推进到 READY_FOR_REVIEW</text>
-                        <text x="560" y="846" text-anchor="middle" fill="#6c6055" font-size="13">Reviewer 前不提交、不改变产品 diff</text>
+                        <line x1="560" y1="760" x2="560" y2="807" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <text x="580" y="791" fill="#176c63" font-size="14" font-weight="800">是</text>
 
-                        <line x1="820" y1="813" x2="920" y2="813" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
-                        <rect x="925" y="768" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
-                        <text x="1007" y="804" text-anchor="middle" fill="#63312d" font-size="15" font-weight="800">门禁失败</text>
-                        <text x="1007" y="829" text-anchor="middle" fill="#7e4b47" font-size="12">停止并保留证据</text>
+                        <rect x="290" y="812" width="540" height="100" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="846" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Orchestrator 自动准备执行环境</text>
+                        <text x="560" y="873" text-anchor="middle" fill="#6c6055" font-size="14">提交合同基线、记录原分支、创建 worktree、排队</text>
+                        <text x="560" y="896" text-anchor="middle" fill="#6c6055" font-size="13">运行时路径写入 Git 公共状态区，不生成激活配置提交</text>
 
-                        <line x1="560" y1="864" x2="560" y2="907" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <line x1="560" y1="912" x2="560" y2="952" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
-                        <rect x="300" y="912" width="520" height="96" rx="22" fill="#f1eaf7" stroke="#655181" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="947" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">全新只读 Reviewer：G7</text>
-                        <text x="560" y="974" text-anchor="middle" fill="#6c6055" font-size="14">复跑验证、核对 diff SHA、行为和测试质量</text>
+                        <rect x="300" y="957" width="520" height="105" rx="22" fill="#fffaf4" stroke="#ad4b23" stroke-width="2" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="992" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Coder：G0 → RED → 最小实现 → G2–G6</text>
+                        <text x="560" y="1019" text-anchor="middle" fill="#6c6055" font-size="14">自动执行一次受限修复循环并封存产品 diff</text>
+                        <text x="560" y="1042" text-anchor="middle" fill="#6c6055" font-size="13">Coder 不能创建 worktree、提交、合并或 push</text>
 
-                        <line x1="820" y1="960" x2="920" y2="960" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
-                        <rect x="925" y="915" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
-                        <text x="1007" y="950" text-anchor="middle" fill="#63312d" font-size="14" font-weight="800">CHANGES_REQUESTED</text>
-                        <text x="1007" y="976" text-anchor="middle" fill="#7e4b47" font-size="12">修复后重新人工排队</text>
+                        <line x1="820" y1="1009" x2="920" y2="1009" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
+                        <rect x="925" y="964" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
+                        <text x="1007" y="1000" text-anchor="middle" fill="#63312d" font-size="15" font-weight="800">硬门禁失败</text>
+                        <text x="1007" y="1025" text-anchor="middle" fill="#7e4b47" font-size="12">停止并保留证据</text>
 
-                        <line x1="560" y1="1008" x2="560" y2="1051" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <line x1="560" y1="1062" x2="560" y2="1107" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
-                        <rect x="300" y="1056" width="520" height="96" rx="22" fill="#eaf5f2" stroke="#176c63" stroke-width="2" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="1091" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">AWAITING_HUMAN：H1 人工最终验收</text>
-                        <text x="560" y="1118" text-anchor="middle" fill="#6c6055" font-size="14">检查行为、RED、构建、Lint、范围、Review 和剩余风险</text>
+                        <rect x="300" y="1112" width="520" height="98" rx="22" fill="#f1eaf7" stroke="#655181" stroke-width="2" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="1147" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">自动启动全新只读 Reviewer：G7</text>
+                        <text x="560" y="1174" text-anchor="middle" fill="#6c6055" font-size="14">复跑验证、核对 diff SHA、行为和测试质量</text>
+                        <text x="560" y="1197" text-anchor="middle" fill="#6c6055" font-size="13">一次合同内修复可自动回到 Coder，再以新 Reviewer 复审</text>
 
-                        <line x1="560" y1="1152" x2="560" y2="1195" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <line x1="820" y1="1161" x2="920" y2="1161" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
+                        <rect x="925" y="1116" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
+                        <text x="1007" y="1152" text-anchor="middle" fill="#63312d" font-size="14" font-weight="800">修复次数耗尽</text>
+                        <text x="1007" y="1177" text-anchor="middle" fill="#7e4b47" font-size="12">转 NEEDS_HUMAN</text>
 
-                        <rect x="350" y="1200" width="420" height="60" rx="30" fill="#176c63" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="1237" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">人工提交产品修改并选择性合入</text>
+                        <line x1="560" y1="1210" x2="560" y2="1255" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+
+                        <rect x="290" y="1260" width="540" height="100" rx="22" fill="#eaf5f2" stroke="#176c63" stroke-width="2" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="1295" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">AWAITING_HUMAN：集中展示 H1 验收包</text>
+                        <text x="560" y="1322" text-anchor="middle" fill="#6c6055" font-size="14">行为、RED、构建、Lint、范围、Review、原分支和风险</text>
+                        <text x="560" y="1345" text-anchor="middle" fill="#6c6055" font-size="13">此前不需要人工查看状态、排队或启动 Reviewer</text>
+
+                        <line x1="560" y1="1360" x2="560" y2="1400" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+
+                        <polygon points="560,1405 730,1470 560,1535 390,1470" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
+                        <text x="560" y="1464" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工最终验收通过？</text>
+                        <text x="560" y="1489" text-anchor="middle" fill="#6c6055" font-size="14">明确授权提交到已记录的原分支</text>
+
+                        <line x1="390" y1="1470" x2="220" y2="1470" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
+                        <text x="305" y="1453" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
+                        <rect x="30" y="1425" width="185" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
+                        <text x="122" y="1461" text-anchor="middle" fill="#63312d" font-size="16" font-weight="800">保持待验收</text>
+                        <text x="122" y="1486" text-anchor="middle" fill="#7e4b47" font-size="13">或提出修改意见</text>
+
+                        <line x1="560" y1="1535" x2="560" y2="1577" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+                        <text x="580" y="1562" fill="#176c63" font-size="14" font-weight="800">是</text>
+
+                        <rect x="280" y="1582" width="560" height="110" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="1617" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Integrator 自动提交并更新原分支</text>
+                        <text x="560" y="1644" text-anchor="middle" fill="#6c6055" font-size="14">重验封存 SHA，只提交 allowedPaths，先验证集成候选</text>
+                        <text x="560" y="1667" text-anchor="middle" fill="#6c6055" font-size="13">可快进则快进；有分支漂移则安全 cherry-pick，冲突立即停止</text>
+
+                        <line x1="840" y1="1637" x2="920" y2="1637" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
+                        <rect x="925" y="1592" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
+                        <text x="1007" y="1628" text-anchor="middle" fill="#63312d" font-size="14" font-weight="800">INTEGRATION_BLOCKED</text>
+                        <text x="1007" y="1653" text-anchor="middle" fill="#7e4b47" font-size="12">原分支保持不变</text>
+
+                        <line x1="560" y1="1692" x2="560" y2="1732" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
+
+                        <rect x="350" y="1737" width="420" height="65" rx="32" fill="#176c63" filter="url(#soft-shadow)"></rect>
+                        <text x="560" y="1777" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">COMPLETED：原分支已有产品提交</text>
                     </svg>
                 </div>
 
                 <p class="caption">
-                    阅读方式：从上向下沿主线执行。任何红色支路都意味着不能自动继续；先解决问题，再由人重新批准排队。
+                    正常路径中，合同批准之后到 <code>AWAITING_HUMAN</code> 之间没有人工命令；失败时停止，不做无限重试或未经授权的 Git 操作。
                 </p>
 
                 <div class="state-strip">
+                    <span class="state">DRAFT</span><span class="state-arrow">→</span>
+                    <span class="state">CONTRACT_REVIEW</span><span class="state-arrow">→</span>
                     <span class="state">APPROVED_CONTRACT</span><span class="state-arrow">→</span>
+                    <span class="state">PREPARING</span><span class="state-arrow">→</span>
                     <span class="state">PENDING</span><span class="state-arrow">→</span>
                     <span class="state">CODING</span><span class="state-arrow">→</span>
                     <span class="state">READY_FOR_REVIEW</span><span class="state-arrow">→</span>
-                    <span class="state">AWAITING_HUMAN</span>
+                    <span class="state">REVIEWING</span><span class="state-arrow">→</span>
+                    <span class="state">AWAITING_HUMAN</span><span class="state-arrow">→</span>
+                    <span class="state">INTEGRATING</span><span class="state-arrow">→</span>
+                    <span class="state">COMPLETED</span>
                 </div>
             </section>
 
             <section class="panel" id="steps">
                 <div class="section-head">
                     <div>
-                        <span class="kicker">Manual Steps</span>
-                        <h2>按顺序执行的十一项操作</h2>
-                        <p>所有尖括号占位符都必须替换成 Planner 或终端实际生成的值。</p>
+                        <span class="kicker">OpenCode Interaction</span>
+                        <h2>一条六阶段闭环，用户只参与三个关口</h2>
+                        <p>除首次启动 OpenCode 外，正常路径不要求用户在 Terminal 中创建 worktree、排队、启动 Coder 或 Reviewer。</p>
                     </div>
                     <span class="section-no">03</span>
                 </div>
 
                 <div class="steps">
                     <article class="step" data-step="1">
-                        <h3>进入项目并检查 OpenCode 环境</h3>
-                        <p>先做发现检查和影子预检。此阶段不排队，也不修改产品代码。</p>
+                        <h3>启动 Planner 并输入自然语言需求</h3>
+                        <p>环境发现和 Android SDK 检查由 Planner 的启动预检自动执行；预检失败时只报告原因，不生成合同。</p>
                         <div class="code-shell">
 <pre><code>cd /Users/zhanglong/files/program/cctest
-
-opencode debug config
-opencode debug skill
-opencode debug agent scheduled-planner
-opencode debug agent scheduled-coder
-opencode debug agent scheduled-reviewer
-
-./scripts/automation/tests/run-tests.sh
-./scripts/automation/shadow-run.sh</code></pre>
+opencode --agent scheduled-planner .</code></pre>
                         </div>
-                        <div class="expect">
-                            <strong>通过标准：</strong>三个 Agent、Scheduler、Superpowers 和相关技能均可发现；脚本测试和 shadow 预检通过。
-                            当前 <code>automation/config.json</code> 仍为 <code>enabled=false</code>、<code>mode=shadow</code>。
-                        </div>
-                    </article>
-
-                    <article class="step" data-step="2">
-                        <h3>启动交互式 Planner</h3>
-                        <p>不要自己指定 TASK-ID，也不要预先创建 Markdown 或 JSON 合同。</p>
-                        <div class="code-shell">
-<pre><code>opencode --agent scheduled-planner .</code></pre>
-                        </div>
-                        <p>进入 OpenCode 后粘贴：</p>
+                        <p>进入 OpenCode 后输入：</p>
                         <div class="code-shell">
 <pre><code>当前代码的城市列表没有“重庆”，因此“查看重庆的记录列表”虽然会命中列表意图，
 但 slots.city 是 null。任务要求通过 TDD 增加该支持。</code></pre>
                         </div>
+                        <div class="expect">
+                            <strong>自动预检：</strong>确认 OpenCode 配置、Agent、技能、Git 仓库、原分支、工作区洁净度、
+                            <code>ANDROID_HOME</code> 和基础脚本可用。发现硬阻塞时停在 <code>DRAFT</code>。
+                        </div>
+                    </article>
+
+                    <article class="step" data-step="2">
+                        <h3>确认方案，自动生成计划和任务合同</h3>
+                        <p>Planner 应先展示任务 ID、验收条件、允许路径、目标测试、非目标和设备测试策略，但此时不写文件。</p>
+                        <p>确认无误后回复：</p>
+                        <div class="code-shell">
+<pre><code>批准方案，生成计划和任务合同。</code></pre>
+                        </div>
+                        <div class="expect">
+                            Planner 生成 <code>docs/plans/&lt;TASK-ID&gt;.md</code> 与
+                            <code>automation/tasks/&lt;TASK-ID&gt;.json</code>，运行合同校验，并进入
+                            <code>CONTRACT_REVIEW</code>。生成文件不等于授权执行。
+                        </div>
                     </article>
 
                     <article class="step" data-step="3">
-                        <h3>审核 Planner 的 C0 提案并明确批准</h3>
-                        <p>提案应当只覆盖一个可观察行为，并明确以下范围：</p>
+                        <h3>人工复核合同，并用一次确认启动自动执行</h3>
+                        <p>OpenCode 必须展示计划全文、合同关键字段、校验结论和将要记录的原分支。人工至少确认：</p>
                         <ul>
                             <li>输入为 <code>查看重庆的记录列表</code>。</li>
                             <li><code>userGoal == BrowsePersonalInfoList</code>。</li>
                             <li><code>slots.city == "重庆"</code>。</li>
-                            <li>先写失败测试，再做最小实现。</li>
-                            <li>上海等已有城市行为保持不变。</li>
-                            <li>不增加区县、别名或模糊匹配。</li>
+                            <li><code>allowedPaths</code> 只有实现文件和对应测试文件。</li>
+                            <li>先 RED 后最小实现，已有城市行为不变。</li>
                             <li>不改 UI、导航、依赖、Gradle、远端解析或意图优先级。</li>
-                            <li><code>deviceTestsRequired == false</code>。</li>
+                            <li>原分支是当前实际分支，例如 <code>feature-opencode-scheduler</code>，而不是硬编码的 <code>main</code>。</li>
                         </ul>
-                        <p>确认无误后，在 OpenCode 中回复：</p>
+                        <p>复核通过后回复：</p>
                         <div class="code-shell">
-<pre><code>批准这个方案，生成计划和任务合同。</code></pre>
+<pre><code>合同已复核，批准自动执行到人工验收阶段。</code></pre>
                         </div>
                         <div class="expect">
-                            批准后才应该生成 <code>docs/plans/&lt;TASK-ID&gt;.md</code> 和
-                            <code>automation/tasks/&lt;TASK-ID&gt;.json</code>。如果提案范围不正确，应继续澄清，不能批准。
+                            该确认生成一次性执行授权。此后编排器自动推进，直到成功进入
+                            <code>AWAITING_HUMAN</code>，或因硬门禁进入失败状态。
                         </div>
                     </article>
 
                     <article class="step" data-step="4">
-                        <h3>复核合同并提交规划基线</h3>
-                        <p>退出 Planner 或另开终端，再次使用确定性脚本验证合同。</p>
+                        <h3>编排器自动准备 worktree、编码并审查</h3>
+                        <p>从这一阶段开始，用户不再执行 Terminal 命令。编排器依次完成：</p>
+                        <ul>
+                            <li><strong>建立基线：</strong>只提交已批准的计划和合同，记录原分支、原 HEAD 与合同 SHA。</li>
+                            <li><strong>准备环境：</strong>在仓库外创建唯一 worktree 和任务分支，并取得任务级锁。</li>
+                            <li><strong>运行时配置：</strong>把绝对路径写入 Git 公共状态区，而不是提交到 <code>automation/config.json</code>。</li>
+                            <li><strong>G0：</strong>新增测试前，全量 <code>testDebugUnitTest</code> 必须通过。</li>
+                            <li><strong>G1：</strong>先添加重庆聚焦测试，获得真实 RED 并记录证据。</li>
+                            <li><strong>G2–G6：</strong>完成最小实现、单测、构建、Lint、设备测试策略和范围门禁。</li>
+                            <li><strong>G7：</strong>自动启动全新的只读 Reviewer，复跑验证并核对封存 diff。</li>
+                        </ul>
                         <div class="code-shell">
-<pre><code>./scripts/automation/validate-contract.sh &lt;TASK-ID&gt;
-git status --short
-
-git add docs/plans/&lt;TASK-ID&gt;.md
-git add automation/tasks/&lt;TASK-ID&gt;.json
-git commit -m "Add approved Chongqing city task"
-
-git rev-parse HEAD</code></pre>
+<pre><code><span class="comment"># 编排器内部流水线；不是人工命令</span>
+PREPARING → PENDING → CODING → READY_FOR_REVIEW
+→ REVIEWING → AWAITING_HUMAN</code></pre>
                         </div>
-                        <div class="expect">
-                            <strong>记录输出：</strong><code>git rev-parse HEAD</code> 的结果就是后续使用的
-                            <code>&lt;BASELINE-COMMIT&gt;</code>。只提交规划产物，不要夹带其他用户修改。
+                        <div class="callout danger">
+                            Coder 仍然不能创建 worktree、提交、merge、rebase 或 push；这些能力只授予带状态校验的确定性编排脚本。
                         </div>
                     </article>
 
                     <article class="step" data-step="5">
-                        <h3>在仓库目录外创建专用 worktree</h3>
+                        <h3>在 OpenCode 中完成集中式人工验收</h3>
+                        <p>自动阶段成功后，OpenCode 一次性展示验收包，而不是要求人工逐个查状态文件。验收包必须包含：</p>
+                        <ul>
+                            <li>业务行为、最终产品 diff 和允许路径对照。</li>
+                            <li>G0 基线、真实 RED、聚焦测试、全量单测、构建与 Lint 结论。</li>
+                            <li>Reviewer 决策、验证退出码、封存 diff SHA 与剩余风险。</li>
+                            <li>即将更新的原分支、当前 HEAD、预计产品提交信息，以及是否发生分支漂移。</li>
+                        </ul>
+                        <p>不通过时回复具体原因，状态保持待验收或进入受限修复；通过时回复：</p>
                         <div class="code-shell">
-<pre><code>git worktree add /absolute/path/to/cctest-task \
-  -b task/chongqing-city &lt;BASELINE-COMMIT&gt;
-
-cd /absolute/path/to/cctest-task</code></pre>
-                        </div>
-                        <p>人工编辑专用 worktree 中的 <code>automation/config.json</code>：</p>
-                        <div class="code-shell">
-<pre><code><span class="string">"enabled"</span>: <span class="keyword">true</span>,
-<span class="string">"mode"</span>: <span class="string">"active"</span>,
-<span class="string">"dedicatedWorktree"</span>: <span class="string">"/absolute/path/to/cctest-task"</span></code></pre>
-                        </div>
-                        <div class="code-shell">
-<pre><code>git add automation/config.json
-git commit -m "Activate quality gate in dedicated worktree"
-git status --short</code></pre>
+<pre><code>验收通过，提交到原分支。</code></pre>
                         </div>
                         <div class="expect">
-                            <strong>通过标准：</strong><code>git status --short</code> 没有输出。Coder 必须从已配置且干净的专用 worktree 启动。
+                            该确认只对当前任务 ID、当前封存 diff SHA 和已展示的原分支有效；任一值变化都必须重新验收。
                         </div>
                     </article>
 
                     <article class="step" data-step="6">
-                        <h3>人工批准并把合同排入队列</h3>
-                        <div class="code-shell">
-<pre><code>AUTOMATION_HUMAN_APPROVED=1 \
-  ./scripts/automation/queue-task.sh &lt;TASK-ID&gt;
-
-./scripts/automation/status.sh &lt;TASK-ID&gt; | jq -r '.state.state'</code></pre>
-                        </div>
-                        <div class="expect"><strong>期望输出：</strong><code>PENDING</code>。</div>
-                    </article>
-
-                    <article class="step" data-step="7">
-                        <h3>手工启动 Coder</h3>
-                        <p>此命令手工运行未来 Scheduler 使用的同一个 Agent 和固定 Prompt。</p>
-                        <div class="code-shell">
-<pre><code>opencode run --agent scheduled-coder -- \
-  "$(&lt;automation/scheduler/coder-prompt.txt)"</code></pre>
-                        </div>
-                        <div class="callout danger">
-                            禁止添加 <code>--dangerously-skip-permissions</code>。Agent 的权限拒绝规则是质量门禁的一部分。
-                        </div>
-                        <p>Coder 应自动完成：</p>
+                        <h3>集成器自动提交到原分支并回报结果</h3>
+                        <p>最终确认后，确定性集成器自动完成以下操作：</p>
                         <ul>
-                            <li><strong>G0：</strong>新增测试前，全量 <code>testDebugUnitTest</code> 必须通过。</li>
-                            <li><strong>G1：</strong>先添加重庆聚焦测试，获得真实 RED 并记录证据。</li>
-                            <li><strong>最小实现：</strong>通常只需把“重庆”加入已知城市配置。</li>
-                            <li><strong>G2：</strong>聚焦测试与全量 JVM 单测通过。</li>
-                            <li><strong>G3：</strong><code>assembleDebug</code> 通过。</li>
-                            <li><strong>G4：</strong>Android Lint 通过。</li>
-                            <li><strong>G5：</strong>依据合同跳过设备测试。</li>
-                            <li><strong>G6：</strong>修改范围、测试完整性和基线一致性通过。</li>
+                            <li>再次验证 <code>AWAITING_HUMAN</code>、Review 批准、diff SHA、合同范围与原分支身份。</li>
+                            <li>只暂存 <code>allowedPaths</code>，在任务分支生成单一产品提交。</li>
+                            <li>先在隔离的集成候选 worktree 中应用提交并复跑确定性验证。</li>
+                            <li>原分支未漂移时执行快进；已前进但可无冲突应用时生成验证过的新候选；冲突时不修改原分支。</li>
+                            <li>保存集成证据、释放锁并清理临时 worktree，最后进入 <code>COMPLETED</code>。</li>
                         </ul>
-                    </article>
-
-                    <article class="step" data-step="8">
-                        <h3>检查 Coder 结果，但不要提交产品 diff</h3>
                         <div class="code-shell">
-<pre><code>./scripts/automation/status.sh &lt;TASK-ID&gt; | jq -r '.state.state'
-git diff --name-only HEAD --
-git diff HEAD --
-
-jq . automation/evidence/&lt;TASK-ID&gt;/red.json
-jq . automation/evidence/&lt;TASK-ID&gt;/ready.json</code></pre>
-                        </div>
-                        <div class="expect">
-                            <strong>期望状态：</strong><code>READY_FOR_REVIEW</code>。确认 <code>red.json</code> 是实现前因重庆未识别而产生的真实失败，
-                            并确认 <code>ready.json</code> 已保存 HEAD 和 <code>diffSha256</code>。
-                        </div>
-                        <div class="callout danger">
-                            Reviewer 完成前不要提交、修改或格式化产品代码。任何 diff 变化都会破坏已封存的 SHA，导致
-                            <code>CHANGES_REQUESTED</code>。
-                        </div>
-                    </article>
-
-                    <article class="step" data-step="9">
-                        <h3>启动全新的只读 Reviewer</h3>
-                        <p>不要继续使用 Coder 会话；新进程会创建独立上下文并重新运行确定性验证。</p>
-                        <div class="code-shell">
-<pre><code>opencode run --agent scheduled-reviewer -- \
-  "$(&lt;automation/scheduler/reviewer-prompt.txt)"
-
-./scripts/automation/status.sh &lt;TASK-ID&gt; | jq -r '.state.state'
-jq . automation/evidence/&lt;TASK-ID&gt;/review.json</code></pre>
-                        </div>
-                        <div class="expect">
-                            <strong>通过必须同时满足：</strong><code>state == AWAITING_HUMAN</code>、
-                            <code>decision == APPROVED</code>、<code>verificationExitCode == 0</code>。
-                        </div>
-                    </article>
-
-                    <article class="step" data-step="10">
-                        <h3>执行 H1 人工最终验收</h3>
-                        <p>检查完整状态、产品 diff 和三类关键证据。</p>
-                        <div class="code-shell">
-<pre><code>./scripts/automation/status.sh &lt;TASK-ID&gt; | jq .
-git status --short
-git diff --name-only HEAD --
-git diff HEAD --
-
-jq . automation/evidence/&lt;TASK-ID&gt;/red.json
-jq . automation/evidence/&lt;TASK-ID&gt;/ready.json
-jq . automation/evidence/&lt;TASK-ID&gt;/review.json</code></pre>
-                        </div>
-                        <p>如需人工再次执行完整确定性验收：</p>
-                        <div class="code-shell">
-<pre><code>./scripts/automation/verify-task.sh &lt;TASK-ID&gt;</code></pre>
-                        </div>
-                    </article>
-
-                    <article class="step" data-step="11">
-                        <h3>人工提交产品修改并选择性合入</h3>
-                        <p>只有 H1 全部通过后，才能提交合同允许的产品源码和测试。例如：</p>
-                        <div class="code-shell">
-<pre><code>git add app/src/main/java/com/example/cctest/routing/parser/TextParsingSupport.kt
-git add app/src/test/java/com/example/cctest/routing/RuleBasedIntentParserTest.kt
-git commit -m "Add Chongqing city recognition"</code></pre>
+<pre><code>state=COMPLETED
+originalBranch=feature-opencode-scheduler
+productCommit=&lt;COMMIT&gt;
+verificationExitCode=0
+pushed=false</code></pre>
                         </div>
                         <div class="callout">
-                            如果要把成果带回主分支，只选择性合入这个产品提交。不要把含本机绝对 worktree 路径的自动化激活提交合入主分支。
+                            “提交到原分支”是本地 Git 提交，不等于 push。只有用户另外明确说“推送到远端”时，才允许执行网络写入。
                         </div>
                     </article>
+                </div>
+            </section>
+
+            <section class="panel" id="implementation">
+                <div class="section-head">
+                    <div>
+                        <span class="kicker">Implementation Contract</span>
+                        <h2>这套自动流程已经落地的能力</h2>
+                        <p>以下能力已由仓库内 Agent、Skill、配置和可测试的确定性脚本实现，不依赖提示词临时模拟关键 Git 或状态操作。</p>
+                    </div>
+                    <span class="section-no">04</span>
+                </div>
+
+                <div class="grid-2">
+                    <article class="card">
+                        <h3>受控 Orchestrator</h3>
+                        <p><code>scheduled-planner</code> 加载专用 Orchestrator Skill。它不能编辑产品代码，只能调用白名单事务脚本、启动隔离的 Coder/Reviewer，并向用户展示审批内容。</p>
+                    </article>
+                    <article class="card">
+                        <h3>两条确定性事务接口</h3>
+                        <div class="code-shell" style="margin-top: 12px;">
+<pre><code>./scripts/automation/approve-and-run.sh &lt;TASK-ID&gt; &lt;APPROVAL-TOKEN&gt;
+./scripts/automation/accept-and-integrate.sh &lt;TASK-ID&gt; &lt;ACCEPTANCE-TOKEN&gt;</code></pre>
+                        </div>
+                        <p>第一条负责基线、worktree 和自动流水线；第二条负责封存校验、候选集成和原分支更新。</p>
+                    </article>
+                    <article class="card">
+                        <h3>非跟踪运行时配置</h3>
+                        <p>worktree 绝对路径、锁和运行状态存放在 Git common dir。不得再通过修改并提交 <code>automation/config.json</code> 激活单次任务。</p>
+                    </article>
+                    <article class="card">
+                        <h3>幂等、锁和可恢复状态</h3>
+                        <p>每个任务只允许一个编排器持锁；重复确认不得重复建分支、重复提交或重复集成。进程中断后应从证据状态安全恢复。</p>
+                    </article>
+                </div>
+
+                <div class="table-wrap" style="margin-top: 18px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>角色</th>
+                                <th>允许能力</th>
+                                <th>明确禁止</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Planner</td>
+                                <td>读取仓库；在首次批准后生成计划与合同；按后续确认调用白名单事务脚本</td>
+                                <td>直接编辑产品、直接执行 Git 变更或 push</td>
+                            </tr>
+                            <tr>
+                                <td>Orchestrator</td>
+                                <td>校验批准令牌、管理状态/锁/worktree、启动隔离 Agent</td>
+                                <td>自行解释需求或编辑产品代码</td>
+                            </tr>
+                            <tr>
+                                <td>Coder</td>
+                                <td>只编辑合同 <code>allowedPaths</code>，执行 TDD 和 G0–G6</td>
+                                <td>任何 worktree、commit、merge、rebase、push 和合同修改</td>
+                            </tr>
+                            <tr>
+                                <td>Reviewer</td>
+                                <td>全新只读上下文，复验并提交结构化决定</td>
+                                <td>编辑任何仓库文件或继续复用 Coder 会话</td>
+                            </tr>
+                            <tr>
+                                <td>Integrator</td>
+                                <td>最终批准后暂存允许文件、创建产品提交、验证候选并更新原分支</td>
+                                <td>跳过 SHA/范围校验、自动解冲突、force push 或修改未授权分支</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -965,10 +1024,10 @@ git commit -m "Add Chongqing city recognition"</code></pre>
                 <div class="section-head">
                     <div>
                         <span class="kicker">H1 Acceptance</span>
-                        <h2>最终人工验收清单</h2>
-                        <p>业务、测试、范围和证据必须全部通过，缺少任意一项都不能视为完成。</p>
+                        <h2>OpenCode 必须集中展示的最终验收清单</h2>
+                        <p>人工不需要运行取证命令，但必须能够展开原始证据；缺少任意一项都不能生成最终接受令牌。</p>
                     </div>
-                    <span class="section-no">04</span>
+                    <span class="section-no">05</span>
                 </div>
 
                 <div class="grid-2">
@@ -1000,19 +1059,21 @@ git commit -m "Add Chongqing city recognition"</code></pre>
                             <li>产品 diff 只落在合同允许路径。</li>
                             <li>没有修改 Agent、Skill、合同、门禁脚本、Gradle 或依赖。</li>
                             <li>没有删除、忽略或弱化测试。</li>
-                            <li>Coder 没有 push、merge、rebase 或创建 worktree。</li>
+                            <li>worktree 由 Orchestrator 创建，Coder 没有 Git 管理权限。</li>
                             <li>Reviewer 是独立只读会话，未编辑仓库文件。</li>
+                            <li>任务历史中不存在含本机绝对路径的激活配置提交。</li>
                         </ul>
                     </article>
 
                     <article class="card">
-                        <h3>状态与证据</h3>
+                        <h3>集成就绪度</h3>
                         <ul class="check-list">
                             <li><code>ready.json</code> 记录 HEAD 与 diff SHA。</li>
                             <li><code>review.json.decision == "APPROVED"</code>。</li>
                             <li><code>verificationExitCode == 0</code>。</li>
-                            <li>最终状态为 <code>AWAITING_HUMAN</code>。</li>
-                            <li>Reviewer 前产品 diff 没有被提交或改变。</li>
+                            <li>当前状态为 <code>AWAITING_HUMAN</code>，产品 diff 未改变。</li>
+                            <li>已展示原分支、基线 HEAD、分支漂移和集成策略。</li>
+                            <li>确认后预期进入 <code>COMPLETED</code>，而不是自动 push。</li>
                         </ul>
                     </article>
                 </div>
@@ -1022,26 +1083,38 @@ git commit -m "Add Chongqing city recognition"</code></pre>
                 <div class="section-head">
                     <div>
                         <span class="kicker">Evidence</span>
-                        <h2>验收时要查看的证据目录</h2>
-                        <p>自然语言总结不能替代这些状态文件和新鲜命令证据。</p>
+                        <h2>跨 worktree 保存的完整证据目录</h2>
+                        <p>证据写入 Git common dir，不进入产品 diff，并且在临时 worktree 清理后仍然存在。</p>
                     </div>
-                    <span class="section-no">05</span>
+                    <span class="section-no">06</span>
                 </div>
 
                 <div class="code-shell">
-<pre><code>automation/evidence/&lt;TASK-ID&gt;/
+<pre><code>&lt;GIT-COMMON-DIR&gt;/automation-runtime/
+├── state/&lt;TASK-ID&gt;.json       <span class="comment"># 当前状态与修订号</span>
+├── workspaces/&lt;TASK-ID&gt;.json  <span class="comment"># 临时分支、worktree 与运行时配置</span>
+├── locks/                      <span class="comment"># 状态锁与任务级编排锁</span>
+└── evidence/&lt;TASK-ID&gt;/
 ├── transitions.jsonl          <span class="comment"># 只追加的状态迁移审计</span>
-├── preflight.log              <span class="comment"># 插件、权限、洁净 worktree 预检</span>
+├── approvals.jsonl            <span class="comment"># 三次批准类型及其绑定分支/SHA</span>
+├── origin.json                <span class="comment"># 原分支、基线 HEAD 与工作区身份</span>
+├── preflight.log              <span class="comment"># 环境、权限、合同与洁净度预检</span>
 ├── baseline.log
 ├── baseline.json              <span class="comment"># G0 绿色基线</span>
 ├── protected.sha256
 ├── red.log
 ├── red.json                   <span class="comment"># 实现前的真实失败证据</span>
-├── gate-attempt-1.log
-├── gate-attempts.json
+├── gate-cycle-0-attempt-1.log
+├── gate-attempts-cycle-0.json
 ├── ready.json                 <span class="comment"># READY_FOR_REVIEW、HEAD 与 diff SHA</span>
 ├── review-verification.log
-└── review.json                <span class="comment"># G7 独立审核结论</span></code></pre>
+├── review.json                <span class="comment"># G7 独立审核结论</span>
+├── acceptance-report.json     <span class="comment"># 集中式人工验收包</span>
+├── sealed.diff                <span class="comment"># 含新文件的封存产品差异</span>
+├── acceptance.json            <span class="comment"># 最终人工接受及其绑定对象</span>
+├── integration-verification.log <span class="comment"># 原分支候选集成与复验</span>
+├── integration.json           <span class="comment"># 产品提交、原分支新 HEAD、结果</span>
+└── cleanup.log                <span class="comment"># worktree 与锁清理记录</span></code></pre>
                 </div>
             </section>
 
@@ -1049,10 +1122,10 @@ git commit -m "Add Chongqing city recognition"</code></pre>
                 <div class="section-head">
                     <div>
                         <span class="kicker">Failure Handling</span>
-                        <h2>失败状态与重新排队</h2>
-                        <p>失败不是继续猜测的信号，而是停止、保留证据并交还人类处理的信号。</p>
+                        <h2>异常才需要人工介入，旧批准不会被复用</h2>
+                        <p>编排器允许合同内的有界自动修复；环境、歧义、超限失败和 Git 冲突仍必须停止。</p>
                     </div>
-                    <span class="section-no">06</span>
+                    <span class="section-no">07</span>
                 </div>
 
                 <div class="table-wrap">
@@ -1066,41 +1139,48 @@ git commit -m "Add Chongqing city recognition"</code></pre>
                         </thead>
                         <tbody>
                             <tr>
+                                <td><code>CONTRACT_INVALID</code></td>
+                                <td>合同缺字段、范围含糊、原分支无法确定或审批对象已改变。</td>
+                                <td>保持在合同复核阶段，由 Planner 修订；绝不创建 worktree。</td>
+                            </tr>
+                            <tr>
                                 <td><code>BLOCKED</code></td>
-                                <td>环境、合同、基线、worktree 或修改范围不满足硬门禁。</td>
-                                <td>保留日志，修复环境或合同问题，不要自动重试。</td>
+                                <td>SDK、依赖、基线、权限、锁或 worktree 不满足硬门禁。</td>
+                                <td>保留日志并报告一条可执行的修复建议；修复后从最近安全状态恢复。</td>
                             </tr>
                             <tr>
                                 <td><code>TEST_FAILED</code></td>
                                 <td>聚焦测试、全量单测、构建或 Lint 在允许修复次数后仍失败。</td>
-                                <td>人工检查失败证据并修复代码，再重新批准排队。</td>
+                                <td>自动修复次数耗尽后转 <code>NEEDS_HUMAN</code>，不得无限消耗模型时间。</td>
                             </tr>
                             <tr>
                                 <td><code>CHANGES_REQUESTED</code></td>
                                 <td>Reviewer 发现语义、测试质量或 diff SHA 不一致。</td>
-                                <td>根据 review.json 修复；Reviewer 不得自己编辑代码。</td>
+                                <td>合同内且未超限时自动返回 Coder，并启动新的 Reviewer；否则交还人工。</td>
+                            </tr>
+                            <tr>
+                                <td><code>INTEGRATION_BLOCKED</code></td>
+                                <td>原工作区变脏、原分支身份改变、候选 cherry-pick 冲突或复验失败。</td>
+                                <td>原分支保持不变，保留候选和证据，等待人工处理后继续。</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
                 <p style="margin-top: 18px; color: var(--muted); line-height: 1.75;">
-                    问题解决后，必须重新由人明确批准排队：
+                    问题解决后，Planner 必须根据保留的证据重新校验最近安全状态；如果合同、diff、原分支或 HEAD 已变化，必须回到相应人工批准关口，不能沿用旧批准继续执行。
                 </p>
-                <div class="code-shell">
-<pre><code>AUTOMATION_HUMAN_APPROVED=1 \
-  ./scripts/automation/queue-task.sh &lt;TASK-ID&gt;</code></pre>
-                </div>
 
                 <div class="callout danger">
-                    不得在脏主工作区运行 Coder，不得跳过权限，不得在 Reviewer 之前提交产品 diff，也不得让 V1 自动 push 或 merge。
+                    自动化不得使用 <code>--dangerously-skip-permissions</code>、force push、自动解决 Git 冲突、修改未授权分支，
+                    也不得把失败当作继续猜测的理由。最终接受令牌只能使用一次，并且必须绑定任务 ID、diff SHA 与原分支 HEAD。
                 </div>
             </section>
         </main>
 
         <footer>
-            本文是 <code>taskdescriptions/task2.html</code> 的详细手工操作版。页面自包含，不加载外部脚本、字体或图片，
-            也不会修改 Android 产品代码。<br>
+            本文在 <code>taskdescriptions/task2.html</code> 的业务与质量要求基础上，重构了低人工干预的自动编排目标方案。
+            页面自包含，不加载外部脚本、字体或图片；自动流程与手工 Runbook 冲突时，以本页的目标状态机和权限边界为准。<br>
             工程：cctest · 文档：task2detail.html
         </footer>
     </div>

@@ -14,7 +14,12 @@ automation_validate_task_id "$task_id"
 contract="$(automation_contract_path "$task_id")"
 evidence_dir="$(automation_evidence_path "$task_id")"
 mkdir -p "$evidence_dir"
-attempt_file="$evidence_dir/gate-attempts.json"
+workspace_file="$(automation_workspace_path "$task_id")"
+coding_cycle=0
+if [[ -f "$workspace_file" ]]; then
+    coding_cycle="$(jq -er '.codingCycle // 0' "$workspace_file")"
+fi
+attempt_file="$evidence_dir/gate-attempts-cycle-$coding_cycle.json"
 previous_attempts=0
 if [[ -f "$attempt_file" ]]; then
     previous_attempts="$(jq -er '.attempts' "$attempt_file")"
@@ -24,7 +29,7 @@ max_fix_loops="$(jq -r '.maxFixLoops' "$contract")"
 max_attempts=$((max_fix_loops + 1))
 [[ "$attempt" -le "$max_attempts" ]] || automation_die "quality gate attempt limit already exhausted"
 
-attempt_log="$evidence_dir/gate-attempt-$attempt.log"
+attempt_log="$evidence_dir/gate-cycle-$coding_cycle-attempt-$attempt.log"
 started_at="$(automation_now)"
 set +e
 "$SCRIPT_DIR/verify-task.sh" "$task_id" 2>&1 | tee "$attempt_log"
@@ -34,11 +39,12 @@ set -e
 jq -n \
     --arg taskId "$task_id" \
     --argjson attempts "$attempt" \
+    --argjson codingCycle "$coding_cycle" \
     --argjson maxAttempts "$max_attempts" \
     --arg startedAt "$started_at" \
     --arg finishedAt "$(automation_now)" \
     --argjson exitCode "$gate_status" \
-    '{taskId: $taskId, attempts: $attempts, maxAttempts: $maxAttempts, lastStartedAt: $startedAt, lastFinishedAt: $finishedAt, lastExitCode: $exitCode}' \
+    '{taskId: $taskId, codingCycle: $codingCycle, attempts: $attempts, maxAttempts: $maxAttempts, lastStartedAt: $startedAt, lastFinishedAt: $finishedAt, lastExitCode: $exitCode}' \
     | automation_record_json "$attempt_file"
 
 if [[ "$gate_status" -ne 0 ]]; then
@@ -52,14 +58,15 @@ if [[ "$gate_status" -ne 0 ]]; then
     exit "$gate_status"
 fi
 
-diff_sha="$(git -C "$AUTOMATION_ROOT" diff --binary HEAD -- | shasum -a 256 | awk '{print $1}')"
+diff_sha="$(automation_worktree_diff_sha)"
 jq -n \
     --arg taskId "$task_id" \
     --arg verifiedAt "$(automation_now)" \
     --arg head "$(git -C "$AUTOMATION_ROOT" rev-parse HEAD)" \
     --arg diffSha256 "$diff_sha" \
     --argjson attempts "$attempt" \
-    '{taskId: $taskId, verifiedAt: $verifiedAt, head: $head, diffSha256: $diffSha256, gateAttempts: $attempts}' \
+    --argjson codingCycle "$coding_cycle" \
+    '{taskId: $taskId, verifiedAt: $verifiedAt, head: $head, diffSha256: $diffSha256, gateAttempts: $attempts, codingCycle: $codingCycle}' \
     | automation_record_json "$evidence_dir/ready.json"
 
 automation_transition_state "$task_id" "CODING" "READY_FOR_REVIEW" "quality-gate" "G1-G6 passed with fresh evidence"

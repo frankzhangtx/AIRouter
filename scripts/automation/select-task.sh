@@ -7,8 +7,8 @@ source "$SCRIPT_DIR/lib.sh"
 
 wanted="${1:-}"
 case "$wanted" in
-    PENDING|READY_FOR_REVIEW) ;;
-    *) printf 'Usage: %s PENDING|READY_FOR_REVIEW\n' "$0" >&2; exit 2 ;;
+    PENDING|READY_FOR_REVIEW|REVIEWING) ;;
+    *) printf 'Usage: %s PENDING|READY_FOR_REVIEW|REVIEWING\n' "$0" >&2; exit 2 ;;
 esac
 
 matches=()

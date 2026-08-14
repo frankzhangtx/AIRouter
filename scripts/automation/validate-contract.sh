@@ -81,6 +81,7 @@ plan_path="$(jq -r '.planPath' "$contract")"
 if [[ "$plan_path" == /* || "$plan_path" == *".."* ]]; then
     automation_die "planPath must be a safe repository-relative path"
 fi
+[[ "$plan_path" == "docs/plans/$task_id.md" ]] || automation_die "planPath must be docs/plans/$task_id.md"
 [[ -f "$AUTOMATION_ROOT/$plan_path" ]] || automation_die "approved plan does not exist: $plan_path"
 
 automation_info "contract valid: $task_id"

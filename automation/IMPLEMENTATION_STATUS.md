@@ -1,56 +1,46 @@
-# Scheduled coding quality gate implementation status
+# OpenCode orchestration implementation status
 
-Verified on 2026-08-09 in `/Users/zhanglong/files/program/cctest`.
+Updated 2026-08-14 in `/Users/zhanglong/files/program/cctest`.
 
-## Implemented and verified
+## Implemented
 
-- Project-level OpenCode configuration pins `opencode-scheduler@1.3.0` and
-  `obra/superpowers` `v6.2.0`.
-- OpenCode downloaded the pinned Superpowers package and discovered the two
-  project wrapper skills plus `test-driven-development`,
-  `systematic-debugging`, and `verification-before-completion`.
-- `scheduled-planner`, `scheduled-coder`, and `scheduled-reviewer` resolve as
-  separate primary agents. The planner accepts a natural-language request,
-  requires interactive C0 approval, and can write only plan/contract files.
-- Both agents default every unlisted tool to `deny`; Scheduler management tools
-  and subagents are disabled. The coder can edit only Android source/test
-  paths, while the reviewer cannot edit any repository file.
-- Contract validation, atomic state transitions, deterministic task selection,
-  clean-worktree preflight, baseline capture, RED capture, scope/test-integrity
-  checks, bounded verification retry, quality gates, diff sealing, and
-  independent review submission are implemented under `scripts/automation/`.
-- The shell test suite passes 16 lifecycle and negative cases.
-- `./gradlew testDebugUnitTest assembleDebug lint` completes with
-  `BUILD SUCCESSFUL`.
-- The shadow preflight discovers plugins, skills, and agents, reports current
-  blockers, and performs no mutation.
+- Portable V2 configuration is enabled in `orchestrated` mode; a task no longer
+  requires editing and committing an absolute `dedicatedWorktree` value.
+- `scheduled-planner` is the single interactive front door and recognizes
+  separate proposal, contract-execution, and final-acceptance approvals.
+- The new `scheduled-quality-orchestrator` skill prevents Planner from
+  performing direct Git mutations while allowing the two audited transaction
+  scripts.
+- Runtime state, evidence, locks, and workspace metadata live in the Git common
+  directory so the original, task, and integration worktrees share one source
+  of truth.
+- Contract approval records the original branch/HEAD and artifact hashes,
+  commits only the plan and contract, creates an outside task worktree, and
+  launches Coder/Reviewer sessions until a hard stop or `AWAITING_HUMAN`.
+- Coder remains restricted to contract paths and TDD gates. Reviewer remains
+  read-only and receives an explicit sealed `REVIEWING` handoff. One bounded
+  review-fix cycle is supported.
+- Final acceptance is bound to task ID, sealed diff SHA, and original branch.
+  Product changes are committed on the task branch, applied and verified in a
+  candidate worktree, then fast-forwarded into the recorded original branch.
+- Successful cleanup removes temporary worktrees but preserves Git commits and
+  evidence. No script runs `git push`; integration evidence records
+  `pushed: false`.
 
-## Intentionally not activated
+## Verification status
 
-`automation/config.json` remains:
+- The deterministic shell suite covers 30 positive and negative checks,
+  including a complete temporary-repository integration flow.
+- Bash syntax and JSON parsing are included in the repository verification
+  pass.
+- With `ANDROID_HOME=/Users/zhanglong/Library/Android/sdk`, the standalone
+  `./gradlew testDebugUnitTest`, `./gradlew assembleDebug`, and
+  `./gradlew lint` commands all completed with `BUILD SUCCESSFUL`.
 
-```json
-{
-  "enabled": false,
-  "mode": "shadow",
-  "dedicatedWorktree": ""
-}
-```
+## First-use boundary
 
-No new recurring Scheduler job has been installed. This is required because:
-
-1. the current main worktree contains pre-existing/user changes;
-2. the new automation implementation has not yet been committed into a clean
-   baseline;
-3. no real human-approved task contract exists;
-4. no dedicated worktree path or preferred schedule has been approved.
-
-The two pre-existing Scheduler jobs (`daily-version-log` and
-`daily-unit-test`) were left unchanged.
-
-## Activation boundary
-
-Activation is a separate human-controlled step. Follow `README.md` and
-`scheduler/README.md` only after establishing a clean committed baseline. Do
-not bypass this boundary by setting `enabled: true` in the current dirty
-worktree or by using `--dangerously-skip-permissions`.
+The current automation implementation itself must first be reviewed and
+committed on the intended source branch. Planner preflight intentionally
+rejects a dirty source worktree, because later it must distinguish the newly
+generated plan/contract from unrelated edits. No recurring Scheduler job is
+needed for the normal V2 flow.

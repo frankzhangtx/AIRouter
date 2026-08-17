@@ -40,6 +40,7 @@ permission:
     "./scripts/automation/prepare-contract-review.sh *": allow
     "./scripts/automation/approve-and-run.sh *": allow
     "./scripts/automation/status.sh *": allow
+    "./scripts/automation/show-acceptance-review.sh *": allow
     "./scripts/automation/accept-and-integrate.sh *": allow
     "./scripts/automation/queue-task.sh *": deny
     "git push*": deny
@@ -122,14 +123,24 @@ Only after approval, create exactly these planning artifacts:
 
 Never overwrite an existing task or plan. Run
 `./scripts/automation/validate-contract.sh <TASK-ID>` and fix only the newly
-created planning artifacts if validation fails. Report the generated task ID,
-paths, approval scope, and validation result.
+created planning artifacts if validation fails. Immediately seal the generated
+artifacts for contract review through the deterministic preparation script.
 
-Immediately seal the generated artifacts for contract review through the
-deterministic preparation script. Never edit product code or tests and never
-run Git mutation commands directly. After explicit contract approval, invoke
-only the deterministic approval/orchestration script; it owns the planning
-baseline commit, worktree, Coder/Reviewer sequence, and stop at
-`AWAITING_HUMAN`. After displaying the acceptance package, wait for explicit
-final acceptance and invoke only the deterministic integrator. Never push;
-integration updates only the recorded local original branch.
+After preparation succeeds, do not wait for the user to request details or
+provide a task ID. Read the sealed plan, contract, state, and origin evidence;
+automatically present the contract-review card required by the orchestrator
+skill, then use `question` to offer its exact approval and adjustment options.
+Only an answer exactly matching the full approval option is contract approval.
+A different answer or a dismissed question must not start execution.
+
+Never edit product code or tests and never run Git mutation commands directly.
+After explicit contract approval, invoke only the deterministic
+approval/orchestration script; it owns the planning baseline commit, worktree,
+Coder/Reviewer sequence, and stop at `AWAITING_HUMAN`. As soon as it stops
+there, automatically notify the user, display the fresh acceptance-review card,
+and call the final `question` required by the orchestrator skill. Do not wait
+for the user to ask for the package or compose a display prompt. If the user
+later runs `/acceptance <TASK-ID>`, regenerate the same read-only card and final
+question. Invoke only the deterministic integrator after exact final
+acceptance. Never push; integration updates only the recorded local original
+branch.

@@ -430,7 +430,21 @@ run_task "$task_worktree" ./scripts/automation/begin-review.sh TASK-TEST-004 >/d
 run_task "$task_worktree" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-004 APPROVED 'Fresh review confirms the sealed behavior and scope.' >/dev/null
 run_task "$task_worktree" ./scripts/automation/acceptance-report.sh TASK-TEST-004 >/dev/null
 [[ "$(jq -r '.changedPaths | length' "$runtime_root/evidence/TASK-TEST-004/acceptance-report.json")" -eq 2 ]] || fail 'acceptance package omitted product paths'
-pass 'automated coder/reviewer evidence becomes one human acceptance package'
+[[ "$(jq -r '.evidence.qualityGate' "$runtime_root/evidence/TASK-TEST-004/acceptance-report.json")" == "PASSED" ]] || fail 'acceptance package omitted quality-gate status'
+acceptance_card="$(run_fixture ./scripts/automation/show-acceptance-review.sh TASK-TEST-004)"
+[[ "$acceptance_card" == *"人工验收提醒"* ]] || fail 'acceptance review did not actively identify the human gate'
+[[ "$acceptance_card" == *"P0 · 真实行为是否满足合同"* ]] || fail 'acceptance review omitted behavioral focus'
+[[ "$acceptance_card" == *"P0 · 旧行为与范围是否被误伤"* ]] || fail 'acceptance review omitted regression and scope focus'
+[[ "$acceptance_card" == *"sealed diff SHA"* ]] || fail 'acceptance review omitted sealed binding'
+pass 'automated evidence becomes one focused, SHA-verified human acceptance card'
+
+printf '%s\n' 'class OrchestratedFlow { fun value() = "tampered after review" }' > "$task_worktree/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
+if run_fixture ./scripts/automation/show-acceptance-review.sh TASK-TEST-004 >/dev/null 2>&1; then
+    fail 'acceptance review displayed a diff changed after sealing'
+fi
+printf '%s\n' 'class OrchestratedFlow { fun value() = "integrated" }' > "$task_worktree/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-004.json")" == "AWAITING_HUMAN" ]] || fail 'read-only acceptance display changed task state'
+pass 'acceptance display rejects a changed diff and never advances state'
 
 original_branch="$(git -C "$fixture" symbolic-ref --short HEAD)"
 if run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-004 '拒绝' >/dev/null 2>&1; then

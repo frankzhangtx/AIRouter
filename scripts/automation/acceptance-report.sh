@@ -14,11 +14,17 @@ contract="$(automation_contract_path "$task_id")"
 workspace_file="$(automation_workspace_path "$task_id")"
 origin_file="$(automation_origin_path "$task_id")"
 evidence_dir="$(automation_evidence_path "$task_id")"
+baseline_file="$evidence_dir/baseline.json"
+red_file="$evidence_dir/red.json"
 ready_file="$evidence_dir/ready.json"
 review_file="$evidence_dir/review.json"
-[[ -f "$workspace_file" && -f "$origin_file" && -f "$ready_file" && -f "$review_file" ]] || \
+[[ -f "$workspace_file" && -f "$origin_file" && -f "$baseline_file" && -f "$red_file" && -f "$ready_file" && -f "$review_file" ]] || \
     automation_die "acceptance evidence is incomplete"
 [[ "$(jq -er '.decision' "$review_file")" == "APPROVED" ]] || automation_die "latest independent review is not approved"
+red_exit_code="$(jq -er '.exitCode' "$red_file")"
+review_verification_exit_code="$(jq -er '.verificationExitCode' "$review_file")"
+[[ "$red_exit_code" -ne 0 ]] || automation_die "RED evidence does not contain a failing test result"
+[[ "$review_verification_exit_code" -eq 0 ]] || automation_die "independent review verification did not pass"
 
 recorded_worktree="$(jq -er '.taskWorktree' "$workspace_file")"
 [[ "$(cd "$recorded_worktree" && pwd)" == "$AUTOMATION_ROOT" ]] || automation_die "acceptance report must run in the recorded task worktree"
@@ -58,15 +64,45 @@ jq -n \
     --arg diffStat "$diff_stat" \
     --arg sealedDiffPath "$sealed_diff" \
     --arg reviewSummary "$(jq -er '.summary' "$review_file")" \
+    --arg testPolicy "$(jq -er '.testPolicy' "$contract")" \
+    --arg testPolicyReason "$(jq -r '.testPolicyReason // "Not specified"' "$contract")" \
+    --argjson maxChangedFiles "$(jq -er '.maxChangedFiles' "$contract")" \
+    --argjson deviceTestsRequired "$(jq -r '.deviceTestsRequired' "$contract")" \
+    --argjson redExitCode "$red_exit_code" \
+    --argjson gateAttempts "$(jq -er '.gateAttempts' "$ready_file")" \
+    --argjson codingCycle "$(jq -er '.codingCycle' "$ready_file")" \
+    --argjson reviewVerificationExitCode "$review_verification_exit_code" \
     --argjson changedPaths "$changed_paths_json" \
+    --argjson allowedPaths "$(jq -c '.allowedPaths' "$contract")" \
     --argjson acceptanceCriteria "$(jq -c '.acceptanceCriteria' "$contract")" \
+    --argjson nonGoals "$(jq -c '.nonGoals' "$contract")" \
+    --argjson targetTests "$(jq -c '.targetTests' "$contract")" \
     '{taskId: $taskId, title: $title, state: "AWAITING_HUMAN",
       generatedAt: $generatedAt, originalBranch: $originalBranch,
       originalHeadBeforeContract: $originalHeadBeforeContract,
       baselineHead: $baselineHead, taskBranch: $taskBranch,
       taskWorktree: $taskWorktree, sealedDiffSha256: $sealedDiffSha256,
-      changedPaths: $changedPaths, diffStat: $diffStat,
+      changedPaths: $changedPaths, maxChangedFiles: $maxChangedFiles,
+      allowedPaths: $allowedPaths, diffStat: $diffStat,
       sealedDiffPath: $sealedDiffPath, acceptanceCriteria: $acceptanceCriteria,
+      nonGoals: $nonGoals, targetTests: $targetTests,
+      testPolicy: $testPolicy, testPolicyReason: $testPolicyReason,
+      deviceTestsRequired: $deviceTestsRequired,
+      evidence: {
+        baselineRecorded: true,
+        redRecorded: true,
+        redExitCode: $redExitCode,
+        qualityGate: "PASSED",
+        gateAttempts: $gateAttempts,
+        codingCycle: $codingCycle,
+        reviewerDecision: "APPROVED",
+        reviewerVerificationExitCode: $reviewVerificationExitCode
+      },
+      bindingChecks: {
+        state: "VERIFIED",
+        sealedDiffMatchesReady: true,
+        sealedDiffMatchesReview: true
+      },
       reviewSummary: $reviewSummary, pushed: false}' \
     | automation_record_json "$report_file"
 

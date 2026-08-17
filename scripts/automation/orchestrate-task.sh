@@ -86,8 +86,9 @@ for _step in 1 2 3 4 5 6 7 8; do
             automation_info "$task_id reached AWAITING_HUMAN"
             (
                 cd "$task_root"
-                ./scripts/automation/acceptance-report.sh "$task_id"
+                ./scripts/automation/acceptance-report.sh "$task_id" >/dev/null
             )
+            "$SCRIPT_DIR/show-acceptance-review.sh" "$task_id"
             exit 0
             ;;
         BLOCKED|TEST_FAILED|NEEDS_HUMAN|INTEGRATION_BLOCKED)

@@ -1,6 +1,6 @@
 ---
 name: scheduled-quality-orchestrator
-description: Use when the interactive planner must turn one approved request into a sealed contract, run isolated coder/reviewer automation, pause for human acceptance, and integrate locally
+description: Use when the interactive planner must turn one approved request into a sealed contract, automatically guide contract and result review, notify the user at human acceptance, redisplay a sealed acceptance card, or integrate an exactly approved result locally
 compatibility: opencode
 metadata:
   audience: interactive-planner
@@ -31,9 +31,37 @@ After proposal approval, create only `docs/plans/<TASK-ID>.md` and
 
 `./scripts/automation/prepare-contract-review.sh <TASK-ID> "批准方案，生成计划和任务合同。"`
 
-Show the full plan and the contract's acceptance criteria, allowed paths,
-forbidden paths, test policy, file limit, and recorded original branch. Do not
-start execution until the user replies exactly:
+Continue automatically after successful preparation; never require the user to
+enter a task ID, list contract fields, or ask for a fuller display. Confirm the
+state is `CONTRACT_REVIEW`, then read the sealed plan, contract, and origin
+evidence rather than relying on the earlier proposal or conversation memory.
+Present one human-readable review card containing:
+
+- task ID, title, validation result, and `CONTRACT_REVIEW` state;
+- the full plan plus current and desired observable behavior;
+- acceptance criteria and edge cases;
+- allowed and forbidden paths, maximum changed-file count, and non-goals;
+- focused tests, test policy, and device-test requirement with its reason;
+- original branch, `originalHeadBeforeContract`, artifact paths, and confirmation
+  that both artifact hashes are sealed and product code is still untouched.
+
+Immediately after the card, call `question` once with `multiple: false` and
+`custom: false`:
+
+- header: `合同复核`
+- question: `计划和任务合同是否准确，可以开始自动执行吗？`
+- option 1 label: `合同已复核，批准自动执行到人工验收阶段。`
+- option 1 description: `确认当前封存内容并自动执行到人工验收。`
+- option 2 label: `需要调整计划或任务合同`
+- option 2 description: `保持停止状态，并说明需要修改的内容。`
+
+The exact option-1 answer is an explicit contract approval. The user may also
+send the same exact phrase directly after seeing the review card. A rejected or
+dismissed question, option 2, silence, a custom answer, or shorter prose is not
+approval. For option 2, ask only for the changes, do not start execution, and do
+not edit sealed artifacts in place or reuse their task ID.
+
+Do not start execution until the explicit answer is exactly:
 
 `合同已复核，批准自动执行到人工验收阶段。`
 
@@ -49,23 +77,56 @@ or agent operations manually.
 
 ## Human acceptance boundary
 
-At `AWAITING_HUMAN`, present the generated acceptance package and explain how
-the user can exercise the behavior. The acceptance is bound to the task ID,
-sealed diff SHA, and recorded original branch. Wait for the exact reply:
+When `approve-and-run.sh` reaches `AWAITING_HUMAN`, do not wait for another user
+message. Treat that state transition as an active human-review notification.
+Immediately run:
+
+`./scripts/automation/show-acceptance-review.sh <TASK-ID>`
+
+Present its fresh, SHA-verified review card without collapsing the four focus
+groups: observable behavior, regression/scope, automated evidence, and
+binding/remaining risk. Do not ask the user to provide the task ID again, list
+fields, inspect raw JSON, or compose a display prompt.
+
+Immediately after the card, call `question` once with `multiple: false` and
+`custom: false`:
+
+- header: `成果验收`
+- question: `请按上方重点完成复核。这个封存成果是否通过人工验收？`
+- option 1 label: `验收通过，提交到原分支。`
+- option 1 description: `确认当前 sealed diff，并开始经过复验的本地集成。`
+- option 2 label: `验收不通过，需要说明失败项`
+- option 2 description: `保持封存，不集成；随后说明失败的条件或观察结果。`
+- option 3 label: `暂不决定，保持封存`
+- option 3 description: `继续停在 AWAITING_HUMAN，稍后可用 /acceptance 再次查看。`
+
+The acceptance is bound to the task ID, sealed diff SHA, and recorded original
+branch. Option 1 or a later direct reply counts only when it exactly equals:
 
 `验收通过，提交到原分支。`
 
-Then run only:
+For option 2, ask only which acceptance criterion or observed behavior failed;
+do not edit the sealed worktree, start integration, or infer a new contract.
+For option 3, stop with no state change. A dismissed question, shorter approval,
+silence, or any other answer is not acceptance.
+
+On exact acceptance, run only:
 
 `./scripts/automation/accept-and-integrate.sh <TASK-ID> "验收通过，提交到原分支。"`
 
 Report the resulting local branch, integrated commit, verification result, and
 `pushed: false`. Never treat acceptance as permission to push.
 
+If the automatic card was missed, or the user invokes `/acceptance <TASK-ID>`,
+run the same display script and repeat the same review card and `question`.
+Never substitute remembered conversation content for the fresh script output.
+
 ## Hard stops
 
-- Never manufacture, paraphrase, or infer one of the three approvals.
-- Never call an approval script before the matching user message.
+- Never manufacture, paraphrase, or infer one of the three approvals. A
+  `question` answer counts only when it exactly equals the full approval label.
+- Never call an approval script before the matching direct reply or exact
+  `question` selection.
 - Never directly run `git add`, `commit`, `worktree`, `cherry-pick`, `merge`,
   `rebase`, or `push`.
 - Never bypass a blocked state, alter runtime evidence, resolve an integration

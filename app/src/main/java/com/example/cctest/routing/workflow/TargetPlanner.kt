@@ -75,7 +75,9 @@ class TargetPlanner(
         val contract = destinationContractRegistry.require(DestinationKey.PERSONAL_INFO_LIST)
         val resolution = recordResolver.resolveFromSlots(result.slots)
         val focusRequest = when {
-            resolution.isUnique -> resolution.toListFocusRequest(autoOpenDetail = false)
+            resolution.isUnique -> resolution.toListFocusRequest(
+                autoOpenDetail = result.slots.autoOpenDetail
+            )
             result.slots.listPosition != null -> ListFocusRequest(
                 position = result.slots.listPosition,
                 matchMode = ListFocusRequest.MATCH_MODE_POSITION,

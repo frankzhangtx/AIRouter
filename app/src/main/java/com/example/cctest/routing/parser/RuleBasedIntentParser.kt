@@ -41,7 +41,8 @@ class RuleBasedIntentParser : IntentParser {
                         personName = extractLookupName(input),
                         phone = extractPhone(input),
                         city = extractCity(input),
-                        autoOpenDetail = input.contains("打开详情") || input.contains("直接看详情")
+                        autoOpenDetail = input.contains("打开详情") || input.contains("直接看详情") ||
+                            (extractPosition(input) != null && input.contains("详情"))
                     ),
                     confidence = 0.88f,
                     parserMetadata = buildMetadata(startedAt)

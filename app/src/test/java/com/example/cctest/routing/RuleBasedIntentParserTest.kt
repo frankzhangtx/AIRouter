@@ -25,6 +25,36 @@ class RuleBasedIntentParserTest {
     }
 
     @Test
+    fun parseListIntent_arabicNumeralWithOpenDetail_autoOpensDetail() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "查看第12条记录并打开详情", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.BrowsePersonalInfoList, result.userGoal)
+        assertEquals(12, result.slots.listPosition)
+        assertEquals(true, result.slots.autoOpenDetail)
+    }
+
+    @Test
+    fun parseListIntent_chineseNumeralWithDetailSuffix_autoOpensDetail() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "查看第十二条记录的详情", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.BrowsePersonalInfoList, result.userGoal)
+        assertEquals(12, result.slots.listPosition)
+        assertEquals(true, result.slots.autoOpenDetail)
+    }
+
+    @Test
+    fun parseListIntent_plainPosition_doesNotAutoOpenDetail() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "查看第12条记录", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.BrowsePersonalInfoList, result.userGoal)
+        assertEquals(12, result.slots.listPosition)
+        assertEquals(false, result.slots.autoOpenDetail)
+    }
+
+    @Test
     fun parseListIntent_extractsChongqingCity() = runBlocking {
         val outcome = parser.parse(ParseRequest(inputText = "查看重庆的记录列表", entrySource = "test"))
         assertTrue(outcome is ParseOutcome.Success)

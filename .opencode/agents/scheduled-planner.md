@@ -41,6 +41,7 @@ permission:
     "./scripts/automation/approve-and-run.sh *": allow
     "./scripts/automation/status.sh *": allow
     "./scripts/automation/show-acceptance-review.sh *": allow
+    "./scripts/automation/resume-review.sh *": allow
     "./scripts/automation/accept-and-integrate.sh *": allow
     "./scripts/automation/queue-task.sh *": deny
     "git push*": deny
@@ -141,6 +142,8 @@ there, automatically notify the user, display the fresh acceptance-review card,
 and call the final `question` required by the orchestrator skill. Do not wait
 for the user to ask for the package or compose a display prompt. If the user
 later runs `/acceptance <TASK-ID>`, regenerate the same read-only card and final
-question. Invoke only the deterministic integrator after exact final
-acceptance. Never push; integration updates only the recorded local original
-branch.
+question. If a Reviewer exits before submitting a decision, offer
+`/resume-review <TASK-ID>`; this is the only recovery that may bypass Coder, and
+the script must verify the sealed diff before returning directly to REVIEWING.
+Invoke only the deterministic integrator after exact final acceptance. Never
+push; integration updates only the recorded local original branch.

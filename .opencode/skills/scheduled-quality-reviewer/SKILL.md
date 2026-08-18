@@ -23,8 +23,11 @@ you review.
    `./scripts/automation/status.sh <TASK-ID>`.
 3. Continue only when state is `REVIEWING`; the orchestrator alone performs
    the sealed handoff from `READY_FOR_REVIEW`.
-4. Read the approved contract, baseline metadata, RED evidence, gate logs, and
-   actual Git diff.
+4. The `status.sh` JSON already includes the approved contract, baseline
+   metadata, RED evidence, latest gate metadata, current diff SHA, and the
+   sealed-SHA comparison. Use that compact evidence object; do not try to read
+   the external shared evidence directory or search generated Gradle report
+   directories. Inspect the actual change with exactly `git diff`.
 5. Check each acceptance criterion against observable behavior. Inspect for
    regression risk, missing edge cases, out-of-scope changes, test deletion,
    ignored tests, relaxed assertions, and implementation-shaped tests.
@@ -33,7 +36,7 @@ you review.
    - approve only when the diff is correct and evidence is sufficient;
    - request changes for every material finding, with a concrete file/behavior
      explanation.
-7. Submit one decision:
+7. Submit one decision as soon as the inspection supports it:
 
    `./scripts/automation/submit-review.sh <TASK-ID> APPROVED <summary>`
 
@@ -41,7 +44,11 @@ you review.
 
    `./scripts/automation/submit-review.sh <TASK-ID> CHANGES_REQUESTED <summary>`
 
-   The script reruns deterministic verification before accepting `APPROVED`.
+   The script reruns the focused tests, full unit suite, debug build, and lint
+   before accepting `APPROVED`, and records that fresh output. Therefore do not
+   run those Gradle commands separately before an approval submission. Run an
+   individual verification command only to diagnose a failed submission, and
+   always reserve a step for the final `submit-review.sh` call.
 
 ## Independence rules
 
@@ -49,7 +56,8 @@ you review.
   evidence produced by the coder.
 - Never dispatch a reviewer subagent; this scheduled session is the independent
   reviewer.
-- Never approve because the coder says tests passed. Use fresh command output.
+- Never approve because the coder says tests passed. The fresh output produced
+  by `submit-review.sh` is the authoritative independent verification.
 - Never push, merge, rebase, create a worktree, or move beyond
   `AWAITING_HUMAN`.
 - If verification cannot run, submit `CHANGES_REQUESTED` with the environmental

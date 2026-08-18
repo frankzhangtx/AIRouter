@@ -12,6 +12,7 @@
     "worktreeBase",
     "maxFixLoops",
     "maxReviewCycles",
+    "maxReviewerRestarts",
     "autoCleanupWorktrees",
     "pushAfterAcceptance",
     "approvalPhrases",
@@ -27,6 +28,7 @@
     "worktreeBase": { "type": "string" },
     "maxFixLoops": { "type": "integer", "minimum": 0, "maximum": 1 },
     "maxReviewCycles": { "type": "integer", "minimum": 0, "maximum": 2 },
+    "maxReviewerRestarts": { "type": "integer", "minimum": 0, "maximum": 3 },
     "autoCleanupWorktrees": { "type": "boolean" },
     "pushAfterAcceptance": { "const": false },
     "approvalPhrases": {

@@ -22,6 +22,10 @@ Updated 2026-08-17 in `/Users/zhanglong/files/program/cctest`.
 - Coder remains restricted to contract paths and TDD gates. Reviewer remains
   read-only and receives an explicit sealed `REVIEWING` handoff. One bounded
   review-fix cycle is supported.
+- A Reviewer that exits before submitting a decision can be resumed directly
+  from the unchanged sealed diff. `/resume-review <TASK-ID>` verifies the full
+  binding, records the restart, bypasses Coder, and preserves the separate
+  review-fix allowance.
 - Reaching `AWAITING_HUMAN` actively displays a SHA-verified acceptance card
   with prioritized behavior, regression/scope, evidence, binding, and
   remaining-risk checks, followed by an explicit three-option `question`.
@@ -36,7 +40,7 @@ Updated 2026-08-17 in `/Users/zhanglong/files/program/cctest`.
 
 ## Verification status
 
-- The deterministic shell suite covers 31 positive and negative checks,
+- The deterministic shell suite covers 33 positive and negative checks,
   including a complete temporary-repository integration flow.
 - Bash syntax and JSON parsing are included in the repository verification
   pass.

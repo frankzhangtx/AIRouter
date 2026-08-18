@@ -84,6 +84,7 @@ automation_validate_config() {
         (.worktreeBase | type == "string") and
         (.maxFixLoops | type == "number" and . >= 0 and . <= 1 and floor == .) and
         (.maxReviewCycles | type == "number" and . >= 0 and . <= 2 and floor == .) and
+        (.maxReviewerRestarts | type == "number" and . >= 0 and . <= 3 and floor == .) and
         (.autoCleanupWorktrees | type == "boolean") and
         .pushAfterAcceptance == false and
         (.approvalPhrases.proposal | type == "string" and length >= 4) and
@@ -346,6 +347,7 @@ automation_transition_allowed() {
         REVIEWING:AWAITING_HUMAN:reviewer) return 0 ;;
         REVIEWING:CHANGES_REQUESTED:reviewer) return 0 ;;
         REVIEWING:BLOCKED:orchestrator) return 0 ;;
+        BLOCKED:REVIEWING:human) return 0 ;;
         CHANGES_REQUESTED:CODING:orchestrator) return 0 ;;
         CHANGES_REQUESTED:NEEDS_HUMAN:orchestrator) return 0 ;;
         AWAITING_HUMAN:INTEGRATING:integrator) return 0 ;;

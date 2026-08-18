@@ -1502,6 +1502,15 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                         看到 <code>CODING</code>、<code>REVIEWING</code> 属于正常运行；到达
                         <code>AWAITING_HUMAN</code> 时 OpenCode 会主动提醒并进入下一步，无需轮询。若进入硬停止状态，请先看本文“故障处理”，不要自己建新 worktree 接着跑。
                     </div>
+                    <div class="subsection">
+                        <h3>仅当 Reviewer 用完步骤预算、尚未提交结论</h3>
+                        <p>此时实现、RED、G1–G6 和 sealed diff 都应保留，不需要重跑 Coder。在同一个 OpenCode 会话输入：</p>
+                        <div class="command-block open">
+                            <div class="command-top"><strong>Reviewer-only 恢复</strong><span>替换 TASK-ID</span></div>
+                            <pre>/resume-review TASK-PHONE-DETAIL-LOOKUP-001</pre>
+                            <div class="command-note">命令会先复验分支、HEAD、范围和 diff SHA，再从 BLOCKED 直接回 REVIEWING；任一封存条件变化都会拒绝恢复。</div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -1761,6 +1770,12 @@ git push -u origin feature-opencode-scheduler</pre>
                             <td>OpenCode 没正确发现仓库配置、项目命令、固定插件、Agent 或 Skill。</td>
                             <td>确认 <code>.opencode/commands/change.md</code> 存在，再运行 <code>opencode debug config</code>、<code>opencode debug agent scheduled-planner</code>、<code>opencode debug skill</code> 和 <code>./scripts/automation/preflight.sh --source</code>。</td>
                             <td>不要跳过预检后直接调用 Coder。</td>
+                        </tr>
+                        <tr>
+                            <td><code>BLOCKED</code>，原因为 <code>reviewer exited without submitting a decision</code></td>
+                            <td>Reviewer 会话在写入结论前耗尽步骤预算；已完成代码和封存证据仍可直接复用。</td>
+                            <td>在 OpenCode 输入 <code>/resume-review TASK-ID</code>；脚本验证 sealed diff 后只重启 Reviewer。</td>
+                            <td>不要改成 <code>PENDING</code>，不要重跑 Coder，也不要 reset 已封存的 worktree。</td>
                         </tr>
                         <tr>
                             <td><code>BLOCKED</code></td>

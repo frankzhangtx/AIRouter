@@ -55,6 +55,14 @@ There is no normal-path Terminal command for worktree creation, queueing,
 Coder launch, Reviewer launch, commit, or merge. Final acceptance never grants
 push permission; successful integration records `pushed: false`.
 
+If a read-only Reviewer exhausts its session budget before submitting a
+decision, the sealed implementation is not discarded. Run
+`/resume-review <TASK-ID>` in the Planner conversation. The guarded recovery
+validates baseline, RED/ready evidence, task branch, HEAD, scope, and diff SHA,
+then goes directly from `BLOCKED` to `REVIEWING`. It neither requeues Coder nor
+uses a code-repair cycle. Do not recover this failure through `PENDING` or by
+resetting the task worktree.
+
 ## Components
 
 - `config.json` is portable versioned policy. It contains no per-task absolute
@@ -68,9 +76,15 @@ push permission; successful integration records `pushed: false`.
   boundaries; the coder/reviewer skills define their narrower workflows.
 - `.opencode/commands/acceptance.md` provides the read-only
   `/acceptance <TASK-ID>` fallback for redisplaying the final review card.
+- `.opencode/commands/resume-review.md` provides the bounded
+  `/resume-review <TASK-ID>` path for a Reviewer interruption with an unchanged
+  sealed diff.
 - `scripts/automation/` implements all state, scope, evidence, worktree, and
   integration operations. `show-acceptance-review.sh` verifies the live sealed
   diff and renders the human review focus without changing task state.
+  `status.sh` includes compact baseline, RED, gate, review, and live sealed-SHA
+  evidence so the read-only Reviewer never needs direct access to the external
+  runtime directory.
 
 Runtime data is shared by all linked worktrees under:
 
@@ -99,6 +113,10 @@ merge, rebase, or push. The integrator cannot update a different branch,
 accept a changed diff, skip candidate verification, resolve conflicts
 automatically, or push.
 
+`maxReviewCycles` bounds code repair after a Reviewer finding;
+`maxReviewerRestarts` separately bounds no-code Reviewer restarts. This keeps a
+transient review-session interruption from consuming a repair cycle.
+
 ## Verification
 
 ```bash
@@ -111,5 +129,6 @@ automatically, or push.
 
 The shell suite exercises approval rejection, shared runtime state, TDD gates,
 diff sealing (including untracked files), reviewer handoff, outside worktree
-creation, product commit, candidate verification, original-branch integration,
-cleanup, and the no-push invariant.
+creation, reviewer-only recovery without a Coder rerun, product commit,
+candidate verification, original-branch integration, cleanup, and the no-push
+invariant.

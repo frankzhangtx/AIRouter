@@ -6,6 +6,7 @@
   "worktreeBase": "",
   "maxFixLoops": 1,
   "maxReviewCycles": 1,
+  "maxReviewerRestarts": 2,
   "autoCleanupWorktrees": true,
   "pushAfterAcceptance": false,
   "approvalPhrases": {

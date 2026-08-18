@@ -121,6 +121,33 @@ If the automatic card was missed, or the user invokes `/acceptance <TASK-ID>`,
 run the same display script and repeat the same review card and `question`.
 Never substitute remembered conversation content for the fresh script output.
 
+## Reviewer-only recovery
+
+If a task is `BLOCKED` because a Reviewer exited before submitting a decision,
+preserve the completed implementation and all TDD/quality-gate evidence. Tell
+the user that retrying through `PENDING` would incorrectly launch Coder again,
+then offer this explicit recovery command:
+
+`/resume-review <TASK-ID>`
+
+On that command, run only:
+
+`./scripts/automation/resume-review.sh <TASK-ID>`
+
+The script must prove that the recorded Reviewer interruption is recoverable,
+the task branch and baseline still match, no decision exists for the current
+sealed diff, the scope gate still passes, and the live diff SHA still equals
+`ready.json`. It then records a bounded resumption and transitions directly
+from `BLOCKED` to `REVIEWING`; it never runs Coder or consumes a review-fix
+cycle. A previous mistaken `BLOCKED → PENDING → BLOCKED` detour is recoverable
+only when it never reached `CODING` and all sealed checks still match.
+
+Do not use `transition-state.sh`, `queue-task.sh`, a worktree reset, or a new
+contract for this specific interruption. If the recovery script rejects the
+task, preserve the current state and report its exact check failure. If it
+reaches `AWAITING_HUMAN`, immediately continue with the Human acceptance
+boundary above.
+
 ## Hard stops
 
 - Never manufacture, paraphrase, or infer one of the three approvals. A
@@ -131,6 +158,7 @@ Never substitute remembered conversation content for the fresh script output.
   `rebase`, or `push`.
 - Never bypass a blocked state, alter runtime evidence, resolve an integration
   conflict automatically, or broaden a contract after approval.
-- For `BLOCKED`, `TEST_FAILED`, `NEEDS_HUMAN`, or `INTEGRATION_BLOCKED`, show
-  the state and evidence path and wait for a revised contract or explicit
-  recovery action.
+- For `BLOCKED`, first distinguish the recoverable Reviewer interruption above
+  from other blockers. For any other `BLOCKED`, or for `TEST_FAILED`,
+  `NEEDS_HUMAN`, or `INTEGRATION_BLOCKED`, show the state and evidence path and
+  wait for a revised contract or a specifically supported recovery action.

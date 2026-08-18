@@ -29,8 +29,13 @@ run_agent() {
     local role="$1"
     local prompt="$2"
     local cycle="$3"
+    local attempt="${4:-0}"
     local log_file exit_code
-    log_file="$(automation_evidence_path "$task_id")/${role}-cycle-${cycle}.log"
+    if [[ "$attempt" -eq 0 ]]; then
+        log_file="$(automation_evidence_path "$task_id")/${role}-cycle-${cycle}.log"
+    else
+        log_file="$(automation_evidence_path "$task_id")/${role}-cycle-${cycle}-attempt-${attempt}.log"
+    fi
     automation_info "starting $role for $task_id in $task_root"
     set +e
     (
@@ -43,9 +48,10 @@ run_agent() {
         --arg taskId "$task_id" \
         --arg role "$role" \
         --argjson cycle "$cycle" \
+        --argjson attempt "$attempt" \
         --arg at "$(automation_now)" \
         --argjson exitCode "$exit_code" \
-        '{taskId: $taskId, role: $role, cycle: $cycle, at: $at, exitCode: $exitCode}' \
+        '{taskId: $taskId, role: $role, cycle: $cycle, attempt: $attempt, at: $at, exitCode: $exitCode}' \
         | automation_append_json "$(automation_evidence_path "$task_id")/agent-runs.jsonl"
     return "$exit_code"
 }
@@ -70,10 +76,15 @@ for _step in 1 2 3 4 5 6 7 8; do
             ;;
         REVIEWING)
             review_cycle="$(jq -er '.reviewCycles // 0' "$workspace_file")"
-            reviewer_prompt="Use \$scheduled-quality-reviewer with $task_id. This is a fresh, non-interactive, read-only review. Submit exactly one evidence-backed decision. Never edit, commit, merge, or push."
-            run_agent scheduled-reviewer "$reviewer_prompt" "$review_cycle" || true
+            agent_runs="$(automation_evidence_path "$task_id")/agent-runs.jsonl"
+            review_attempt=0
+            if [[ -f "$agent_runs" ]]; then
+                review_attempt="$(jq -s --argjson cycle "$review_cycle" '[.[] | select(.role == "scheduled-reviewer" and .cycle == $cycle)] | length' "$agent_runs")"
+            fi
+            reviewer_prompt="Use \$scheduled-quality-reviewer with $task_id. This is fresh, non-interactive, read-only review attempt $review_attempt for sealed review cycle $review_cycle. Work within the step budget. Run exactly ./scripts/automation/status.sh $task_id once; its JSON already includes baseline, RED, ready, latest gate, current diff SHA, and the sealed-SHA comparison, so do not browse the external evidence directory. Then inspect the approved contract and run exactly git diff. Submit exactly one decision. Do not browse generated build reports, list the whole repository, retry denied command variants, or run Gradle commands separately before deciding: submit-review.sh performs and records the focused tests, full unit suite, assembleDebug, and lint for APPROVED. Reserve a tool call for submit-review.sh. Never edit, commit, merge, or push."
+            run_agent scheduled-reviewer "$reviewer_prompt" "$review_cycle" "$review_attempt" || true
             if [[ "$(automation_read_state "$task_id")" == "REVIEWING" ]]; then
-                automation_transition_state "$task_id" "REVIEWING" "BLOCKED" "orchestrator" "reviewer exited without submitting a decision"
+                automation_transition_state "$task_id" "REVIEWING" "BLOCKED" "orchestrator" "reviewer exited without submitting a decision; sealed diff preserved for reviewer-only recovery"
             fi
             ;;
         CHANGES_REQUESTED)

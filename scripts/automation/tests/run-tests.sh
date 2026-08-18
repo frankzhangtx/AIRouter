@@ -113,6 +113,7 @@ jq -n '{
     worktreeBase: "",
     maxFixLoops: 1,
     maxReviewCycles: 1,
+    maxReviewerRestarts: 2,
     autoCleanupWorktrees: true,
     pushAfterAcceptance: false,
     approvalPhrases: {
@@ -266,14 +267,30 @@ pass 'G1-G6 seal all tracked and untracked product changes'
 
 run_fixture ./scripts/automation/begin-review.sh TASK-TEST-001 >/dev/null
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-001.json")" == "REVIEWING" ]] || fail 'review handoff did not create REVIEWING state'
+review_status="$(run_fixture ./scripts/automation/status.sh TASK-TEST-001)"
+[[ "$(jq -r '.evidence.red.exitCode' <<< "$review_status")" -ne 0 ]] || fail 'review status omitted RED evidence'
+[[ "$(jq -r '.evidence.latestGate.lastExitCode' <<< "$review_status")" -eq 0 ]] || fail 'review status omitted gate evidence'
+[[ "$(jq -r '.evidence.sealedDiffMatches' <<< "$review_status")" == "true" ]] || fail 'review status did not verify the sealed diff'
 pass 'orchestrator creates an explicit sealed reviewer handoff'
+
+run_fixture ./scripts/automation/transition-state.sh \
+    TASK-TEST-001 REVIEWING BLOCKED orchestrator \
+    'reviewer exited without submitting a decision' >/dev/null
+sealed_sha_before_resume="$(jq -r '.diffSha256' "$runtime_root/evidence/TASK-TEST-001/ready.json")"
+run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/resume-review.sh TASK-TEST-001 >/dev/null
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-001.json")" == "REVIEWING" ]] || fail 'reviewer-only recovery did not return directly to REVIEWING'
+[[ "$(jq -r '.codingCycle' "$runtime_root/workspaces/TASK-TEST-001.json")" -eq 0 ]] || fail 'reviewer-only recovery consumed a coding cycle'
+[[ "$(jq -r '.reviewCycles' "$runtime_root/workspaces/TASK-TEST-001.json")" -eq 0 ]] || fail 'reviewer-only recovery consumed a repair cycle'
+[[ "$(jq -r '.diffSha256' "$runtime_root/evidence/TASK-TEST-001/ready.json")" == "$sealed_sha_before_resume" ]] || fail 'reviewer-only recovery changed ready evidence'
+[[ "$(jq -r '.coderRerun' "$runtime_root/evidence/TASK-TEST-001/review-resumptions.jsonl")" == "false" ]] || fail 'reviewer-only recovery did not audit the coder bypass'
+pass 'a budget-exhausted reviewer resumes from the sealed diff without rerunning Coder'
 
 run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-001 APPROVED 'Independent diff review found no material issue.' >/dev/null
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-001.json")" == "AWAITING_HUMAN" ]] || fail 'review did not create AWAITING_HUMAN state'
 pass 'independent approval stops at AWAITING_HUMAN'
 
 transition_count="$(wc -l < "$runtime_root/evidence/TASK-TEST-001/transitions.jsonl" | tr -d ' ')"
-[[ "$transition_count" -eq 6 ]] || fail "unexpected transition audit count: $transition_count"
+[[ "$transition_count" -eq 8 ]] || fail "unexpected transition audit count: $transition_count"
 pass 'append-only transition audit contains the complete gated lifecycle'
 
 (
@@ -339,8 +356,12 @@ if run_fixture ./scripts/automation/claim-task.sh TASK-TEST-003 >/dev/null 2>&1;
     fail 'claim accepted a dirty worktree'
 fi
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-003.json")" == "BLOCKED" ]] || fail 'preflight failure did not create BLOCKED'
+if run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/resume-review.sh TASK-TEST-003 >/dev/null 2>&1; then
+    fail 'reviewer-only recovery accepted a non-review blocker'
+fi
 rm "$fixture/unapproved-change.txt"
 pass 'preflight blocks dirty task worktrees without retrying implicitly'
+pass 'reviewer-only recovery rejects unrelated BLOCKED states'
 
 printf '%s\n' '# Approved reviewer-fix plan' > "$fixture/docs/plans/TASK-TEST-005.md"
 jq \

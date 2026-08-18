@@ -22,6 +22,7 @@ private val mainlandMobilePhonePattern = Regex(
     "(?<![0-9])(?:1[0-9]{10}|1[0-9]{2}-[0-9]{4}-[0-9]{4}|" +
         "1[0-9]{2} [0-9]{4} [0-9]{4})(?![0-9])"
 )
+private val phoneTailPattern = Regex("尾号\\s*(\\d{4})(?!\\d)")
 
 fun String.normalizedInput(): String {
     return trim()
@@ -45,6 +46,11 @@ fun extractPosition(text: String): Int? {
 
 fun extractPhone(text: String): String? {
     return mainlandMobilePhonePattern.find(text)?.value?.filter(Char::isDigit)
+}
+
+fun extractPhoneTail(text: String): String? {
+    val normalized = text.normalizedInput()
+    return phoneTailPattern.find(normalized)?.groupValues?.getOrNull(1)
 }
 
 fun extractEmail(text: String): String? {

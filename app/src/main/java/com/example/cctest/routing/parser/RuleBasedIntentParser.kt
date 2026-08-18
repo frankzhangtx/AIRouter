@@ -53,7 +53,7 @@ class RuleBasedIntentParser : IntentParser {
                     userGoal = UserGoal.OpenPersonalInfoDetail,
                     slots = ParseSlots(
                         personName = extractLookupName(input),
-                        phone = extractPhone(input),
+                        phone = extractPhone(input) ?: extractPhoneTail(input),
                         city = extractCity(input)
                     ),
                     confidence = 0.84f,
@@ -89,6 +89,10 @@ class RuleBasedIntentParser : IntentParser {
     }
 
     private fun looksLikeForm(text: String): Boolean {
+        val viewingVerbs = listOf("查看", "看看", "想看", "帮我看", "帮我看看", "打开", "进入")
+        if (text.contains("详情") && viewingVerbs.any(text::contains)) {
+            return false
+        }
         val formKeywords = listOf("填写", "补全", "完善", "修改", "更新", "个人资料", "个人信息")
         val hasStructuredFields = extractPersonalInfoFields(text).hasAnyValue()
         return formKeywords.any(text::contains) || hasStructuredFields
@@ -102,8 +106,10 @@ class RuleBasedIntentParser : IntentParser {
     private fun looksLikeDetail(text: String): Boolean {
         val hasLookupName = !extractLookupName(text).isNullOrBlank()
         val hasPhone = !extractPhone(text).isNullOrBlank()
+        val hasPhoneTail = !extractPhoneTail(text).isNullOrBlank()
+        val hasPhoneSignal = hasPhone || hasPhoneTail
         val detailKeywords = listOf("详情", "资料", "信息")
-        return (detailKeywords.any(text::contains) && (hasLookupName || hasPhone)) ||
-            (text.contains("查看") && (hasLookupName || hasPhone))
+        return (detailKeywords.any(text::contains) && (hasLookupName || hasPhoneSignal)) ||
+            (text.contains("查看") && (hasLookupName || hasPhoneSignal))
     }
 }

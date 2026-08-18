@@ -101,4 +101,37 @@ class RuleBasedIntentParserTest {
         assertNull(extractPhone("电话 138-0000-10222"))
         assertNull(extractPhone("电话 138a0000a1022"))
     }
+
+    @Test
+    fun parseDetailIntent_opensDetailForFullPhone() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(inputText = "查看手机号13800001001的详情", entrySource = "test")
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.OpenPersonalInfoDetail, result.userGoal)
+        assertEquals("13800001001", result.slots.phone)
+    }
+
+    @Test
+    fun parseDetailIntent_opensDetailForPhoneTail() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(inputText = "查看手机号尾号1001的详情", entrySource = "test")
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.OpenPersonalInfoDetail, result.userGoal)
+        assertEquals("1001", result.slots.phone)
+    }
+
+    @Test
+    fun parseFormIntent_stillParsesWhenUpdateProfileWithPhone() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(inputText = "更新个人资料，电话13800001001", entrySource = "test")
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.FillPersonalInfo, result.userGoal)
+        assertEquals("13800001001", result.slots.personalInfoFields.phone)
+    }
 }

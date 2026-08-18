@@ -31,4 +31,27 @@ class PersonalInfoRecordResolverTest {
         assertTrue(resolution.isUnique)
         assertEquals("record-12", resolution.matchedRecord?.recordId)
     }
+
+    @Test
+    fun resolveFromSlots_uniquelyMatchesByFullPhone() {
+        val resolution = resolver.resolveFromSlots(ParseSlots(phone = "13800001001"))
+        assertTrue(resolution.isUnique)
+        assertEquals("record-2", resolution.matchedRecord?.recordId)
+        assertEquals("张雨桐", resolution.matchedRecord?.name)
+    }
+
+    @Test
+    fun resolveFromSlots_uniquelyMatchesByPhoneTail() {
+        val resolution = resolver.resolveFromSlots(ParseSlots(phone = "1001"))
+        assertTrue(resolution.isUnique)
+        assertEquals("record-2", resolution.matchedRecord?.recordId)
+        assertEquals("张雨桐", resolution.matchedRecord?.name)
+    }
+
+    @Test
+    fun resolveFromSlots_returnsNoneForUnknownPhoneTail() {
+        val resolution = resolver.resolveFromSlots(ParseSlots(phone = "9999"))
+        assertFalse(resolution.isUnique)
+        assertTrue(resolution.candidates.isEmpty())
+    }
 }

@@ -55,7 +55,11 @@ class PersonalInfoRecordResolver(
 
         val normalizedPhone = normalizePhone(queryPhone)
         if (!normalizedPhone.isNullOrBlank()) {
-            val phoneMatches = records.filter { normalizePhone(it.phone) == normalizedPhone }
+            val phoneMatches = if (normalizedPhone.length >= 11) {
+                records.filter { normalizePhone(it.phone) == normalizedPhone }
+            } else {
+                records.filter { normalizePhone(it.phone)?.endsWith(normalizedPhone) == true }
+            }
             if (phoneMatches.size == 1) {
                 return RecordResolution.unique(phoneMatches.first(), ListFocusRequest.MATCH_MODE_PHONE)
             }

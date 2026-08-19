@@ -1,0 +1,4 @@
+Use $scheduled-quality-coder with NEXT_PENDING. This is a non-interactive
+scheduled run. Resolve a task only through the deterministic selector. If zero
+or multiple PENDING tasks exist, stop cleanly. Stop on any ambiguity, failed
+precondition, or scope conflict. Never push or merge.

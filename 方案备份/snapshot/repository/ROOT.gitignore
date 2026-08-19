@@ -1,0 +1,32 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/lzssh1
+/lzssh1.pub
+
+# OpenCode-generated local dependencies (agents and skills remain versioned)
+/.opencode/node_modules/
+/.opencode/package.json
+/.opencode/package-lock.json
+/.opencode/bun.lock
+/.opencode/.gitignore
+
+# Scheduled coding runtime artifacts (contracts stay versioned)
+/automation/state/*
+!/automation/state/.gitkeep
+/automation/evidence/*
+!/automation/evidence/.gitkeep
+/automation/locks/*
+!/automation/locks/.gitkeep

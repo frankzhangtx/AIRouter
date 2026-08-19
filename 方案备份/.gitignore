@@ -1,0 +1,6 @@
+# Historical runtime evidence can contain absolute paths, logs, and task diffs.
+/runtime-audit/
+
+# Exact third-party package copies are local rollback caches. Their pinned
+# install specifications are documented and versioned separately.
+/external-dependencies/

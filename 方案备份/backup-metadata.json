@@ -1,0 +1,58 @@
+{
+  "backupFormatVersion": 1,
+  "createdAt": "2026-08-19T20:14:29+08:00",
+  "purpose": "pre-plugin-conversion rollback baseline",
+  "repository": {
+    "rootAtBackup": "/Users/zhanglong/files/program/cctest",
+    "branch": "feature-opencode-scheduler",
+    "head": "829693652e3737ad94c7cc75214b09fb2b58715b",
+    "headDate": "2026-08-19",
+    "headSubject": "提交新的自动编码方案",
+    "workingTreeCleanBeforeBackup": true,
+    "worktreeCount": 1
+  },
+  "environment": {
+    "openCodeVersion": "1.15.13",
+    "openCodePluginSdkVersion": "1.15.13",
+    "automationSchemaVersion": 3,
+    "workspaceStrategy": "inPlaceExclusive",
+    "originalBranchDriftPolicy": "block"
+  },
+  "externalDependencies": {
+    "scheduler": "opencode-scheduler@1.3.0",
+    "superpowers": "superpowers@git+https://github.com/obra/superpowers.git#v6.2.0"
+  },
+  "runtime": {
+    "states": 3,
+    "allStatesCompleted": true,
+    "repositoryLeasePresent": false,
+    "taskWorktreePresent": false
+  },
+  "verification": {
+    "automationTests": {
+      "passed": 38,
+      "total": 38,
+      "exitCode": 0
+    },
+    "shadowRun": {
+      "exitCode": 0,
+      "mutationPerformed": false
+    }
+  },
+  "trees": {
+    "snapshot/repository": {
+      "fileCount": 70,
+      "sha256": "e08bb576db26b4b85db79d044c4146bd372266fd51da2e5aa039f52a82af23ca"
+    },
+    "external-dependencies": {
+      "fileCount": 183,
+      "sha256": "ecb94b3cd106fa906ddb1c87aac4db927cb26c7a642fef7a2817c7a88cb22017",
+      "localOnly": true
+    },
+    "runtime-audit": {
+      "fileCount": 79,
+      "sha256": "8284a8804177ad84f71616667d8f415ea97ef82314aad8fdad26b7b203fc22b7",
+      "localOnly": true
+    }
+  }
+}

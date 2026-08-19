@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "TASK-FIELD-SEMICOLON-001",
+  "title": "用中文分号「；」分隔个人信息字段",
+  "designApproved": true,
+  "planPath": "docs/plans/TASK-FIELD-SEMICOLON-001.md",
+  "ambiguityPolicy": "BLOCKED",
+  "maxFixLoops": 1,
+  "maxChangedFiles": 2,
+  "allowedPaths": [
+    "app/src/main/java/com/example/cctest/routing/parser/TextParsingSupport.kt",
+    "app/src/test/java/com/example/cctest/routing/RuleBasedIntentParserTest.kt"
+  ],
+  "forbiddenPaths": [
+    ".opencode/**",
+    "automation/**",
+    "scripts/automation/**",
+    "opencode.json",
+    "AGENTS.md",
+    "gradle/**",
+    "gradlew",
+    "gradlew.bat",
+    "settings.gradle.kts",
+    "build.gradle.kts",
+    "app/build.gradle.kts"
+  ],
+  "allowedSuperpowers": [
+    "test-driven-development",
+    "systematic-debugging",
+    "verification-before-completion"
+  ],
+  "acceptanceCriteria": [
+    "「更新个人信息，地址是上海市浦东新区；公司是星河科技」解析为 FillPersonalInfo，且 address == \"上海市浦东新区\"、company == \"星河科技\"",
+    "先新增聚焦测试并确认为 RED（当前地址会贪婪捕获「；公司是星河科技」而失败），再添加实现",
+    "已有「，」分隔行为不变，例如「帮我补全个人资料，我叫李晨曦，29岁」仍按原样解析",
+    "聚焦测试、完整本地单元测试、assembleDebug 与 lint 全部通过"
+  ],
+  "nonGoals": [
+    "不改动 UI、导航、Gradle、依赖或远程/LLM 解析",
+    "不把 ASCII「;」或其它标点加入分隔符集合",
+    "不调整 RuleBasedIntentParser 的意图分类顺序或 confidence",
+    "不为其它意图分支新增测试"
+  ],
+  "targetTests": [
+    "com.example.cctest.routing.RuleBasedIntentParserTest"
+  ],
+  "deviceTestsRequired": false,
+  "testPolicy": "required",
+  "testPolicyReason": "字段分隔行为改变可观测的 personalInfoFields slots，需要聚焦回归测试覆盖中文分号分隔与已有逗号分隔不变"
+}

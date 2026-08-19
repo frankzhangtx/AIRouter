@@ -572,7 +572,8 @@
             <p class="lead">
                 用户只需在 OpenCode 中完成三次单选确认：批准方案、批准任务合同、批准最终验收；无需输入审批语。
                 合同批准后，由受控编排器在当前工程目录切换到事务任务分支、运行 Coder 和独立 Reviewer；最终验收通过后，
-                再由确定性集成器创建并验证一个同时包含代码、测试、计划和合同的提交，安全快进任务开始时记录的原分支，全程不复制工程目录。
+                再由确定性集成器创建并验证一个同时包含代码、测试、计划和合同的提交，安全快进任务开始时记录的原分支，
+                随后删除已集成的本地任务分支，全程不复制工程目录。
             </p>
             <div class="meta-list">
                 <div class="meta-item">工程：<code>/Users/zhanglong/files/program/cctest</code></div>
@@ -618,7 +619,7 @@
                     <article class="card">
                         <span class="badge green">人工关口 3</span>
                         <h3 style="margin-top: 10px;">验收并提交原分支</h3>
-                        <p>Reviewer 通过后停在 <code>AWAITING_HUMAN</code>。用户在“成果验收”单选中点击通过，集成器才更新原分支。</p>
+                        <p>Reviewer 通过后停在 <code>AWAITING_HUMAN</code>。用户在“成果验收”单选中点击通过，集成器才更新原分支并删除已集成的本地任务分支。</p>
                     </article>
                 </div>
 
@@ -785,7 +786,7 @@
                         <rect x="280" y="1582" width="560" height="110" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
                         <text x="560" y="1617" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Integrator 自动提交并更新原分支</text>
                         <text x="560" y="1644" text-anchor="middle" fill="#6c6055" font-size="14">重验封存 SHA，将代码、测试、计划和合同合为一个提交</text>
-                        <text x="560" y="1667" text-anchor="middle" fill="#6c6055" font-size="13">原分支仍是批准基线才快进；发生漂移立即停止，不自动 cherry-pick</text>
+                        <text x="560" y="1667" text-anchor="middle" fill="#6c6055" font-size="13">快进成功后删除任务分支；发生漂移立即停止并保留任务分支</text>
 
                         <line x1="840" y1="1637" x2="920" y2="1637" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <rect x="925" y="1592" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
@@ -795,7 +796,7 @@
                         <line x1="560" y1="1692" x2="560" y2="1732" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
                         <rect x="350" y="1737" width="420" height="65" rx="32" fill="#176c63" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="1777" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">COMPLETED：原分支只有一个任务提交</text>
+                        <text x="560" y="1777" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">COMPLETED：一个任务提交，任务分支已删除</text>
                     </svg>
                 </div>
 
@@ -951,13 +952,15 @@ PREPARING → PENDING → CODING → READY_FOR_REVIEW
                             <li>将合同允许的代码/测试与已封存的计划/合同一起暂存，在任务分支生成一个提交。</li>
                             <li>确认从任务开始基线到候选 HEAD 恰好只有这一个提交，并在当前任务目录复跑确定性验证，不建立第二个候选目录。</li>
                             <li>原分支仍等于批准基线时执行快进；只要发生漂移就进入 <code>INTEGRATION_BLOCKED</code>，不自动 cherry-pick。</li>
-                            <li>保存集成证据并释放持久租约；可选隔离模式再清理唯一任务 worktree，最后进入 <code>COMPLETED</code>。</li>
+                            <li>原分支安全到达已验证提交后，清理或分离可选任务 worktree，并用安全删除移除本地任务分支。</li>
+                            <li>保存集成与分支删除证据、释放持久租约，最后进入 <code>COMPLETED</code>；失败或阻塞时保留任务分支。</li>
                         </ul>
                         <div class="code-shell">
 <pre><code>state=COMPLETED
 originalBranch=feature-opencode-scheduler
 productCommit=&lt;COMMIT&gt;
 verificationExitCode=0
+taskBranchDeleted=true
 pushed=false</code></pre>
                         </div>
                         <div class="callout">
@@ -1094,7 +1097,7 @@ pushed=false</code></pre>
                             <li><code>verificationExitCode == 0</code>。</li>
                             <li>当前状态为 <code>AWAITING_HUMAN</code>，产品 diff 未改变。</li>
                             <li>已展示原分支、基线 HEAD、分支漂移和集成策略。</li>
-                            <li>确认后预期进入 <code>COMPLETED</code>，而不是自动 push。</li>
+                            <li>确认后预期进入 <code>COMPLETED</code>，且已集成的本地任务分支被删除，而不是自动 push。</li>
                         </ul>
                     </article>
                 </div>
@@ -1137,7 +1140,7 @@ pushed=false</code></pre>
 ├── integration.json           <span class="comment"># 单一任务提交、原分支新 HEAD、结果</span>
 ├── aborted.diff               <span class="comment"># 显式中止时归档的未提交差异</span>
 ├── abort.json                 <span class="comment"># 恢复提交、原分支与 ABORTED 结果</span>
-└── cleanup.log                <span class="comment"># 可选 worktree 清理记录</span></code></pre>
+└── cleanup.log                <span class="comment"># 任务 worktree 与本地任务分支清理记录</span></code></pre>
                 </div>
             </section>
 

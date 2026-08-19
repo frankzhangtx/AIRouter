@@ -37,6 +37,7 @@ lease_json=null
 lease_matches=null
 original_head_current=""
 original_branch_drifted=null
+task_branch_exists=null
 if [[ "$workspace_json" != "null" ]]; then
     task_root="$(jq -r '.taskRoot // .taskWorktree // empty' <<< "$workspace_json")"
     if [[ -n "$task_root" && -d "$task_root" ]]; then
@@ -44,7 +45,15 @@ if [[ "$workspace_json" != "null" ]]; then
     fi
     source_root="$(jq -r '.sourceRoot // empty' <<< "$workspace_json")"
     original_branch="$(jq -r '.originalBranch // empty' <<< "$workspace_json")"
+    task_branch="$(jq -r '.taskBranch // empty' <<< "$workspace_json")"
     baseline_head="$(jq -r '.baselineHead // empty' <<< "$workspace_json")"
+    if [[ -n "$source_root" && -n "$task_branch" ]]; then
+        if git -C "$source_root" show-ref --verify --quiet "refs/heads/$task_branch"; then
+            task_branch_exists=true
+        else
+            task_branch_exists=false
+        fi
+    fi
     if [[ -n "$source_root" && -n "$original_branch" ]] && \
        git -C "$source_root" show-ref --verify --quiet "refs/heads/$original_branch"; then
         original_head_current="$(git -C "$source_root" rev-parse "refs/heads/$original_branch")"
@@ -87,6 +96,7 @@ jq -n \
     --argjson review "$review_json" \
     --argjson repositoryLease "$lease_json" \
     --argjson repositoryLeaseMatches "$lease_matches" \
+    --argjson taskBranchExists "$task_branch_exists" \
     --arg originalHeadCurrent "$original_head_current" \
     --argjson originalBranchDrifted "$original_branch_drifted" \
     --arg evidence "$evidence_dir" \
@@ -95,6 +105,7 @@ jq -n \
       runtime: {
         repositoryLease: $repositoryLease,
         repositoryLeaseMatches: $repositoryLeaseMatches,
+        taskBranchExists: $taskBranchExists,
         originalHeadCurrent: ($originalHeadCurrent | if length == 0 then null else . end),
         originalBranchDrifted: $originalBranchDrifted
       },

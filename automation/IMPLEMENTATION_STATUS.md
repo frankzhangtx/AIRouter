@@ -36,7 +36,9 @@ Updated 2026-08-19 in `/Users/zhanglong/files/program/cctest`.
   root. If the original branch still equals the pre-task baseline, the
   deterministic integrator fast-forwards it locally; otherwise it stops in
   `INTEGRATION_BLOCKED` without cherry-pick, rebase, conflict resolution, or
-  branch modification.
+  branch modification. After a successful fast-forward it safely deletes the
+  integrated local task branch; blocked and failed tasks retain their branch
+  for recovery.
 - `/abort-task <TASK-ID>` requires a separate exact confirmation, rejects
   out-of-contract changes, and archives diff/recovery evidence. Product changes
   are preserved with the sealed planning artifacts in one recovery commit;
@@ -50,7 +52,8 @@ Updated 2026-08-19 in `/Users/zhanglong/files/program/cctest`.
 - The deterministic shell suite covers in-place execution, lease exclusion,
   optional isolated execution, TDD/review gates, diff tamper rejection,
   single combined integration commits, drift blocking, planning-only aborts
-  without commits, abort recovery, cleanup, and the no-push invariant.
+  without commits, abort recovery, successful task-branch deletion, blocked
+  task-branch retention, cleanup, and the no-push invariant.
 - Bash syntax and JSON parsing are included in the repository verification
   pass.
 - Android verification is performed with standalone Gradle wrapper commands as

@@ -893,7 +893,7 @@
                 这是一份可以逐行照抄的操作手册。正常流程中，你只需在 Terminal 做环境准备并启动一次
                 OpenCode，之后始终留在同一个 <code>scheduled-planner</code> 会话里，用 <code>/change</code>
                 输入一句话需求，再通过三张 OpenCode 单选卡完成确认；方案、合同和成果三次确认都只需点击审批选项。
-                worktree、任务分支、Coder、Reviewer、质量门、提交与回原分支都由系统接管。
+                worktree、任务分支、Coder、Reviewer、质量门、提交、回原分支以及成功后的任务分支删除都由系统接管。
             </p>
             <div class="hero-note">
                 <article>
@@ -1018,8 +1018,8 @@
                         <text x="1314" y="388" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="12" fill="#5c7184">验证后快进原分支</text>
 
                         <rect x="605" y="493" width="290" height="72" rx="18" fill="#e9f3e9" stroke="#84aa8a"/>
-                        <text x="750" y="522" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="16" font-weight="750" fill="#315f3b">COMPLETED · 本地原分支已更新</text>
-                        <text x="750" y="545" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="12" fill="#5a7560">pushed: false · 是否 push 由你另行决定</text>
+                        <text x="750" y="522" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="16" font-weight="750" fill="#315f3b">COMPLETED · 原分支已更新，任务分支已删除</text>
+                        <text x="750" y="545" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="12" fill="#5a7560">pushed: false · 失败任务仍保留分支用于恢复</text>
 
                         <rect x="180" y="463" width="250" height="70" rx="16" fill="#f7e8e6" stroke="#c88986" stroke-dasharray="6 5"/>
                         <text x="305" y="491" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="14" font-weight="700" fill="#7d302e">硬停止：不自动绕过</text>
@@ -1672,7 +1672,8 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                             <li>确认任务基线到候选 HEAD 恰好只有这一个提交，并在当前任务目录验证，不创建第二个候选 worktree。</li>
                             <li>重新执行聚焦测试、完整单测、构建、lint，以及合同要求的设备测试。</li>
                             <li>只有验证全部通过且原分支未漂移，才把记录的原分支快进到已验证候选提交。</li>
-                            <li>状态写为 <code>COMPLETED</code>；可选隔离模式按配置清理唯一任务 worktree，证据继续保留。</li>
+                            <li>清理或分离可选任务 worktree，再安全删除已经合入原分支的本地任务分支。</li>
+                            <li>记录分支删除证据并把状态写为 <code>COMPLETED</code>；失败或阻塞时保留任务分支用于恢复。</li>
                         </ol>
                     </div>
                     <div class="command-block auto">
@@ -1686,8 +1687,8 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                         <span class="state-pill done">COMPLETED</span>
                     </div>
                     <div class="callout success">
-                        “提交到原分支”指本地 Git 分支完成提交和快进集成，不等于推送到 GitHub。最终证据固定记录
-                        <code>pushed: false</code>。
+                        “提交到原分支”指本地 Git 分支完成提交和快进集成，不等于推送到 GitHub。成功后本地任务分支会自动删除；
+                        最终证据固定记录 <code>taskBranchDeleted: true</code> 与 <code>pushed: false</code>。
                     </div>
                 </div>
             </section>
@@ -1715,7 +1716,8 @@ git log -3 --oneline
 ./scripts/automation/status.sh "$TASK_ID"</pre>
                     </div>
                     <div class="callout success">
-                        期望分支为 <code>feature-opencode-scheduler</code>（如果任务就是从该分支启动），工作区干净，日志包含合同提交和产品提交，状态为 <code>COMPLETED</code>。
+                        期望分支为 <code>feature-opencode-scheduler</code>（如果任务就是从该分支启动），工作区干净，日志只有一个组合任务提交，
+                        状态为 <code>COMPLETED</code>，本次任务对应的 <code>automation/task-*</code> 本地分支已经不存在。
                     </div>
                     <div class="subsection">
                         <h3>可选：你明确希望同步到远端时再 push</h3>
@@ -1911,7 +1913,7 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                             <td>8</td>
                             <td><span class="mini-pill human">点击确认</span></td>
                             <td>点击 <code>验收通过，提交到原分支。</code>；不通过或未完成检查则选择对应选项。</td>
-                            <td><code>COMPLETED</code>，本地原分支已更新。</td>
+                            <td><code>COMPLETED</code>，本地原分支已更新，已集成的任务分支已删除。</td>
                         </tr>
                         <tr>
                             <td>9</td>

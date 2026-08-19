@@ -129,9 +129,13 @@ After option 1 is selected in the fresh `成果验收` question, run only:
 
 The deterministic integrator must create exactly one commit containing the
 sealed plan, task contract, and all authorized product changes; it must not
-create an earlier planning-only commit. Report the resulting local branch,
-integrated commit, verification result, and `pushed: false`. Never treat
-acceptance as permission to push.
+create an earlier planning-only commit. Only after the recorded original branch
+safely reaches that verified commit, it must remove or detach any task worktree
+that still owns the task branch and safely delete the integrated local task
+branch. A failed or blocked integration must retain the task branch for
+recovery. Report the resulting local branch, integrated commit, task-branch
+deletion, verification result, and `pushed: false`. Never treat acceptance as
+permission to push.
 
 If the automatic card was missed, or the user invokes `/acceptance <TASK-ID>`,
 run the same display script and repeat the same review card and `question`.

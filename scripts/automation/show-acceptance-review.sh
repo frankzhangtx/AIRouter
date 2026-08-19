@@ -54,6 +54,7 @@ printf '| 任务 | `%s` · %s |\n' "$task_id" "$(jq -r '.title' "$report_file")"
 printf '| 原分支 | `%s` |\n' "$(jq -r '.originalBranch' "$report_file")"
 printf '| 原分支当前 HEAD | `%s` |\n' "$(jq -r '.originalHeadCurrent' "$report_file")"
 printf '| 原分支漂移 | `%s` |\n' "$(jq -r 'if .originalBranchDrifted then "是（集成将阻断）" else "否" end' "$report_file")"
+printf '| 任务分支收尾 | 成功集成后自动删除；失败或阻塞时保留 |\n'
 printf '| sealed diff SHA | `%s` |\n' "$report_diff_sha"
 printf '| 变更范围 | 实际 %s 个 / 合同上限 %s 个 |\n' "$changed_count" "$max_changed_files"
 printf '| 提交策略 | 代码、测试、计划与任务合同合并为一个提交 |\n'
@@ -89,6 +90,8 @@ jq -r '.targetTests[] | "  - `\(.)`"' "$report_file"
 printf '\n### P1 · 绑定与剩余风险\n\n'
 printf -- '- 当前 diff 与质量门、独立 Review、验收包的 SHA 三方一致。\n'
 printf -- '- 目标接收分支是 `%s`；通过后只做本地集成，`pushed: false`。\n' "$(jq -r '.originalBranch' "$report_file")"
+printf -- '- 原分支安全到达已验证提交后，本地任务分支 `%s` 将被自动删除；集成失败时保留以便恢复。\n' \
+    "$(jq -r '.taskBranch' "$report_file")"
 if [[ "$(jq -r '.originalBranchDrifted' "$report_file")" == "true" ]]; then
     printf -- '- **原分支已偏离批准基线；当前策略会进入 `INTEGRATION_BLOCKED`，不会自动 cherry-pick。**\n'
 fi

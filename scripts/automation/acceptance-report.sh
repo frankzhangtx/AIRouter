@@ -100,6 +100,7 @@ jq -n \
       originalHeadBeforeContract: $originalHeadBeforeContract,
       baselineHead: $baselineHead, originalHeadCurrent: $originalHeadCurrent,
       originalBranchDrifted: $originalBranchDrifted, taskBranch: $taskBranch,
+      taskBranchCleanupPolicy: "deleteAfterSuccessfulIntegration",
       workspaceStrategy: $workspaceStrategy, taskRoot: $taskRoot,
       sealedDiffSha256: $sealedDiffSha256,
       changedPaths: $changedPaths, maxChangedFiles: $maxChangedFiles,

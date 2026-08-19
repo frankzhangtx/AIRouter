@@ -78,7 +78,12 @@ approved plan, task contract, code, tests, and other authorized product
 changes. It verifies that exact commit in the task root and fast-forwards the
 recorded original branch only when it still equals the pre-task baseline. The
 plan and contract never receive a standalone normal-path commit. It never
-pushes.
+pushes. After the original branch safely reaches the verified commit, the
+integrator deletes the local task branch. Failed or blocked integration keeps
+the task branch for recovery. In isolated mode, the configured task worktree is
+removed first; if worktree cleanup is disabled, it is retained at the verified
+commit in detached-HEAD state so the integrated task branch can still be
+deleted.
 
 If a read-only Reviewer exits before submitting a decision, use
 `/resume-review <TASK-ID>`. The recovery verifies baseline, RED/ready evidence,
@@ -151,5 +156,5 @@ The shell suite exercises approval rejection, persistent lease exclusion,
 in-place preparation without extra worktrees, optional single-worktree mode,
 TDD gates, diff sealing, reviewer handoff/recovery, product verification,
 single-commit plan/contract integration, original-branch drift blocking,
-explicit archival without planning-only commits, cleanup, and the no-push
-invariant.
+successful task-branch deletion, blocked-task branch retention, explicit
+archival without planning-only commits, cleanup, and the no-push invariant.

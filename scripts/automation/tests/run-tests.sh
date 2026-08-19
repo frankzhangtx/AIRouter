@@ -475,6 +475,7 @@ acceptance_card="$(run_fixture ./scripts/automation/show-acceptance-review.sh TA
 [[ "$acceptance_card" == *"P0 · 真实行为是否满足合同"* ]] || fail 'acceptance review omitted behavioral focus'
 [[ "$acceptance_card" == *"P0 · 旧行为与范围是否被误伤"* ]] || fail 'acceptance review omitted regression and scope focus'
 [[ "$acceptance_card" == *"sealed diff SHA"* ]] || fail 'acceptance review omitted sealed binding'
+[[ "$acceptance_card" == *"成功集成后自动删除；失败或阻塞时保留"* ]] || fail 'acceptance review omitted task branch cleanup policy'
 pass 'automated evidence becomes one focused, SHA-verified human acceptance card'
 
 printf '%s\n' 'class OrchestratedFlow { fun value() = "tampered after review" }' > "$task_root/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
@@ -509,9 +510,16 @@ done
 [[ "$(jq -r '.contractCommit' "$runtime_root/evidence/TASK-TEST-004/origin.json")" == "$combined_commit" ]] || fail 'origin evidence did not bind the contract to the combined task commit'
 [[ "$(jq -r '.pushed' "$runtime_root/evidence/TASK-TEST-004/integration.json")" == "false" ]] || fail 'integration evidence did not forbid push'
 [[ "$(jq -r '.method' "$runtime_root/evidence/TASK-TEST-004/integration.json")" == "inPlaceExclusive-fast-forward" ]] || fail 'integration did not use the in-place fast-forward path'
+[[ "$(jq -r '.taskBranchDeleted' "$runtime_root/evidence/TASK-TEST-004/integration.json")" == "true" ]] || fail 'integration evidence did not record task branch deletion'
+[[ "$(jq -r '.taskBranchDeleted' "$runtime_root/workspaces/TASK-TEST-004.json")" == "true" ]] || fail 'workspace metadata did not record task branch deletion'
+if git -C "$fixture" show-ref --verify --quiet refs/heads/automation/task-test-004; then
+    fail 'successful in-place integration left the local task branch behind'
+fi
+completed_status="$(run_fixture ./scripts/automation/status.sh TASK-TEST-004)"
+[[ "$(jq -r '.runtime.taskBranchExists' <<< "$completed_status")" == "false" ]] || fail 'completed status did not report task branch deletion'
 [[ ! -d "$runtime_root/locks/repository.workspace.lease" ]] || fail 'successful integration did not release the repository lease'
 [[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 1 ]] || fail 'final integration created an unexpected candidate worktree'
-pass 'one verified commit carries product code, tests, plan, and contract to the original branch without push'
+pass 'one verified commit reaches the original branch and deletes the integrated local task branch without push'
 
 printf '%s\n' '# Abort archival safety plan' > "$fixture/docs/plans/TASK-TEST-008.md"
 jq \
@@ -594,8 +602,12 @@ run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrat
 [[ "$(jq -r '.method' "$runtime_root/evidence/TASK-TEST-007/integration.json")" == "isolatedWorktree-fast-forward" ]] || fail 'isolated task used the wrong integration method'
 [[ ! -d "$isolated_task_root" ]] || fail 'isolated task root was not cleaned after successful integration'
 [[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 1 ]] || fail 'isolated integration left an extra candidate worktree'
+if git -C "$fixture" show-ref --verify --quiet refs/heads/automation/task-test-007; then
+    fail 'successful isolated integration left the local task branch behind'
+fi
+[[ "$(jq -r '.taskBranchDeleted' "$runtime_root/evidence/TASK-TEST-007/integration.json")" == "true" ]] || fail 'isolated integration did not record task branch deletion'
 [[ -f "$fixture/app/src/main/java/com/example/cctest/IsolatedFlow.kt" ]] || fail 'isolated product change was not integrated'
-pass 'optional isolation uses one task worktree and never creates a second integration candidate'
+pass 'optional isolation removes its task worktree and integrated local task branch without a second candidate'
 
 in_place_config_tmp="$(mktemp "$fixture/automation/.config.XXXXXX")"
 jq '.workspaceStrategy = "inPlaceExclusive"' "$fixture/automation/config.json" > "$in_place_config_tmp"
@@ -637,8 +649,9 @@ if run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integ
 fi
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-006.json")" == "INTEGRATION_BLOCKED" ]] || fail 'branch drift did not create INTEGRATION_BLOCKED'
 [[ "$(git -C "$fixture" rev-parse "refs/heads/$advanced_original_branch")" == "$advanced_original_commit" ]] || fail 'blocked integration changed the advanced original branch'
+git -C "$fixture" show-ref --verify --quiet refs/heads/automation/task-test-006 || fail 'blocked integration deleted the recoverable task branch'
 [[ ! -f "$runtime_root/evidence/TASK-TEST-006/integration.json" ]] || fail 'blocked integration recorded false success evidence'
-pass 'original-branch drift blocks integration without cherry-picking or modifying the original branch'
+pass 'original-branch drift blocks integration while preserving the original and task branches'
 
 if run_fixture ./scripts/automation/abort-task.sh TASK-TEST-006 '中止' >/dev/null 2>&1; then
     fail 'abort accepted an unbound confirmation'

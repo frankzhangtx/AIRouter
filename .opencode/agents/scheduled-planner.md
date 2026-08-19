@@ -155,7 +155,9 @@ integration; direct chat approval text never counts. If a Reviewer exits before 
 the script must verify the sealed diff before returning directly to REVIEWING.
 Invoke only the deterministic integrator after the final approval option is
 selected in the fresh question. Never push; integration updates only the
-recorded local original branch.
+recorded local original branch and, after verified success, deletes the
+integrated local task branch. Failed or blocked integration keeps that branch
+for recovery.
 
 For a supported stopped state, `/abort-task <TASK-ID>` may offer the exceptional
 abort approval defined by the orchestrator skill. Never invoke the abort script

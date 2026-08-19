@@ -33,9 +33,12 @@ task_root="$(automation_workspace_task_root "$workspace_file")"
 task_branch="$(jq -er '.taskBranch' "$workspace_file")"
 workspace_strategy="$(automation_workspace_strategy "$workspace_file")"
 original_ref="refs/heads/$original_branch"
+task_ref="refs/heads/$task_branch"
 
 [[ "$source_root" == "$AUTOMATION_ROOT" ]] || automation_die "final acceptance must run from the recorded source root"
 [[ -d "$task_root" ]] || automation_die "task root is missing: $task_root"
+[[ "$task_branch" != "$original_branch" ]] || automation_die "task branch must differ from the recorded original branch"
+git -C "$source_root" show-ref --verify --quiet "$task_ref" || automation_die "recorded task branch no longer exists: $task_branch"
 [[ "$(automation_current_branch "$task_root")" == "$task_branch" ]] || automation_die "task branch identity changed"
 [[ "$(git -C "$task_root" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "task branch HEAD changed before deterministic commit"
 automation_require_repository_lease "$task_id" "$source_root" "$workspace_strategy"
@@ -186,6 +189,46 @@ git -C "$source_root" merge --ff-only "$product_commit"
 integrated_head="$(git -C "$source_root" rev-parse HEAD)"
 [[ "$integrated_head" == "$product_commit" ]] || automation_die "original branch did not reach the verified combined task commit"
 integration_method="$workspace_strategy-fast-forward"
+cleanup_log="$evidence_dir/cleanup.log"
+task_worktree_disposition="source-root-reused"
+
+if [[ "$workspace_strategy" == "isolatedWorktree" ]]; then
+    if [[ "$(automation_config_value '.autoCleanupWorktrees')" == "true" ]]; then
+        git -C "$source_root" worktree remove "$task_root" >> "$cleanup_log" 2>&1 || \
+            automation_die "could not remove isolated task worktree: $task_root"
+        printf '%s removed isolated task worktree %s\n' "$(automation_now)" "$task_root" >> "$cleanup_log"
+        task_worktree_disposition="removed"
+    else
+        git -C "$task_root" switch --detach "$product_commit" >> "$cleanup_log" 2>&1 || \
+            automation_die "could not detach retained isolated task worktree: $task_root"
+        printf '%s retained isolated task worktree in detached state at %s\n' \
+            "$(automation_now)" "$product_commit" >> "$cleanup_log"
+        task_worktree_disposition="retained-detached"
+    fi
+fi
+
+[[ "$(git -C "$source_root" rev-parse "$task_ref")" == "$product_commit" ]] || \
+    automation_die "task branch no longer points to the verified combined task commit"
+[[ "$(automation_current_branch "$source_root")" == "$original_branch" ]] || \
+    automation_die "source root must be on the original branch before task branch deletion"
+git -C "$source_root" branch -d -- "$task_branch" >> "$cleanup_log" 2>&1 || \
+    automation_die "could not safely delete integrated task branch: $task_branch"
+if git -C "$source_root" show-ref --verify --quiet "$task_ref"; then
+    automation_die "integrated task branch still exists after deletion: $task_branch"
+fi
+task_branch_deleted_at="$(automation_now)"
+printf '%s deleted integrated local task branch %s at %s\n' \
+    "$task_branch_deleted_at" "$task_branch" "$product_commit" >> "$cleanup_log"
+
+jq \
+    --arg taskBranchDeletedAt "$task_branch_deleted_at" \
+    --arg taskWorktreeDisposition "$task_worktree_disposition" \
+    --arg updatedAt "$(automation_now)" \
+    '.taskBranchDeleted = true |
+     .taskBranchDeletedAt = $taskBranchDeletedAt |
+     .taskWorktreeDisposition = $taskWorktreeDisposition |
+     .updatedAt = $updatedAt' \
+    "$workspace_file" | automation_record_json "$workspace_file"
 
 jq -n \
     --arg taskId "$task_id" \
@@ -196,26 +239,23 @@ jq -n \
     --arg integratedHead "$integrated_head" \
     --arg method "$integration_method" \
     --arg workspaceStrategy "$workspace_strategy" \
+    --arg taskBranch "$task_branch" \
+    --arg taskBranchDeletedAt "$task_branch_deleted_at" \
+    --arg taskWorktreeDisposition "$task_worktree_disposition" \
     --argjson verificationExitCode "$verification_status" \
     '{taskId: $taskId, integratedAt: $integratedAt,
       originalBranch: $originalBranch,
       sourceHeadBeforeIntegration: $sourceHeadBeforeIntegration,
       productCommit: $productCommit, integratedHead: $integratedHead,
       method: $method, workspaceStrategy: $workspaceStrategy,
+      taskBranch: $taskBranch, taskBranchDeleted: true,
+      taskBranchDeletedAt: $taskBranchDeletedAt,
+      taskWorktreeDisposition: $taskWorktreeDisposition,
       verificationExitCode: $verificationExitCode, pushed: false}' \
     | automation_record_json "$evidence_dir/integration.json"
 
-automation_transition_state "$task_id" "INTEGRATING" "COMPLETED" "integrator" "verified combined task commit fast-forwarded into the recorded original branch; not pushed"
+automation_transition_state "$task_id" "INTEGRATING" "COMPLETED" "integrator" "verified combined task commit fast-forwarded into the recorded original branch and the integrated local task branch was deleted; not pushed"
 integration_complete=1
-
-if [[ "$workspace_strategy" == "isolatedWorktree" && "$(automation_config_value '.autoCleanupWorktrees')" == "true" ]]; then
-    cleanup_log="$evidence_dir/cleanup.log"
-    if git -C "$source_root" worktree remove "$task_root" >> "$cleanup_log" 2>&1; then
-        printf '%s removed isolated task worktree %s\n' "$(automation_now)" "$task_root" >> "$cleanup_log"
-    else
-        printf '%s WARN could not remove isolated task worktree %s\n' "$(automation_now)" "$task_root" >> "$cleanup_log"
-    fi
-fi
 
 automation_release_repository_lease "$task_id"
 automation_release_run_lock

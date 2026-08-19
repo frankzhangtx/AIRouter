@@ -77,10 +77,11 @@ automation_require_layout() {
 automation_validate_config() {
     automation_require_layout
     jq -e '
-        .schemaVersion == 2 and
+        .schemaVersion == 3 and
         (.enabled | type == "boolean") and
         (.mode == "shadow" or .mode == "orchestrated") and
-        .requireDedicatedWorktree == true and
+        (.workspaceStrategy == "inPlaceExclusive" or .workspaceStrategy == "isolatedWorktree") and
+        .originalBranchDriftPolicy == "block" and
         (.worktreeBase | type == "string") and
         (.maxFixLoops | type == "number" and . >= 0 and . <= 1 and floor == .) and
         (.maxReviewCycles | type == "number" and . >= 0 and . <= 2 and floor == .) and
@@ -90,6 +91,7 @@ automation_validate_config() {
         (.approvalPhrases.proposal | type == "string" and length >= 4) and
         (.approvalPhrases.contract | type == "string" and length >= 4) and
         (.approvalPhrases.acceptance | type == "string" and length >= 4) and
+        (.approvalPhrases.abort | type == "string" and length >= 4) and
         (.plugins.scheduler | type == "string" and length > 0) and
         (.plugins.superpowers | type == "string" and length > 0) and
         (.requiredSkills | type == "array" and length >= 6) and
@@ -121,6 +123,11 @@ automation_contract_path() {
     printf '%s/%s.json\n' "$AUTOMATION_TASKS_DIR" "$task_id"
 }
 
+automation_contract_relative_path() {
+    local task_id="$1"
+    printf 'automation/tasks/%s.json\n' "$task_id"
+}
+
 automation_state_path() {
     local task_id="$1"
     printf '%s/%s.json\n' "$AUTOMATION_STATE_DIR" "$task_id"
@@ -134,6 +141,16 @@ automation_evidence_path() {
 automation_workspace_path() {
     local task_id="$1"
     printf '%s/%s.json\n' "$AUTOMATION_WORKSPACES_DIR" "$task_id"
+}
+
+automation_workspace_strategy() {
+    local workspace_file="$1"
+    jq -er '.workspaceStrategy // "isolatedWorktree"' "$workspace_file"
+}
+
+automation_workspace_task_root() {
+    local workspace_file="$1"
+    jq -er '.taskRoot // .taskWorktree' "$workspace_file"
 }
 
 automation_origin_path() {
@@ -167,7 +184,7 @@ automation_require_approval() {
         automation_die "unknown approval kind: $kind"
         return 1
     }
-    [[ "$supplied" == "$expected" ]] || automation_die "approval text does not match the configured $kind confirmation"
+    [[ "$supplied" == "$expected" ]] || automation_die "approval option token does not match the configured $kind confirmation"
 }
 
 automation_file_sha256() {
@@ -233,6 +250,64 @@ automation_changed_paths_at() {
 
 automation_changed_paths() {
     automation_changed_paths_at "$AUTOMATION_ROOT"
+}
+
+automation_assert_planning_artifacts_sealed() {
+    local task_id="$1"
+    local root="${2:-$AUTOMATION_ROOT}"
+    local origin_file contract_rel plan_rel contract_path plan_path
+
+    origin_file="$(automation_origin_path "$task_id")"
+    [[ -f "$origin_file" ]] || automation_die "origin evidence is missing for $task_id"
+    contract_rel="$(jq -er '.contractPath' "$origin_file")"
+    plan_rel="$(jq -er '.planPath' "$origin_file")"
+    contract_path="$root/$contract_rel"
+    plan_path="$root/$plan_rel"
+
+    [[ "$(automation_file_sha256 "$contract_path")" == "$(jq -er '.contractSha256' "$origin_file")" ]] || \
+        automation_die "approved contract changed after contract review"
+    [[ "$(automation_file_sha256 "$plan_path")" == "$(jq -er '.planSha256' "$origin_file")" ]] || \
+        automation_die "approved plan changed after contract review"
+}
+
+automation_is_planning_artifact() {
+    local task_id="$1"
+    local path="$2"
+    local origin_file contract_rel plan_rel
+
+    origin_file="$(automation_origin_path "$task_id")"
+    [[ -f "$origin_file" ]] || return 1
+    contract_rel="$(jq -er '.contractPath' "$origin_file")" || return 1
+    plan_rel="$(jq -er '.planPath' "$origin_file")" || return 1
+    [[ "$path" == "$contract_rel" || "$path" == "$plan_rel" ]]
+}
+
+automation_product_changed_paths_at() {
+    local task_id="$1"
+    local root="${2:-$AUTOMATION_ROOT}"
+    local path
+
+    while IFS= read -r path; do
+        [[ -n "$path" ]] || continue
+        if ! automation_is_planning_artifact "$task_id" "$path"; then
+            printf '%s\n' "$path"
+        fi
+    done < <(automation_changed_paths_at "$root")
+}
+
+automation_product_changed_paths_between() {
+    local task_id="$1"
+    local base="$2"
+    local head="$3"
+    local root="${4:-$AUTOMATION_ROOT}"
+    local path
+
+    while IFS= read -r path; do
+        [[ -n "$path" ]] || continue
+        if ! automation_is_planning_artifact "$task_id" "$path"; then
+            printf '%s\n' "$path"
+        fi
+    done < <(git -C "$root" diff --name-only "$base" "$head" -- | LC_ALL=C sort -u)
 }
 
 automation_changed_paths_between() {
@@ -318,6 +393,101 @@ automation_release_run_lock() {
     AUTOMATION_HELD_RUN_LOCK=""
 }
 
+automation_repository_lease_dir() {
+    printf '%s/repository.workspace.lease\n' "$AUTOMATION_LOCKS_DIR"
+}
+
+automation_assert_repository_lease_available() {
+    local task_id="$1"
+    local lease_dir lease_file owner
+    lease_dir="$(automation_repository_lease_dir)"
+    lease_file="$lease_dir/lease.json"
+    [[ -d "$lease_dir" ]] || return 0
+    [[ -f "$lease_file" ]] || {
+        automation_die "repository workspace lease is malformed: $lease_dir"
+        return 1
+    }
+    owner="$(jq -er '.taskId' "$lease_file")" || return 1
+    [[ "$owner" == "$task_id" ]] || {
+        automation_die "repository workspace is leased by $owner"
+        return 1
+    }
+}
+
+automation_acquire_repository_lease() {
+    local task_id="$1"
+    local source_root="$2"
+    local strategy="$3"
+    local lease_dir lease_file tmp
+    automation_ensure_runtime_layout
+    lease_dir="$(automation_repository_lease_dir)"
+    lease_file="$lease_dir/lease.json"
+
+    if ! mkdir "$lease_dir" 2>/dev/null; then
+        automation_assert_repository_lease_available "$task_id" || return 1
+        jq -e \
+            --arg taskId "$task_id" \
+            --arg sourceRoot "$source_root" \
+            --arg strategy "$strategy" \
+            '.taskId == $taskId and .sourceRoot == $sourceRoot and .workspaceStrategy == $strategy' \
+            "$lease_file" >/dev/null || {
+                automation_die "repository workspace lease does not match the current task metadata"
+                return 1
+            }
+        return 0
+    fi
+
+    tmp="$(mktemp "$lease_dir/.lease.XXXXXX")"
+    jq -n \
+        --arg taskId "$task_id" \
+        --arg sourceRoot "$source_root" \
+        --arg strategy "$strategy" \
+        --arg acquiredAt "$(automation_now)" \
+        '{taskId: $taskId, sourceRoot: $sourceRoot,
+          workspaceStrategy: $strategy, acquiredAt: $acquiredAt}' > "$tmp"
+    mv "$tmp" "$lease_file"
+}
+
+automation_require_repository_lease() {
+    local task_id="$1"
+    local source_root="$2"
+    local strategy="$3"
+    local lease_file
+    lease_file="$(automation_repository_lease_dir)/lease.json"
+    [[ -f "$lease_file" ]] || {
+        automation_die "repository workspace lease is missing for $task_id"
+        return 1
+    }
+    jq -e \
+        --arg taskId "$task_id" \
+        --arg sourceRoot "$source_root" \
+        --arg strategy "$strategy" \
+        '.taskId == $taskId and .sourceRoot == $sourceRoot and .workspaceStrategy == $strategy' \
+        "$lease_file" >/dev/null || {
+            automation_die "repository workspace lease is owned by another task or workspace"
+            return 1
+        }
+}
+
+automation_release_repository_lease() {
+    local task_id="$1"
+    local lease_dir lease_file owner
+    lease_dir="$(automation_repository_lease_dir)"
+    lease_file="$lease_dir/lease.json"
+    [[ -d "$lease_dir" ]] || return 0
+    [[ -f "$lease_file" ]] || {
+        automation_die "repository workspace lease is malformed: $lease_dir"
+        return 1
+    }
+    owner="$(jq -er '.taskId' "$lease_file")" || return 1
+    [[ "$owner" == "$task_id" ]] || {
+        automation_die "cannot release repository workspace lease owned by $owner"
+        return 1
+    }
+    rm -f "$lease_file"
+    rmdir "$lease_dir"
+}
+
 automation_transition_allowed() {
     local from="$1"
     local to="$2"
@@ -353,6 +523,7 @@ automation_transition_allowed() {
         AWAITING_HUMAN:INTEGRATING:integrator) return 0 ;;
         INTEGRATING:COMPLETED:integrator) return 0 ;;
         INTEGRATING:INTEGRATION_BLOCKED:integrator) return 0 ;;
+        PREPARING:ABORTED:human|PENDING:ABORTED:human|CODING:ABORTED:human|READY_FOR_REVIEW:ABORTED:human|REVIEWING:ABORTED:human|CHANGES_REQUESTED:ABORTED:human|AWAITING_HUMAN:ABORTED:human|BLOCKED:ABORTED:human|TEST_FAILED:ABORTED:human|NEEDS_HUMAN:ABORTED:human|INTEGRATION_BLOCKED:ABORTED:human) return 0 ;;
         *) return 1 ;;
     esac
 }

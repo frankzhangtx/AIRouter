@@ -17,6 +17,7 @@ automation_require_orchestrated
 automation_require_approval acceptance "$approval"
 [[ "$(automation_read_state "$task_id")" == "AWAITING_HUMAN" ]] || automation_die "$task_id is not awaiting human acceptance"
 [[ "$(automation_config_value '.pushAfterAcceptance')" == "false" ]] || automation_die "automatic push is forbidden"
+[[ "$(automation_config_value '.originalBranchDriftPolicy')" == "block" ]] || automation_die "unsupported original branch drift policy"
 
 origin_file="$(automation_origin_path "$task_id")"
 workspace_file="$(automation_workspace_path "$task_id")"
@@ -28,36 +29,48 @@ review_file="$evidence_dir/review.json"
 source_root="$(jq -er '.sourceRoot' "$origin_file")"
 original_branch="$(jq -er '.originalBranch' "$origin_file")"
 baseline_head="$(jq -er '.baselineHead' "$workspace_file")"
-task_worktree="$(jq -er '.taskWorktree' "$workspace_file")"
+task_root="$(automation_workspace_task_root "$workspace_file")"
 task_branch="$(jq -er '.taskBranch' "$workspace_file")"
-[[ "$source_root" == "$AUTOMATION_ROOT" ]] || automation_die "final acceptance must run from the recorded source worktree"
-[[ -d "$task_worktree" ]] || automation_die "task worktree is missing: $task_worktree"
-[[ "$(automation_current_branch "$source_root")" == "$original_branch" ]] || automation_die "source worktree is no longer on $original_branch"
-[[ "$(automation_current_branch "$task_worktree")" == "$task_branch" ]] || automation_die "task worktree branch identity changed"
-[[ "$(git -C "$task_worktree" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "task branch HEAD changed before deterministic commit"
-automation_worktree_is_clean "$source_root" || automation_die "source worktree must be clean before integration"
-git -C "$source_root" merge-base --is-ancestor "$baseline_head" HEAD || automation_die "original branch history no longer contains the approved contract baseline"
+workspace_strategy="$(automation_workspace_strategy "$workspace_file")"
+original_ref="refs/heads/$original_branch"
 
-sealed_diff_sha="$(automation_worktree_diff_sha "$task_worktree")"
+[[ "$source_root" == "$AUTOMATION_ROOT" ]] || automation_die "final acceptance must run from the recorded source root"
+[[ -d "$task_root" ]] || automation_die "task root is missing: $task_root"
+[[ "$(automation_current_branch "$task_root")" == "$task_branch" ]] || automation_die "task branch identity changed"
+[[ "$(git -C "$task_root" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "task branch HEAD changed before deterministic commit"
+automation_require_repository_lease "$task_id" "$source_root" "$workspace_strategy"
+
+case "$workspace_strategy" in
+    inPlaceExclusive)
+        [[ "$task_root" == "$source_root" ]] || automation_die "in-place task root must equal the source root"
+        ;;
+    isolatedWorktree)
+        [[ "$task_root" != "$source_root" ]] || automation_die "isolated task root must differ from the source root"
+        [[ "$(automation_current_branch "$source_root")" == "$original_branch" ]] || automation_die "source root is no longer on $original_branch"
+        automation_worktree_is_clean "$source_root" || automation_die "source root must be clean before integration"
+        ;;
+    *)
+        automation_die "unsupported workspace strategy: $workspace_strategy"
+        ;;
+esac
+
+git -C "$source_root" show-ref --verify --quiet "$original_ref" || automation_die "recorded original branch no longer exists: $original_branch"
+source_head="$(git -C "$source_root" rev-parse "$original_ref")"
+git -C "$source_root" merge-base --is-ancestor "$baseline_head" "$source_head" || automation_die "original branch no longer contains the recorded pre-task baseline"
+
+automation_assert_planning_artifacts_sealed "$task_id" "$task_root"
+sealed_diff_sha="$(automation_worktree_diff_sha "$task_root")"
 [[ "$sealed_diff_sha" == "$(jq -er '.diffSha256' "$ready_file")" ]] || automation_die "task diff changed after quality gate"
 [[ "$sealed_diff_sha" == "$(jq -er '.diffSha256' "$review_file")" ]] || automation_die "task diff changed after review"
 [[ "$(jq -er '.decision' "$review_file")" == "APPROVED" ]] || automation_die "latest review is not approved"
 
 (
-    cd "$task_worktree"
+    cd "$task_root"
     ./scripts/automation/scope-gate.sh "$task_id" >/dev/null
     ./scripts/automation/acceptance-report.sh "$task_id" >/dev/null
 )
 report_file="$evidence_dir/acceptance-report.json"
 [[ "$(jq -er '.sealedDiffSha256' "$report_file")" == "$sealed_diff_sha" ]] || automation_die "acceptance report is stale"
-
-source_head="$(git -C "$source_root" rev-parse HEAD)"
-integration_branch="automation/integrate-$(tr '[:upper:]' '[:lower:]' <<< "$task_id")"
-integration_worktree="$(jq -er '.worktreeBase' "$workspace_file")/$(tr '[:upper:]' '[:lower:]' <<< "$task_id")-integration"
-[[ ! -e "$integration_worktree" ]] || automation_die "integration worktree path already exists: $integration_worktree"
-if git -C "$source_root" show-ref --verify --quiet "refs/heads/$integration_branch"; then
-    automation_die "integration branch already exists: $integration_branch"
-fi
 
 automation_acquire_run_lock "$task_id"
 integration_complete=0
@@ -69,11 +82,16 @@ integration_exit() {
         jq -n \
             --arg taskId "$task_id" \
             --arg failedAt "$(automation_now)" \
+            --arg originalBranch "$original_branch" \
+            --arg originalHead "$(git -C "$source_root" rev-parse "$original_ref" 2>/dev/null || true)" \
+            --arg productCommit "$(jq -r '.productCommit // ""' "$workspace_file" 2>/dev/null || true)" \
             --argjson exitCode "$exit_code" \
             '{taskId: $taskId, failedAt: $failedAt, exitCode: $exitCode,
-              message: "Integration stopped; original branch was not advanced unless integration.json exists."}' \
+              originalBranch: $originalBranch, originalHead: $originalHead,
+              productCommit: ($productCommit | if length == 0 then null else . end),
+              message: "Integration stopped. Inspect the recorded refs before recovery; no automatic conflict resolution was attempted."}' \
             | automation_record_json "$evidence_dir/integration-failure.json" || true
-        automation_transition_state "$task_id" "INTEGRATING" "INTEGRATION_BLOCKED" "integrator" "candidate integration or verification failed" || true
+        automation_transition_state "$task_id" "INTEGRATING" "INTEGRATION_BLOCKED" "integrator" "candidate verification or fast-forward failed" || true
     fi
     automation_release_run_lock
     exit "$exit_code"
@@ -103,54 +121,71 @@ automation_transition_state "$task_id" "AWAITING_HUMAN" "INTEGRATING" "integrato
 product_paths=()
 while IFS= read -r path; do
     [[ -n "$path" ]] && product_paths+=("$path")
-done < <(automation_changed_paths_at "$task_worktree")
-[[ "${#product_paths[@]}" -gt 0 ]] || automation_die "no product paths remain to commit"
-git -C "$task_worktree" add -- "${product_paths[@]}"
-title="$(jq -er '.title' "$task_worktree/automation/tasks/$task_id.json")"
-git -C "$task_worktree" commit -m "Implement $title ($task_id)"
-product_commit="$(git -C "$task_worktree" rev-parse HEAD)"
-automation_worktree_is_clean "$task_worktree" || automation_die "task worktree is dirty after product commit"
+done < <(automation_product_changed_paths_at "$task_id" "$task_root")
+[[ "${#product_paths[@]}" -gt 0 ]] || automation_die "no product paths remain to commit with the planning artifacts"
+
+commit_paths=()
+while IFS= read -r path; do
+    [[ -n "$path" ]] && commit_paths+=("$path")
+done < <(automation_changed_paths_at "$task_root")
+[[ "${#commit_paths[@]}" -ge 3 ]] || automation_die "final commit must contain product changes and both planning artifacts"
+git -C "$task_root" add -- "${commit_paths[@]}"
+title="$(jq -er '.title' "$task_root/automation/tasks/$task_id.json")"
+git -C "$task_root" commit -m "Implement $title ($task_id)"
+product_commit="$(git -C "$task_root" rev-parse HEAD)"
+automation_worktree_is_clean "$task_root" || automation_die "task root is dirty after the combined task commit"
+git -C "$task_root" merge-base --is-ancestor "$baseline_head" "$product_commit" || automation_die "combined task commit is not based on the recorded pre-task baseline"
+[[ "$(git -C "$task_root" rev-list --count "$baseline_head..$product_commit")" -eq 1 ]] || \
+    automation_die "task history must contain exactly one combined product-and-planning commit"
+
+jq \
+    --arg contractCommit "$product_commit" \
+    --arg committedAt "$(automation_now)" \
+    '.contractCommit = $contractCommit |
+     .planningArtifactsCommittedWithProduct = true |
+     .planningArtifactsCommittedAt = $committedAt' \
+    "$origin_file" | automation_record_json "$origin_file"
 
 jq \
     --arg productCommit "$product_commit" \
+    --arg candidateHead "$product_commit" \
     --arg sourceHeadAtIntegration "$source_head" \
-    --arg integrationBranch "$integration_branch" \
-    --arg integrationWorktree "$integration_worktree" \
+    --arg integrationMethod "$workspace_strategy-fast-forward" \
     --arg updatedAt "$(automation_now)" \
     '.productCommit = $productCommit |
+     .candidateHead = $candidateHead |
      .sourceHeadAtIntegration = $sourceHeadAtIntegration |
-     .integrationBranch = $integrationBranch |
-     .integrationWorktree = $integrationWorktree |
+     .integrationMethod = $integrationMethod |
      .updatedAt = $updatedAt' \
     "$workspace_file" | automation_record_json "$workspace_file"
 
-git -C "$source_root" worktree add "$integration_worktree" -b "$integration_branch" "$source_head"
-if [[ "$source_head" == "$baseline_head" ]]; then
-    git -C "$integration_worktree" merge --ff-only "$product_commit"
-    integration_method="fast-forward-product-commit"
-else
-    git -C "$integration_worktree" cherry-pick "$product_commit"
-    integration_method="cherry-pick-onto-advanced-original"
-fi
-candidate_head="$(git -C "$integration_worktree" rev-parse HEAD)"
+[[ "$source_head" == "$baseline_head" ]] || automation_die "original branch drifted from $baseline_head to $source_head; policy requires manual resolution"
+[[ "$(automation_file_sha256 "$task_root/automation/tasks/$task_id.json")" == "$(jq -er '.contractSha256' "$origin_file")" ]] || \
+    automation_die "approved contract changed on the verified candidate"
 
-[[ "$(automation_file_sha256 "$integration_worktree/automation/tasks/$task_id.json")" == "$(jq -er '.contractSha256' "$origin_file")" ]] || \
-    automation_die "approved contract changed on the integration candidate"
 set +e
 (
-    cd "$integration_worktree"
-    ./scripts/automation/verify-integration.sh "$task_id" "$source_head" "$candidate_head"
+    cd "$task_root"
+    ./scripts/automation/verify-integration.sh "$task_id" "$baseline_head" "$product_commit"
 ) 2>&1 | tee "$evidence_dir/integration-verification.log"
 verification_status=${PIPESTATUS[0]}
 set -e
 [[ "$verification_status" -eq 0 ]] || automation_die "integration verification failed with exit $verification_status"
 
-[[ "$(automation_current_branch "$source_root")" == "$original_branch" ]] || automation_die "original branch changed during candidate verification"
-[[ "$(git -C "$source_root" rev-parse HEAD)" == "$source_head" ]] || automation_die "original branch advanced during candidate verification"
-automation_worktree_is_clean "$source_root" || automation_die "source worktree became dirty during candidate verification"
-git -C "$source_root" merge --ff-only "$integration_branch"
+[[ "$(git -C "$source_root" rev-parse "$original_ref")" == "$baseline_head" ]] || automation_die "original branch advanced during candidate verification"
+if [[ "$workspace_strategy" == "inPlaceExclusive" ]]; then
+    [[ "$(automation_current_branch "$source_root")" == "$task_branch" ]] || automation_die "in-place task branch changed during verification"
+    git -C "$source_root" switch "$original_branch"
+else
+    [[ "$(automation_current_branch "$source_root")" == "$original_branch" ]] || automation_die "source branch changed during candidate verification"
+    [[ "$(git -C "$source_root" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "source HEAD changed during candidate verification"
+    automation_worktree_is_clean "$source_root" || automation_die "source root became dirty during candidate verification"
+fi
+
+git -C "$source_root" merge --ff-only "$product_commit"
 integrated_head="$(git -C "$source_root" rev-parse HEAD)"
-[[ "$integrated_head" == "$candidate_head" ]] || automation_die "original branch did not reach the verified candidate"
+[[ "$integrated_head" == "$product_commit" ]] || automation_die "original branch did not reach the verified combined task commit"
+integration_method="$workspace_strategy-fast-forward"
 
 jq -n \
     --arg taskId "$task_id" \
@@ -160,34 +195,29 @@ jq -n \
     --arg productCommit "$product_commit" \
     --arg integratedHead "$integrated_head" \
     --arg method "$integration_method" \
+    --arg workspaceStrategy "$workspace_strategy" \
     --argjson verificationExitCode "$verification_status" \
     '{taskId: $taskId, integratedAt: $integratedAt,
       originalBranch: $originalBranch,
       sourceHeadBeforeIntegration: $sourceHeadBeforeIntegration,
       productCommit: $productCommit, integratedHead: $integratedHead,
-      method: $method, verificationExitCode: $verificationExitCode,
-      pushed: false}' \
+      method: $method, workspaceStrategy: $workspaceStrategy,
+      verificationExitCode: $verificationExitCode, pushed: false}' \
     | automation_record_json "$evidence_dir/integration.json"
 
-automation_transition_state "$task_id" "INTEGRATING" "COMPLETED" "integrator" "verified candidate fast-forwarded into the recorded original branch; not pushed"
+automation_transition_state "$task_id" "INTEGRATING" "COMPLETED" "integrator" "verified combined task commit fast-forwarded into the recorded original branch; not pushed"
 integration_complete=1
 
-if [[ "$(automation_config_value '.autoCleanupWorktrees')" == "true" ]]; then
+if [[ "$workspace_strategy" == "isolatedWorktree" && "$(automation_config_value '.autoCleanupWorktrees')" == "true" ]]; then
     cleanup_log="$evidence_dir/cleanup.log"
-    {
-        if git -C "$source_root" worktree remove "$integration_worktree"; then
-            printf '%s removed integration worktree %s\n' "$(automation_now)" "$integration_worktree"
-        else
-            printf '%s WARN could not remove integration worktree %s\n' "$(automation_now)" "$integration_worktree"
-        fi
-        if git -C "$source_root" worktree remove "$task_worktree"; then
-            printf '%s removed task worktree %s\n' "$(automation_now)" "$task_worktree"
-        else
-            printf '%s WARN could not remove task worktree %s\n' "$(automation_now)" "$task_worktree"
-        fi
-    } >> "$cleanup_log" 2>&1
+    if git -C "$source_root" worktree remove "$task_root" >> "$cleanup_log" 2>&1; then
+        printf '%s removed isolated task worktree %s\n' "$(automation_now)" "$task_root" >> "$cleanup_log"
+    else
+        printf '%s WARN could not remove isolated task worktree %s\n' "$(automation_now)" "$task_root" >> "$cleanup_log"
+    fi
 fi
 
+automation_release_repository_lease "$task_id"
 automation_release_run_lock
 trap - EXIT
 jq . "$evidence_dir/integration.json"

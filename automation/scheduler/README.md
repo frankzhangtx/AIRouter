@@ -1,6 +1,6 @@
 # Scheduler compatibility prompts
 
-The V2 normal path does not require recurring Scheduler jobs. After contract
+The V3 normal path does not require recurring Scheduler jobs. After contract
 approval, `orchestrate-task.sh` launches a task-specific Coder and a fresh
 Reviewer immediately and remains in control until `AWAITING_HUMAN` or a hard
 failure state.
@@ -13,6 +13,7 @@ external schedule:
   `REVIEWING` by the orchestrator.
 
 Do not install both prompts as independent recurring jobs: a timer cannot own
-the contract approval, worktree creation, sealed reviewer handoff, bounded
-repair cycle, or final integration transaction. Do not use
+the contract approval, persistent repository lease, transactional task branch,
+sealed reviewer handoff, bounded repair cycle, or final integration
+transaction. Do not use
 `--dangerously-skip-permissions`; agent denies are part of the quality gate.

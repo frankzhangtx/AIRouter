@@ -892,7 +892,7 @@
             <p class="lead">
                 这是一份可以逐行照抄的操作手册。正常流程中，你只需在 Terminal 做环境准备并启动一次
                 OpenCode，之后始终留在同一个 <code>scheduled-planner</code> 会话里，用 <code>/change</code>
-                输入一句话需求，再完成三次明确确认；合同复核卡和最终验收卡都会自动展示，后两次只需点击审批选项。
+                输入一句话需求，再通过三张 OpenCode 单选卡完成确认；方案、合同和成果三次确认都只需点击审批选项。
                 worktree、任务分支、Coder、Reviewer、质量门、提交与回原分支都由系统接管。
             </p>
             <div class="hero-note">
@@ -1066,7 +1066,7 @@
                 <article class="quick-card">
                     <span class="number">2</span>
                     <h3>一句需求与三次确认</h3>
-                    <p>用 <code>/change</code> 输入一句话需求；必要时回答少量澄清问题。合同与成果复核卡都会自动展示，后两次确认点击选项即可。</p>
+                    <p>用 <code>/change</code> 输入一句话需求；必要时回答少量澄清问题。方案、合同与成果复核卡都会自动展示，三次确认均点击选项即可。</p>
                 </article>
                 <article class="quick-card">
                     <span class="number">3</span>
@@ -1240,7 +1240,7 @@ opencode --agent scheduled-planner .</pre>
                     </div>
                     <div class="callout warning">
                         不要在 <code>/change</code> 中附上任何审批语。即使误写，系统也必须先展示方案，
-                        并等待你在后续消息中单独输入对应的精确审批语。
+                        再弹出当次“方案确认”单选；直接消息中的审批文本永远不构成批准。
                     </div>
                 </div>
             </section>
@@ -1283,7 +1283,7 @@ allowedPaths 仅保留实现文件和对应测试文件；
 保持所有现有城市识别行为不变。调整后重新展示方案，不要创建文件。</pre>
                     </div>
                     <div class="callout">
-                        只有在方案完整、边界明确时才进入下一步。普通的“好的”“继续”不算审批；系统只接受下一步的精确句子。
+                        只有在方案完整、边界明确时才进入下一步。普通聊天消息不算审批；系统只接受下一步当次“方案确认”控件中的选项选择。
                     </div>
                 </div>
             </section>
@@ -1293,17 +1293,21 @@ allowedPaths 仅保留实现文件和对应测试文件；
                     <span class="step-no">5</span>
                     <div>
                         <div class="step-title-row">
-                            <h2 class="step-title">第一次确认：批准方案</h2>
+                            <h2 class="step-title">第一次确认：在选项中批准方案</h2>
                             <span class="channel opencode">OpenCode</span>
                             <span class="channel human">人工闸门 1/3</span>
                         </div>
-                        <p class="step-intro">确认方案后，在 OpenCode 单独输入下面这句话，句号也保留。</p>
+                        <p class="step-intro">方案展示完成后，Planner 会自动弹出单选控件；点击一项即可，无需发送审批消息。</p>
                     </div>
                 </div>
                 <div class="step-content">
-                    <div class="command-block open">
-                        <div class="command-top"><strong>在 OpenCode 原样输入</strong><span>精确审批语</span></div>
-                        <pre>批准方案，生成计划和任务合同。</pre>
+                    <div class="command-block auto">
+                        <div class="command-top"><strong>Planner 自动弹出“方案确认”</strong><span>点击一项，无需输入</span></div>
+                        <pre>● 批准方案，生成计划和任务合同。
+  确认当前方案并生成两份待复核的规划文件。
+
+○ 需要调整方案
+  不生成文件；随后说明需要调整的目标、范围或验证方式。</pre>
                     </div>
                     <div class="subsection">
                         <h3>系统随后自动完成</h3>
@@ -1399,7 +1403,7 @@ allowedPaths 仅保留实现文件和对应测试文件；
                             <span class="channel opencode">OpenCode</span>
                             <span class="channel human">人工闸门 2/3</span>
                         </div>
-                        <p class="step-intro">合同确认无误后点击完整审批语对应的选项，无需手工输入。之后保持 OpenCode 会话运行，系统会连续执行。</p>
+                        <p class="step-intro">合同确认无误后点击批准选项，无需手工输入。直接发送相同审批文本也不会启动执行；之后保持 OpenCode 会话运行，系统会连续执行。</p>
                     </div>
                 </div>
                 <div class="step-content">
@@ -1417,12 +1421,12 @@ allowedPaths 仅保留实现文件和对应测试文件；
                         <h3>点击批准会触发的完整自动链路</h3>
                         <div class="auto-grid">
                             <div class="auto-item">
-                                <strong>1. 提交已批准的计划和合同</strong>
-                                <span>只提交这两个封存文件，并把该提交作为任务基线。</span>
+                                <strong>1. 封存计划和合同但暂不提交</strong>
+                                <span>记录原分支、原 HEAD 与文件哈希；规划文件留在任务 diff 中等待最终合并提交。</span>
                             </div>
                             <div class="auto-item">
-                                <strong>2. 在仓库外创建专用 worktree</strong>
-                                <span>默认位于同级 <code>cctest-worktrees/&lt;task-id&gt;</code>，并创建隔离任务分支。</span>
+                                <strong>2. 原地切换事务任务分支</strong>
+                                <span>取得持久仓库租约后，在当前工程目录创建任务分支，不复制工程；仅显式配置隔离模式时创建一个 worktree。</span>
                             </div>
                             <div class="auto-item">
                                 <strong>3. 受限 Coder 通过 TDD 编码</strong>
@@ -1438,7 +1442,7 @@ allowedPaths 仅保留实现文件和对应测试文件；
                             </div>
                             <div class="auto-item">
                                 <strong>6. 主动停下等待你</strong>
-                                <span>进入 <code>AWAITING_HUMAN</code>，不会提前提交产品代码到原分支。</span>
+                                <span>进入 <code>AWAITING_HUMAN</code>，代码、测试、计划和合同此时都尚未提交。</span>
                             </div>
                         </div>
                     </div>
@@ -1650,23 +1654,25 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                             <span class="channel opencode">OpenCode</span>
                             <span class="channel human">人工闸门 3/3</span>
                         </div>
-                        <p class="step-intro">确认复核卡中的 P0、P1 项都满足后，直接点击绿色通过选项；系统仍要求精确审批值，不会把模糊回复当成授权。</p>
+                        <p class="step-intro">确认复核卡中的 P0、P1 项都满足后，直接点击绿色通过选项；直接聊天消息不会被当成授权。</p>
                     </div>
                 </div>
                 <div class="step-content">
-                    <div class="command-block open">
-                        <div class="command-top"><strong>仅当确认控件不可用时，在 OpenCode 原样输入</strong><span>备用精确审批语</span></div>
-                        <pre>验收通过，提交到原分支。</pre>
+                    <div class="command-block auto">
+                        <div class="command-top"><strong>使用 Planner 弹出的“成果验收”控件</strong><span>点击一项，无文本备用入口</span></div>
+                        <pre>● 验收通过，提交到原分支。
+○ 验收不通过，需要说明失败项
+○ 暂不决定，保持封存</pre>
                     </div>
                     <div class="subsection">
                         <h3>系统随后自动完成</h3>
                         <ol>
                             <li>重新核对状态、原分支、合同 SHA、sealed diff SHA 和 Reviewer 的 APPROVED 结论。</li>
-                            <li>只把合同允许的产品文件提交到任务分支，生成一个确定的产品提交。</li>
-                            <li>在新的候选集成 worktree 中把产品提交叠加到原分支最新状态。</li>
+                            <li>把合同允许的产品文件与封存的计划、任务合同合并成唯一任务提交。</li>
+                            <li>确认任务基线到候选 HEAD 恰好只有这一个提交，并在当前任务目录验证，不创建第二个候选 worktree。</li>
                             <li>重新执行聚焦测试、完整单测、构建、lint，以及合同要求的设备测试。</li>
                             <li>只有验证全部通过且原分支未漂移，才把记录的原分支快进到已验证候选提交。</li>
-                            <li>状态写为 <code>COMPLETED</code>，按配置清理任务与集成 worktree，证据继续保留。</li>
+                            <li>状态写为 <code>COMPLETED</code>；可选隔离模式按配置清理唯一任务 worktree，证据继续保留。</li>
                         </ol>
                     </div>
                     <div class="command-block auto">
@@ -1837,7 +1843,7 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
             </div>
             <div class="callout info">
                 也不需要创建 OpenCode Scheduler 定时任务。<code>automation/scheduler/</code> 下的提示词只保留作兼容诊断；
-                当前 V2 的启动入口始终是 <code>scheduled-planner</code> 会话，会话内的需求入口是 <code>/change</code>。
+                当前 V3 的启动入口始终是 <code>scheduled-planner</code> 会话，会话内的需求入口是 <code>/change</code>。
             </div>
         </section>
 
@@ -1874,7 +1880,7 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                         <tr>
                             <td>3</td>
                             <td><span class="mini-pill opencode">OpenCode</span></td>
-                            <td><code>批准方案，生成计划和任务合同。</code></td>
+                            <td>在“方案确认”中点击 <code>批准方案，生成计划和任务合同。</code></td>
                             <td><code>CONTRACT_REVIEW</code>。</td>
                         </tr>
                         <tr>
@@ -1892,7 +1898,7 @@ find "$GIT_COMMON_DIR/automation-runtime/evidence/$TASK_ID" -maxdepth 1 -type f 
                         <tr>
                             <td>6</td>
                             <td><span class="mini-pill automatic">自动</span></td>
-                            <td>系统建 worktree、运行 Coder、质量门、Reviewer，生成验收包并主动弹出复核卡。</td>
+                            <td>系统取得租约并原地切换任务分支，运行 Coder、质量门、Reviewer，生成验收包并主动弹出复核卡。</td>
                             <td>sealed diff 与 Review 均已封存，卡片停在 <code>AWAITING_HUMAN</code>。</td>
                         </tr>
                         <tr>

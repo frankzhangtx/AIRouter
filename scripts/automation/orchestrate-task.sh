@@ -12,8 +12,13 @@ automation_require_orchestrated
 
 workspace_file="$(automation_workspace_path "$task_id")"
 [[ -f "$workspace_file" ]] || automation_die "workspace metadata is missing for $task_id"
-task_root="$(jq -er '.taskWorktree' "$workspace_file")"
-[[ -d "$task_root" ]] || automation_die "task worktree is missing: $task_root"
+task_root="$(automation_workspace_task_root "$workspace_file")"
+workspace_strategy="$(automation_workspace_strategy "$workspace_file")"
+source_root="$(jq -er '.sourceRoot' "$workspace_file")"
+[[ -d "$task_root" ]] || automation_die "task root is missing: $task_root"
+if [[ "$(jq -r '.repositoryLeaseRequired // false' "$workspace_file")" == "true" ]]; then
+    automation_require_repository_lease "$task_id" "$source_root" "$workspace_strategy"
+fi
 
 automation_acquire_run_lock "$task_id"
 trap 'automation_release_run_lock' EXIT

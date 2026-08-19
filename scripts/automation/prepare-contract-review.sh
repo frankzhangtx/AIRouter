@@ -15,6 +15,7 @@ fi
 automation_validate_task_id "$task_id"
 automation_require_orchestrated
 automation_require_approval proposal "$approval"
+automation_assert_repository_lease_available "$task_id"
 "$SCRIPT_DIR/validate-contract.sh" "$task_id" >/dev/null
 
 contract="$(automation_contract_path "$task_id")"
@@ -33,6 +34,11 @@ if [[ "${#changed_paths[@]}" -ne 2 ]] || \
    [[ " ${changed_paths[*]} " != *" $plan_rel "* ]]; then
     automation_die "before contract review, the only changed paths must be $plan_rel and $contract_rel"
 fi
+for planning_path in "$plan_rel" "$contract_rel"; do
+    if git -C "$AUTOMATION_ROOT" ls-files --error-unmatch -- "$planning_path" >/dev/null 2>&1; then
+        automation_die "planning artifact must be a new untracked file: $planning_path"
+    fi
+done
 
 original_branch="$(automation_current_branch)"
 original_head="$(git -C "$AUTOMATION_ROOT" rev-parse HEAD)"

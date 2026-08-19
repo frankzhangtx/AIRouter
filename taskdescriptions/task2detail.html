@@ -570,9 +570,9 @@
             <div class="eyebrow">Task 2 · Automated OpenCode Delivery</div>
             <h1>从需求确认自动执行到<br>人工验收与原分支提交</h1>
             <p class="lead">
-                用户只需在 OpenCode 中完成三次明确确认：批准方案、批准任务合同、批准最终验收。
-                合同批准后，由受控编排器自动建立专用 worktree、运行 Coder 和独立 Reviewer；最终验收通过后，
-                再由确定性集成器把已验证的产品提交安全带回任务开始时记录的原分支。
+                用户只需在 OpenCode 中完成三次单选确认：批准方案、批准任务合同、批准最终验收；无需输入审批语。
+                合同批准后，由受控编排器在当前工程目录切换到事务任务分支、运行 Coder 和独立 Reviewer；最终验收通过后，
+                再由确定性集成器创建并验证一个同时包含代码、测试、计划和合同的提交，安全快进任务开始时记录的原分支，全程不复制工程目录。
             </p>
             <div class="meta-list">
                 <div class="meta-item">工程：<code>/Users/zhanglong/files/program/cctest</code></div>
@@ -608,17 +608,17 @@
                     <article class="card">
                         <span class="badge gold">人工关口 1</span>
                         <h3 style="margin-top: 10px;">批准方案</h3>
-                        <p>Planner 先展示范围、验收条件、测试与非目标。用户确认后，才生成计划和任务合同。</p>
+                        <p>Planner 先展示范围、验收条件、测试与非目标，再弹出“方案确认”单选；用户点击批准后才生成计划和任务合同。</p>
                     </article>
                     <article class="card">
                         <span class="badge gold">人工关口 2</span>
                         <h3 style="margin-top: 10px;">批准合同并执行</h3>
-                        <p>人工复核生成的 Markdown 计划和 JSON 合同。明确批准后，自动编排持续运行到人工验收。</p>
+                        <p>人工复核生成的 Markdown 计划和 JSON 合同，在“合同复核”单选中点击批准后，自动编排持续运行到人工验收。</p>
                     </article>
                     <article class="card">
                         <span class="badge green">人工关口 3</span>
                         <h3 style="margin-top: 10px;">验收并提交原分支</h3>
-                        <p>Reviewer 通过后停在 <code>AWAITING_HUMAN</code>。用户确认验收，集成器才更新原分支。</p>
+                        <p>Reviewer 通过后停在 <code>AWAITING_HUMAN</code>。用户在“成果验收”单选中点击通过，集成器才更新原分支。</p>
                     </article>
                 </div>
 
@@ -631,7 +631,7 @@
                     <article class="card">
                         <span class="badge green">中段全自动</span>
                         <h3 style="margin-top: 10px;">不再手敲十一组命令</h3>
-                        <p>worktree、排队、Coder、Reviewer、状态检查和证据汇总由编排器连续完成。</p>
+                        <p>任务分支、仓库租约、Coder、Reviewer、状态检查和证据汇总由编排器连续完成。</p>
                     </article>
                     <article class="card">
                         <span class="badge red">职责隔离</span>
@@ -641,7 +641,7 @@
                     <article class="card">
                         <span class="badge gold">交付边界</span>
                         <h3 style="margin-top: 10px;">默认只提交，不自动 push</h3>
-                        <p>完成状态表示本地原分支已有产品提交。远端 push 仍需单独、明确授权。</p>
+                        <p>完成状态表示本地原分支已有单一任务提交。远端 push 仍需单独、明确授权。</p>
                     </article>
                 </div>
 
@@ -656,7 +656,7 @@
                 </div>
 
                 <div class="callout">
-                    <strong>自动化不等于放宽门禁：</strong>原工作区不干净、合同含糊、环境缺失、测试失败、审查不通过或集成冲突时，
+                    <strong>自动化不等于放宽门禁：</strong>原工作目录不干净、合同含糊、环境缺失、测试失败、审查不通过或原分支漂移时，
                     编排器必须停止并保留证据；正常路径不需要人工接力，异常路径不能静默猜测。
                 </div>
             </section>
@@ -674,7 +674,7 @@
                 <div class="diagram-wrap">
                     <svg viewBox="0 0 1120 1830" role="img" aria-labelledby="flow-title flow-desc">
                         <title id="flow-title">重庆城市识别任务的 OpenCode 自动编排流程</title>
-                        <desc id="flow-desc">用户输入需求并批准方案，Planner 生成计划和合同；合同批准后编排器自动准备工作树、编码、验证和评审；人工最终验收后，集成器将产品提交带回原分支。</desc>
+                        <desc id="flow-desc">用户输入需求并通过方案确认单选批准方案，Planner 生成并封存但不提交计划和合同；合同复核单选批准后编排器自动准备任务分支、编码、验证和评审；成果验收单选通过后，集成器用一个提交将代码、测试、计划和合同带回原分支。</desc>
                         <defs>
                             <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
                                 <path d="M0,0 L0,6 L9,3 z" fill="#ad4b23"></path>
@@ -701,7 +701,7 @@
 
                         <polygon points="560,296 720,365 560,434 400,365" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
                         <text x="560" y="359" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工批准方案？</text>
-                        <text x="560" y="384" text-anchor="middle" fill="#6c6055" font-size="14">未批准前不生成任务文件</text>
+                        <text x="560" y="384" text-anchor="middle" fill="#6c6055" font-size="14">OpenCode 单选；未批准前不生成任务文件</text>
 
                         <line x1="400" y1="365" x2="220" y2="365" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <text x="315" y="348" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
@@ -720,7 +720,7 @@
 
                         <polygon points="560,622 730,691 560,760 390,691" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
                         <text x="560" y="685" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工批准合同并执行？</text>
-                        <text x="560" y="710" text-anchor="middle" fill="#6c6055" font-size="14">这是自动执行授权边界</text>
+                        <text x="560" y="710" text-anchor="middle" fill="#6c6055" font-size="14">OpenCode 单选；这是自动执行授权边界</text>
 
                         <line x1="390" y1="691" x2="220" y2="691" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <text x="305" y="674" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
@@ -733,14 +733,14 @@
 
                         <rect x="290" y="812" width="540" height="100" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
                         <text x="560" y="846" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Orchestrator 自动准备执行环境</text>
-                        <text x="560" y="873" text-anchor="middle" fill="#6c6055" font-size="14">提交合同基线、记录原分支、创建 worktree、排队</text>
-                        <text x="560" y="896" text-anchor="middle" fill="#6c6055" font-size="13">运行时路径写入 Git 公共状态区，不生成激活配置提交</text>
+                        <text x="560" y="873" text-anchor="middle" fill="#6c6055" font-size="14">记录原 HEAD、保留未提交规划文件、取得租约、切换任务分支</text>
+                        <text x="560" y="896" text-anchor="middle" fill="#6c6055" font-size="13">默认复用当前工程目录；运行状态写入 Git 公共状态区</text>
 
                         <line x1="560" y1="912" x2="560" y2="952" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
                         <rect x="300" y="957" width="520" height="105" rx="22" fill="#fffaf4" stroke="#ad4b23" stroke-width="2" filter="url(#soft-shadow)"></rect>
                         <text x="560" y="992" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Coder：G0 → RED → 最小实现 → G2–G6</text>
-                        <text x="560" y="1019" text-anchor="middle" fill="#6c6055" font-size="14">自动执行一次受限修复循环并封存产品 diff</text>
+                        <text x="560" y="1019" text-anchor="middle" fill="#6c6055" font-size="14">自动执行一次受限修复循环并封存完整任务 diff</text>
                         <text x="560" y="1042" text-anchor="middle" fill="#6c6055" font-size="13">Coder 不能创建 worktree、提交、合并或 push</text>
 
                         <line x1="820" y1="1009" x2="920" y2="1009" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
@@ -771,7 +771,7 @@
 
                         <polygon points="560,1405 730,1470 560,1535 390,1470" fill="#fff6e7" stroke="#9b691b" stroke-width="2" filter="url(#soft-shadow)"></polygon>
                         <text x="560" y="1464" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">人工最终验收通过？</text>
-                        <text x="560" y="1489" text-anchor="middle" fill="#6c6055" font-size="14">明确授权提交到已记录的原分支</text>
+                        <text x="560" y="1489" text-anchor="middle" fill="#6c6055" font-size="14">OpenCode 单选；授权提交到已记录的原分支</text>
 
                         <line x1="390" y1="1470" x2="220" y2="1470" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <text x="305" y="1453" text-anchor="middle" fill="#9b4038" font-size="14" font-weight="800">否</text>
@@ -784,8 +784,8 @@
 
                         <rect x="280" y="1582" width="560" height="110" rx="22" fill="#edf3f6" stroke="#35657f" stroke-width="2" filter="url(#soft-shadow)"></rect>
                         <text x="560" y="1617" text-anchor="middle" fill="#211b16" font-size="18" font-weight="800">Integrator 自动提交并更新原分支</text>
-                        <text x="560" y="1644" text-anchor="middle" fill="#6c6055" font-size="14">重验封存 SHA，只提交 allowedPaths，先验证集成候选</text>
-                        <text x="560" y="1667" text-anchor="middle" fill="#6c6055" font-size="13">可快进则快进；有分支漂移则安全 cherry-pick，冲突立即停止</text>
+                        <text x="560" y="1644" text-anchor="middle" fill="#6c6055" font-size="14">重验封存 SHA，将代码、测试、计划和合同合为一个提交</text>
+                        <text x="560" y="1667" text-anchor="middle" fill="#6c6055" font-size="13">原分支仍是批准基线才快进；发生漂移立即停止，不自动 cherry-pick</text>
 
                         <line x1="840" y1="1637" x2="920" y2="1637" stroke="#9b4038" stroke-width="3" marker-end="url(#arrow-danger)"></line>
                         <rect x="925" y="1592" width="165" height="90" rx="18" fill="#faecea" stroke="#9b4038" stroke-width="2"></rect>
@@ -795,7 +795,7 @@
                         <line x1="560" y1="1692" x2="560" y2="1732" stroke="#ad4b23" stroke-width="3" marker-end="url(#arrow)"></line>
 
                         <rect x="350" y="1737" width="420" height="65" rx="32" fill="#176c63" filter="url(#soft-shadow)"></rect>
-                        <text x="560" y="1777" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">COMPLETED：原分支已有产品提交</text>
+                        <text x="560" y="1777" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="800">COMPLETED：原分支只有一个任务提交</text>
                     </svg>
                 </div>
 
@@ -823,7 +823,7 @@
                     <div>
                         <span class="kicker">OpenCode Interaction</span>
                         <h2>一条六阶段闭环，用户只参与三个关口</h2>
-                        <p>除首次启动 OpenCode 外，正常路径不要求用户在 Terminal 中创建 worktree、排队、启动 Coder 或 Reviewer。</p>
+                        <p>除首次启动 OpenCode 外，正常路径不要求用户在 Terminal 中切换分支、排队、启动 Coder 或 Reviewer。</p>
                     </div>
                     <span class="section-no">03</span>
                 </div>
@@ -850,14 +850,19 @@ opencode --agent scheduled-planner .</code></pre>
                     <article class="step" data-step="2">
                         <h3>确认方案，自动生成计划和任务合同</h3>
                         <p>Planner 应先展示任务 ID、验收条件、允许路径、目标测试、非目标和设备测试策略，但此时不写文件。</p>
-                        <p>确认无误后回复：</p>
+                        <p>确认无误后，在 Planner 自动弹出的“方案确认”单选框中点击一项：</p>
                         <div class="code-shell">
-<pre><code>批准方案，生成计划和任务合同。</code></pre>
+<pre><code>● 批准方案，生成计划和任务合同。
+  确认当前方案并生成两份待复核的规划文件。
+
+○ 需要调整方案
+  不生成文件；随后说明要调整的目标、范围或验证方式。</code></pre>
                         </div>
                         <div class="expect">
                             Planner 生成 <code>docs/plans/&lt;TASK-ID&gt;.md</code> 与
                             <code>automation/tasks/&lt;TASK-ID&gt;.json</code>，运行合同校验，并进入
-                            <code>CONTRACT_REVIEW</code>。生成文件不等于授权执行。
+                            <code>CONTRACT_REVIEW</code>。只有点击第一项才会生成文件；直接发送同名文本不构成批准。
+                            生成文件只做哈希封存，暂不提交；生成文件不等于授权执行。
                         </div>
                     </article>
 
@@ -873,26 +878,32 @@ opencode --agent scheduled-planner .</code></pre>
                             <li>不改 UI、导航、依赖、Gradle、远端解析或意图优先级。</li>
                             <li>原分支是当前实际分支，例如 <code>feature-opencode-scheduler</code>，而不是硬编码的 <code>main</code>。</li>
                         </ul>
-                        <p>复核通过后回复：</p>
+                        <p>复核完成后，在 Planner 自动弹出的“合同复核”单选框中点击一项：</p>
                         <div class="code-shell">
-<pre><code>合同已复核，批准自动执行到人工验收阶段。</code></pre>
+<pre><code>● 合同已复核，批准自动执行到人工验收阶段。
+  确认当前封存内容并自动执行到人工验收。
+
+○ 需要调整计划或任务合同
+  保持停止状态，并说明需要修改的内容。</code></pre>
                         </div>
                         <div class="expect">
-                            该确认生成一次性执行授权。此后编排器自动推进，直到成功进入
-                            <code>AWAITING_HUMAN</code>，或因硬门禁进入失败状态。
+                            只有点击第一项才生成一次性执行授权，直接发送审批文本无效。此后编排器自动推进，直到成功进入
+                            <code>AWAITING_HUMAN</code>，或因硬门禁进入失败状态。批准合同本身不会产生 Git 提交。
                         </div>
                     </article>
 
                     <article class="step" data-step="4">
-                        <h3>编排器自动准备 worktree、编码并审查</h3>
+                        <h3>编排器原地准备事务分支、编码并审查</h3>
                         <p>从这一阶段开始，用户不再执行 Terminal 命令。编排器依次完成：</p>
                         <ul>
-                            <li><strong>建立基线：</strong>只提交已批准的计划和合同，记录原分支、原 HEAD 与合同 SHA。</li>
-                            <li><strong>准备环境：</strong>在仓库外创建唯一 worktree 和任务分支，并取得任务级锁。</li>
-                            <li><strong>运行时配置：</strong>把绝对路径写入 Git 公共状态区，而不是提交到 <code>automation/config.json</code>。</li>
+                            <li><strong>建立基线：</strong>记录原分支、未改变的原 HEAD 与合同 SHA；计划和合同继续保持未提交。</li>
+                            <li><strong>准备环境：</strong>取得持久仓库租约，在当前工程目录创建并切换唯一任务分支，不复制源码。</li>
+                            <li><strong>可选隔离：</strong>只有将 <code>workspaceStrategy</code> 显式设为 <code>isolatedWorktree</code> 时才创建一个任务 worktree。</li>
+                            <li><strong>运行时配置：</strong>把任务根路径、分支和租约写入 Git 公共状态区，而不是提交单次激活配置。</li>
                             <li><strong>G0：</strong>新增测试前，全量 <code>testDebugUnitTest</code> 必须通过。</li>
                             <li><strong>G1：</strong>先添加重庆聚焦测试，获得真实 RED 并记录证据。</li>
                             <li><strong>G2–G6：</strong>完成最小实现、单测、构建、Lint、设备测试策略和范围门禁。</li>
+                            <li><strong>范围计数：</strong>计划和合同必须保持封存哈希不变，但不占用 <code>maxChangedFiles</code>；该上限只统计产品代码、测试及其他合同授权文件。</li>
                             <li><strong>G7：</strong>自动启动全新的只读 Reviewer，复跑验证并核对封存 diff。</li>
                         </ul>
                         <div class="code-shell">
@@ -910,16 +921,25 @@ PREPARING → PENDING → CODING → READY_FOR_REVIEW
                         <p>自动阶段成功后，OpenCode 一次性展示验收包，而不是要求人工逐个查状态文件。验收包必须包含：</p>
                         <ul>
                             <li>业务行为、最终产品 diff 和允许路径对照。</li>
+                            <li>将随产品变更一并进入同一提交的计划与任务合同路径。</li>
                             <li>G0 基线、真实 RED、聚焦测试、全量单测、构建与 Lint 结论。</li>
                             <li>Reviewer 决策、验证退出码、封存 diff SHA 与剩余风险。</li>
-                            <li>即将更新的原分支、当前 HEAD、预计产品提交信息，以及是否发生分支漂移。</li>
+                            <li>即将更新的原分支、当前 HEAD、预计单一任务提交信息，以及是否发生分支漂移。</li>
                         </ul>
-                        <p>不通过时回复具体原因，状态保持待验收或进入受限修复；通过时回复：</p>
+                        <p>检查完成后，在 Planner 自动弹出的“成果验收”单选框中点击一项：</p>
                         <div class="code-shell">
-<pre><code>验收通过，提交到原分支。</code></pre>
+<pre><code>● 验收通过，提交到原分支。
+  确认当前 sealed diff，并开始经过复验的本地集成。
+
+○ 验收不通过，需要说明失败项
+  保持封存，不集成；随后说明失败条件。
+
+○ 暂不决定，保持封存
+  不改变状态，稍后可重新打开同一张验收卡。</code></pre>
                         </div>
                         <div class="expect">
-                            该确认只对当前任务 ID、当前封存 diff SHA 和已展示的原分支有效；任一值变化都必须重新验收。
+                            只有点击第一项才构成验收；直接发送同名文本无效。该选择只对当前任务 ID、当前封存 diff SHA
+                            和已展示的原分支有效；任一值变化都必须重新展示并选择。
                         </div>
                     </article>
 
@@ -928,10 +948,10 @@ PREPARING → PENDING → CODING → READY_FOR_REVIEW
                         <p>最终确认后，确定性集成器自动完成以下操作：</p>
                         <ul>
                             <li>再次验证 <code>AWAITING_HUMAN</code>、Review 批准、diff SHA、合同范围与原分支身份。</li>
-                            <li>只暂存 <code>allowedPaths</code>，在任务分支生成单一产品提交。</li>
-                            <li>先在隔离的集成候选 worktree 中应用提交并复跑确定性验证。</li>
-                            <li>原分支未漂移时执行快进；已前进但可无冲突应用时生成验证过的新候选；冲突时不修改原分支。</li>
-                            <li>保存集成证据、释放锁并清理临时 worktree，最后进入 <code>COMPLETED</code>。</li>
+                            <li>将合同允许的代码/测试与已封存的计划/合同一起暂存，在任务分支生成一个提交。</li>
+                            <li>确认从任务开始基线到候选 HEAD 恰好只有这一个提交，并在当前任务目录复跑确定性验证，不建立第二个候选目录。</li>
+                            <li>原分支仍等于批准基线时执行快进；只要发生漂移就进入 <code>INTEGRATION_BLOCKED</code>，不自动 cherry-pick。</li>
+                            <li>保存集成证据并释放持久租约；可选隔离模式再清理唯一任务 worktree，最后进入 <code>COMPLETED</code>。</li>
                         </ul>
                         <div class="code-shell">
 <pre><code>state=COMPLETED
@@ -963,20 +983,21 @@ pushed=false</code></pre>
                         <p><code>scheduled-planner</code> 加载专用 Orchestrator Skill。它不能编辑产品代码，只能调用白名单事务脚本、启动隔离的 Coder/Reviewer，并向用户展示审批内容。</p>
                     </article>
                     <article class="card">
-                        <h3>两条确定性事务接口</h3>
+                        <h3>两条主事务与一条安全中止接口</h3>
                         <div class="code-shell" style="margin-top: 12px;">
 <pre><code>./scripts/automation/approve-and-run.sh &lt;TASK-ID&gt; &lt;APPROVAL-TOKEN&gt;
-./scripts/automation/accept-and-integrate.sh &lt;TASK-ID&gt; &lt;ACCEPTANCE-TOKEN&gt;</code></pre>
+./scripts/automation/accept-and-integrate.sh &lt;TASK-ID&gt; &lt;ACCEPTANCE-TOKEN&gt;
+./scripts/automation/abort-task.sh &lt;TASK-ID&gt; &lt;ABORT-TOKEN&gt;</code></pre>
                         </div>
-                        <p>第一条负责基线、worktree 和自动流水线；第二条负责封存校验、候选集成和原分支更新。</p>
+                        <p>第一条负责基线、事务分支、租约和自动流水线；第二条负责封存校验、同目录复验和原分支快进；第三条归档现场并恢复原分支。</p>
                     </article>
                     <article class="card">
                         <h3>非跟踪运行时配置</h3>
-                        <p>worktree 绝对路径、锁和运行状态存放在 Git common dir。不得再通过修改并提交 <code>automation/config.json</code> 激活单次任务。</p>
+                        <p>任务根路径、持久仓库租约和运行状态存放在 Git common dir。不得通过修改并提交本机绝对路径激活单次任务。</p>
                     </article>
                     <article class="card">
                         <h3>幂等、锁和可恢复状态</h3>
-                        <p>每个任务只允许一个编排器持锁；重复确认不得重复建分支、重复提交或重复集成。进程中断后应从证据状态安全恢复。</p>
+                        <p>同一仓库只允许一个编排任务持有租约；重复确认不得重复建分支、重复提交或重复集成。租约跨人工等待保留，进程中断后从证据状态恢复。</p>
                     </article>
                 </div>
 
@@ -997,7 +1018,7 @@ pushed=false</code></pre>
                             </tr>
                             <tr>
                                 <td>Orchestrator</td>
-                                <td>校验批准令牌、管理状态/锁/worktree、启动隔离 Agent</td>
+                                <td>校验批准令牌、管理状态/持久租约/事务任务根、启动隔离 Agent</td>
                                 <td>自行解释需求或编辑产品代码</td>
                             </tr>
                             <tr>
@@ -1012,7 +1033,7 @@ pushed=false</code></pre>
                             </tr>
                             <tr>
                                 <td>Integrator</td>
-                                <td>最终批准后暂存允许文件、创建产品提交、验证候选并更新原分支</td>
+                                <td>最终批准后将允许文件与封存计划/合同合为一个提交、验证候选并更新原分支</td>
                                 <td>跳过 SHA/范围校验、自动解冲突、force push 或修改未授权分支</td>
                             </tr>
                         </tbody>
@@ -1059,7 +1080,7 @@ pushed=false</code></pre>
                             <li>产品 diff 只落在合同允许路径。</li>
                             <li>没有修改 Agent、Skill、合同、门禁脚本、Gradle 或依赖。</li>
                             <li>没有删除、忽略或弱化测试。</li>
-                            <li>worktree 由 Orchestrator 创建，Coder 没有 Git 管理权限。</li>
+                            <li>事务任务分支与可选 worktree 只由 Orchestrator 管理，Coder 没有 Git 管理权限。</li>
                             <li>Reviewer 是独立只读会话，未编辑仓库文件。</li>
                             <li>任务历史中不存在含本机绝对路径的激活配置提交。</li>
                         </ul>
@@ -1083,8 +1104,8 @@ pushed=false</code></pre>
                 <div class="section-head">
                     <div>
                         <span class="kicker">Evidence</span>
-                        <h2>跨 worktree 保存的完整证据目录</h2>
-                        <p>证据写入 Git common dir，不进入产品 diff，并且在临时 worktree 清理后仍然存在。</p>
+                        <h2>跨分支与进程保存的完整证据目录</h2>
+                        <p>证据写入 Git common dir，不进入产品 diff；即使进程退出、切回原分支或清理可选 worktree 仍然存在。</p>
                     </div>
                     <span class="section-no">06</span>
                 </div>
@@ -1092,11 +1113,11 @@ pushed=false</code></pre>
                 <div class="code-shell">
 <pre><code>&lt;GIT-COMMON-DIR&gt;/automation-runtime/
 ├── state/&lt;TASK-ID&gt;.json       <span class="comment"># 当前状态与修订号</span>
-├── workspaces/&lt;TASK-ID&gt;.json  <span class="comment"># 临时分支、worktree 与运行时配置</span>
-├── locks/                      <span class="comment"># 状态锁与任务级编排锁</span>
+├── workspaces/&lt;TASK-ID&gt;.json  <span class="comment"># 工作区策略、任务根与分支身份</span>
+├── locks/                      <span class="comment"># 状态锁、运行锁与持久仓库租约</span>
 └── evidence/&lt;TASK-ID&gt;/
 ├── transitions.jsonl          <span class="comment"># 只追加的状态迁移审计</span>
-├── approvals.jsonl            <span class="comment"># 三次批准类型及其绑定分支/SHA</span>
+├── approvals.jsonl            <span class="comment"># 三次正常批准及可选中止授权</span>
 ├── origin.json                <span class="comment"># 原分支、基线 HEAD 与工作区身份</span>
 ├── preflight.log              <span class="comment"># 环境、权限、合同与洁净度预检</span>
 ├── baseline.log
@@ -1110,11 +1131,13 @@ pushed=false</code></pre>
 ├── review-verification.log
 ├── review.json                <span class="comment"># G7 独立审核结论</span>
 ├── acceptance-report.json     <span class="comment"># 集中式人工验收包</span>
-├── sealed.diff                <span class="comment"># 含新文件的封存产品差异</span>
+├── sealed.diff                <span class="comment"># 含产品与规划文件的封存任务差异</span>
 ├── acceptance.json            <span class="comment"># 最终人工接受及其绑定对象</span>
-├── integration-verification.log <span class="comment"># 原分支候选集成与复验</span>
-├── integration.json           <span class="comment"># 产品提交、原分支新 HEAD、结果</span>
-└── cleanup.log                <span class="comment"># worktree 与锁清理记录</span></code></pre>
+├── integration-verification.log <span class="comment"># 单一任务提交的同目录确定性复验</span>
+├── integration.json           <span class="comment"># 单一任务提交、原分支新 HEAD、结果</span>
+├── aborted.diff               <span class="comment"># 显式中止时归档的未提交差异</span>
+├── abort.json                 <span class="comment"># 恢复提交、原分支与 ABORTED 结果</span>
+└── cleanup.log                <span class="comment"># 可选 worktree 清理记录</span></code></pre>
                 </div>
             </section>
 
@@ -1141,11 +1164,11 @@ pushed=false</code></pre>
                             <tr>
                                 <td><code>CONTRACT_INVALID</code></td>
                                 <td>合同缺字段、范围含糊、原分支无法确定或审批对象已改变。</td>
-                                <td>保持在合同复核阶段，由 Planner 修订；绝不创建 worktree。</td>
+                                <td>保持在合同复核阶段，由 Planner 修订；绝不取得执行租约或切换任务分支。</td>
                             </tr>
                             <tr>
                                 <td><code>BLOCKED</code></td>
-                                <td>SDK、依赖、基线、权限、锁或 worktree 不满足硬门禁。</td>
+                                <td>SDK、依赖、基线、权限、仓库租约或任务根身份不满足硬门禁。</td>
                                 <td>保留日志并报告一条可执行的修复建议；修复后从最近安全状态恢复。</td>
                             </tr>
                             <tr>
@@ -1160,8 +1183,13 @@ pushed=false</code></pre>
                             </tr>
                             <tr>
                                 <td><code>INTEGRATION_BLOCKED</code></td>
-                                <td>原工作区变脏、原分支身份改变、候选 cherry-pick 冲突或复验失败。</td>
-                                <td>原分支保持不变，保留候选和证据，等待人工处理后继续。</td>
+                                <td>原分支偏离任务开始基线、任务根身份改变或单一任务提交复验失败。</td>
+                                <td>原分支保持不变，不自动 cherry-pick；保留任务分支、租约与证据，等待人工决定。</td>
+                            </tr>
+                            <tr>
+                                <td><code>ABORTED</code></td>
+                                <td>人工明确决定终止一个已停止的任务。</td>
+                                <td>有产品修改时与计划/合同合为一个 recovery commit；仅有规划文件时只归档 diff、不提交；随后恢复原分支并释放租约。</td>
                             </tr>
                         </tbody>
                     </table>

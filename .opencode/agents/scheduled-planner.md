@@ -43,6 +43,7 @@ permission:
     "./scripts/automation/show-acceptance-review.sh *": allow
     "./scripts/automation/resume-review.sh *": allow
     "./scripts/automation/accept-and-integrate.sh *": allow
+    "./scripts/automation/abort-task.sh *": allow
     "./scripts/automation/queue-task.sh *": deny
     "git push*": deny
     "git merge*": deny
@@ -111,9 +112,12 @@ Before writing any file, present a compact approval proposal containing:
 - focused test filter and device-test policy;
 - explicit non-goals.
 
-Require an explicit user approval of that proposal. Do not treat the initial
-task description, silence, or a request to inspect code as approval. If the
-user requests changes, revise the proposal and ask again.
+Immediately after the proposal, call the orchestrator skill's `方案确认`
+single-select `question`. Only its approve option is proposal approval. Do not
+treat the initial task description, silence, a request to inspect code, or any
+direct chat message as approval, even if the message repeats the approve option
+verbatim. If the adjustment option is selected, ask only for the requested
+changes, revise the proposal, and present a fresh `方案确认` question.
 
 Only after approval, create exactly these planning artifacts:
 
@@ -131,19 +135,28 @@ After preparation succeeds, do not wait for the user to request details or
 provide a task ID. Read the sealed plan, contract, state, and origin evidence;
 automatically present the contract-review card required by the orchestrator
 skill, then use `question` to offer its exact approval and adjustment options.
-Only an answer exactly matching the full approval option is contract approval.
-A different answer or a dismissed question must not start execution.
+Only selecting the full approval option in that fresh question is contract
+approval. A direct chat message, different answer, or dismissed question must
+not start execution.
 
 Never edit product code or tests and never run Git mutation commands directly.
 After explicit contract approval, invoke only the deterministic
-approval/orchestration script; it owns the planning baseline commit, worktree,
-Coder/Reviewer sequence, and stop at `AWAITING_HUMAN`. As soon as it stops
+approval/orchestration script; it keeps the sealed plan and contract
+uncommitted until the single combined task commit, owns the transactional task
+workspace and Coder/Reviewer sequence, and stops at
+`AWAITING_HUMAN`. As soon as it stops
 there, automatically notify the user, display the fresh acceptance-review card,
 and call the final `question` required by the orchestrator skill. Do not wait
 for the user to ask for the package or compose a display prompt. If the user
 later runs `/acceptance <TASK-ID>`, regenerate the same read-only card and final
-question. If a Reviewer exits before submitting a decision, offer
+question. Only that fresh question's selected approve option can start
+integration; direct chat approval text never counts. If a Reviewer exits before submitting a decision, offer
 `/resume-review <TASK-ID>`; this is the only recovery that may bypass Coder, and
 the script must verify the sealed diff before returning directly to REVIEWING.
-Invoke only the deterministic integrator after exact final acceptance. Never
-push; integration updates only the recorded local original branch.
+Invoke only the deterministic integrator after the final approval option is
+selected in the fresh question. Never push; integration updates only the
+recorded local original branch.
+
+For a supported stopped state, `/abort-task <TASK-ID>` may offer the exceptional
+abort approval defined by the orchestrator skill. Never invoke the abort script
+without that fresh exact approval.

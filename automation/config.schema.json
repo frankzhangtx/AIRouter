@@ -8,7 +8,8 @@
     "schemaVersion",
     "enabled",
     "mode",
-    "requireDedicatedWorktree",
+    "workspaceStrategy",
+    "originalBranchDriftPolicy",
     "worktreeBase",
     "maxFixLoops",
     "maxReviewCycles",
@@ -21,10 +22,13 @@
     "protectedPaths"
   ],
   "properties": {
-    "schemaVersion": { "const": 2 },
+    "schemaVersion": { "const": 3 },
     "enabled": { "type": "boolean" },
     "mode": { "enum": ["shadow", "orchestrated"] },
-    "requireDedicatedWorktree": { "const": true },
+    "workspaceStrategy": {
+      "enum": ["inPlaceExclusive", "isolatedWorktree"]
+    },
+    "originalBranchDriftPolicy": { "const": "block" },
     "worktreeBase": { "type": "string" },
     "maxFixLoops": { "type": "integer", "minimum": 0, "maximum": 1 },
     "maxReviewCycles": { "type": "integer", "minimum": 0, "maximum": 2 },
@@ -34,11 +38,12 @@
     "approvalPhrases": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["proposal", "contract", "acceptance"],
+      "required": ["proposal", "contract", "acceptance", "abort"],
       "properties": {
         "proposal": { "type": "string", "minLength": 4 },
         "contract": { "type": "string", "minLength": 4 },
-        "acceptance": { "type": "string", "minLength": 4 }
+        "acceptance": { "type": "string", "minLength": 4 },
+        "abort": { "type": "string", "minLength": 4 }
       }
     },
     "plugins": {

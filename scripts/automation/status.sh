@@ -33,10 +33,44 @@ if [[ "$ready_json" != "null" ]]; then
 fi
 
 current_diff_sha=""
+lease_json=null
+lease_matches=null
+original_head_current=""
+original_branch_drifted=null
 if [[ "$workspace_json" != "null" ]]; then
-    task_root="$(jq -r '.taskWorktree // empty' <<< "$workspace_json")"
+    task_root="$(jq -r '.taskRoot // .taskWorktree // empty' <<< "$workspace_json")"
     if [[ -n "$task_root" && -d "$task_root" ]]; then
         current_diff_sha="$(automation_worktree_diff_sha "$task_root")"
+    fi
+    source_root="$(jq -r '.sourceRoot // empty' <<< "$workspace_json")"
+    original_branch="$(jq -r '.originalBranch // empty' <<< "$workspace_json")"
+    baseline_head="$(jq -r '.baselineHead // empty' <<< "$workspace_json")"
+    if [[ -n "$source_root" && -n "$original_branch" ]] && \
+       git -C "$source_root" show-ref --verify --quiet "refs/heads/$original_branch"; then
+        original_head_current="$(git -C "$source_root" rev-parse "refs/heads/$original_branch")"
+        if [[ -n "$baseline_head" && "$original_head_current" != "$baseline_head" ]]; then
+            original_branch_drifted=true
+        else
+            original_branch_drifted=false
+        fi
+    fi
+    if [[ "$(jq -r '.repositoryLeaseRequired // false' <<< "$workspace_json")" == "true" ]]; then
+        lease_file="$(automation_repository_lease_dir)/lease.json"
+        if [[ -f "$lease_file" ]]; then
+            lease_json="$(jq -c . "$lease_file")"
+            if jq -e \
+                --arg taskId "$task_id" \
+                --arg sourceRoot "$source_root" \
+                --arg strategy "$(jq -r '.workspaceStrategy' <<< "$workspace_json")" \
+                '.taskId == $taskId and .sourceRoot == $sourceRoot and .workspaceStrategy == $strategy' \
+                "$lease_file" >/dev/null; then
+                lease_matches=true
+            else
+                lease_matches=false
+            fi
+        else
+            lease_matches=false
+        fi
     fi
 fi
 
@@ -51,9 +85,19 @@ jq -n \
     --argjson ready "$ready_json" \
     --argjson gate "$gate_json" \
     --argjson review "$review_json" \
+    --argjson repositoryLease "$lease_json" \
+    --argjson repositoryLeaseMatches "$lease_matches" \
+    --arg originalHeadCurrent "$original_head_current" \
+    --argjson originalBranchDrifted "$original_branch_drifted" \
     --arg evidence "$evidence_dir" \
     --arg currentDiffSha256 "$current_diff_sha" \
     '{contract: $contract[0], state: $state, workspace: $workspace, origin: $origin,
+      runtime: {
+        repositoryLease: $repositoryLease,
+        repositoryLeaseMatches: $repositoryLeaseMatches,
+        originalHeadCurrent: ($originalHeadCurrent | if length == 0 then null else . end),
+        originalBranchDrifted: $originalBranchDrifted
+      },
       evidenceDirectory: $evidence,
       evidence: {
         directory: $evidence,

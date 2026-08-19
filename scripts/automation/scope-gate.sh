@@ -19,8 +19,16 @@ baseline_head="$(jq -er '.head' "$baseline_meta")"
 current_head="$(git -C "$AUTOMATION_ROOT" rev-parse HEAD)"
 [[ "$baseline_head" == "$current_head" ]] || { automation_die "HEAD changed after baseline"; exit 40; }
 
-changed_file_list="$(automation_changed_paths)"
-[[ -n "$changed_file_list" ]] || { automation_die "task has no changed files"; exit 40; }
+workspace_file="$(automation_workspace_path "$task_id")"
+planning_commit_policy="$(jq -r '.planningArtifactsCommitPolicy // "legacyCommittedSeparately"' "$workspace_file")"
+if [[ "$planning_commit_policy" == "withProductChanges" ]]; then
+    automation_assert_planning_artifacts_sealed "$task_id" "$AUTOMATION_ROOT" || exit 40
+    changed_file_list="$(automation_product_changed_paths_at "$task_id" "$AUTOMATION_ROOT")"
+    [[ -n "$changed_file_list" ]] || { automation_die "task has no product changes beyond its sealed planning artifacts"; exit 40; }
+else
+    changed_file_list="$(automation_changed_paths)"
+    [[ -n "$changed_file_list" ]] || { automation_die "task has no changed files"; exit 40; }
+fi
 
 max_changed="$(jq -r '.maxChangedFiles' "$contract")"
 changed_count="$(printf '%s\n' "$changed_file_list" | awk 'NF { count++ } END { print count + 0 }')"
@@ -81,5 +89,9 @@ while IFS= read -r untracked_test; do
     esac
 done < <(git -C "$AUTOMATION_ROOT" ls-files --others --exclude-standard -- app/src/test app/src/androidTest)
 
-automation_info "scope gate passed ($changed_count changed files)"
+if [[ "$planning_commit_policy" == "withProductChanges" ]]; then
+    automation_info "scope gate passed ($changed_count product files; sealed planning artifacts excluded from the contract limit)"
+else
+    automation_info "scope gate passed ($changed_count changed files)"
+fi
 printf '%s\n' "$changed_file_list"

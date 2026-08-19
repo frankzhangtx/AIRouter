@@ -35,8 +35,11 @@ it with `./scripts/automation/block-task.sh <TASK-ID> <reason>` before stopping.
 3. Branch by deterministic state:
 
    - For `PENDING`, run `./scripts/automation/claim-task.sh <TASK-ID>`. It
-     performs preflight, verifies the orchestrator-created worktree, captures
-     the green baseline, and changes the task to `CODING`.
+     performs preflight, verifies that the only initial worktree changes are
+     the two sealed, uncommitted planning artifacts, captures the green
+     baseline, and changes the task to `CODING`. Never edit, stage, or remove
+     those planning artifacts; the integrator will include them in the final
+     combined commit.
    - For `CODING` with reviewer feedback, read `review.json` and implement only
      the requested in-contract repair. Do not claim again and do not replace
      the original RED evidence.
@@ -69,7 +72,7 @@ it with `./scripts/automation/block-task.sh <TASK-ID> <reason>` before stopping.
 Stop immediately when any of these occur:
 
 - requirement ambiguity or conflict;
-- dirty worktree before claim;
+- any initial task-root change beyond the two sealed planning artifacts;
 - missing plugin, skill, tool, device, or dependency;
 - a requested edit outside `allowedPaths` or inside protected paths;
 - no meaningful failing test can be written;

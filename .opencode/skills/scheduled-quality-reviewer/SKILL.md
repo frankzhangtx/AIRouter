@@ -27,7 +27,11 @@ you review.
    metadata, RED evidence, latest gate metadata, current diff SHA, and the
    sealed-SHA comparison. Use that compact evidence object; do not try to read
    the external shared evidence directory or search generated Gradle report
-   directories. Inspect the actual change with exactly `git diff`.
+   directories. Inspect the actual tracked product change with exactly
+   `git diff`. The plan and task contract remain uncommitted and are included
+   in the sealing scripts' full task SHA even when plain `git diff` does not
+   render those untracked files; their hashes are protected, and only product
+   paths count against `allowedPaths` and `maxChangedFiles`.
 5. Check each acceptance criterion against observable behavior. Inspect for
    regression risk, missing edge cases, out-of-scope changes, test deletion,
    ignored tests, relaxed assertions, and implementation-shaped tests.

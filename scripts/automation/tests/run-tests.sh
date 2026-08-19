@@ -68,12 +68,13 @@ write_workspace() {
         --arg sourceRoot "$fixture" \
         --arg originalBranch "$branch" \
         --arg baselineHead "$head" \
-        --arg taskWorktree "$fixture" \
+        --arg taskRoot "$fixture" \
         --arg taskBranch "$branch" \
         --arg worktreeBase "$worktree_base" \
         '{taskId: $taskId, sourceRoot: $sourceRoot,
           originalBranch: $originalBranch, baselineHead: $baselineHead,
-          taskWorktree: $taskWorktree, taskBranch: $taskBranch,
+          workspaceStrategy: "inPlaceExclusive", taskRoot: $taskRoot,
+          repositoryLeaseRequired: false, taskBranch: $taskBranch,
           worktreeBase: $worktreeBase, codingCycle: 0, reviewCycles: 0}' \
         > "$runtime_root/workspaces/$task_id.json"
 }
@@ -106,10 +107,11 @@ printf '%s\n' \
 chmod +x "$fixture/gradlew"
 
 jq -n '{
-    schemaVersion: 2,
+    schemaVersion: 3,
     enabled: true,
     mode: "orchestrated",
-    requireDedicatedWorktree: true,
+    workspaceStrategy: "inPlaceExclusive",
+    originalBranchDriftPolicy: "block",
     worktreeBase: "",
     maxFixLoops: 1,
     maxReviewCycles: 1,
@@ -119,7 +121,8 @@ jq -n '{
     approvalPhrases: {
         proposal: "批准方案，生成计划和任务合同。",
         contract: "合同已复核，批准自动执行到人工验收阶段。",
-        acceptance: "验收通过，提交到原分支。"
+        acceptance: "验收通过，提交到原分支。",
+        abort: "中止任务，封存修改并恢复原分支。"
     },
     plugins: {
         scheduler: "opencode-scheduler@1.3.0",
@@ -199,7 +202,7 @@ jq -n '{
 )
 
 run_fixture ./scripts/automation/validate-contract.sh TASK-TEST-001 >/dev/null
-pass 'valid version-2 configuration and task contract are accepted'
+pass 'valid version-3 configuration and task contract are accepted'
 
 if run_fixture env AUTOMATION_HUMAN_APPROVED=0 ./scripts/automation/queue-task.sh TASK-TEST-001 >/dev/null 2>&1; then
     fail 'legacy queue accepted without explicit human approval'
@@ -360,7 +363,7 @@ if run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/resume-revie
     fail 'reviewer-only recovery accepted a non-review blocker'
 fi
 rm "$fixture/unapproved-change.txt"
-pass 'preflight blocks dirty task worktrees without retrying implicitly'
+pass 'preflight blocks dirty task roots without retrying implicitly'
 pass 'reviewer-only recovery rejects unrelated BLOCKED states'
 
 printf '%s\n' '# Approved reviewer-fix plan' > "$fixture/docs/plans/TASK-TEST-005.md"
@@ -416,7 +419,7 @@ pass 'reviewer repair limit prevents an unbounded agent loop'
 printf '%s\n' '# End-to-end orchestrated plan' > "$fixture/docs/plans/TASK-TEST-004.md"
 jq \
     '.id = "TASK-TEST-004" |
-     .title = "Exercise automatic worktree integration" |
+     .title = "Exercise in-place transactional integration" |
      .planPath = "docs/plans/TASK-TEST-004.md" |
      .targetTests = ["com.example.cctest.OrchestratedFlowTest"]' \
     "$fixture/automation/tasks/TASK-TEST-001.json" \
@@ -425,7 +428,7 @@ jq \
 if run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-004 '确认' >/dev/null 2>&1; then
     fail 'proposal preparation accepted an unbound confirmation'
 fi
-pass 'proposal gate requires the configured explicit approval phrase'
+pass 'proposal gate requires the configured approval option token'
 
 run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-004 '批准方案，生成计划和任务合同。' >/dev/null
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-004.json")" == "CONTRACT_REVIEW" ]] || fail 'proposal gate did not enter CONTRACT_REVIEW'
@@ -434,22 +437,37 @@ pass 'approved proposal seals plan, contract, branch, HEAD, and hashes'
 if run_fixture ./scripts/automation/approve-and-run.sh TASK-TEST-004 '确认执行' >/dev/null 2>&1; then
     fail 'contract execution accepted an unbound confirmation'
 fi
-pass 'contract gate rejects execution without the exact approval'
+pass 'contract gate rejects execution without the exact approval option token'
 
 run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/approve-and-run.sh TASK-TEST-004 '合同已复核，批准自动执行到人工验收阶段。' >/dev/null
-task_worktree="$(jq -er '.taskWorktree' "$runtime_root/workspaces/TASK-TEST-004.json")"
-[[ -d "$task_worktree" ]] || fail 'orchestrator did not create the external task worktree'
+task_root="$(jq -er '.taskRoot' "$runtime_root/workspaces/TASK-TEST-004.json")"
+approved_baseline="$(jq -er '.baselineHead' "$runtime_root/workspaces/TASK-TEST-004.json")"
+[[ "$task_root" == "$fixture" ]] || fail 'in-place strategy did not keep the task in the source directory'
+[[ "$(jq -r '.workspaceStrategy' "$runtime_root/workspaces/TASK-TEST-004.json")" == "inPlaceExclusive" ]] || fail 'workspace strategy was not recorded'
+[[ "$(git -C "$fixture" symbolic-ref --short HEAD)" == "automation/task-test-004" ]] || fail 'source directory did not switch to the task branch'
+[[ "$(git -C "$fixture" rev-list --count "$approved_baseline..automation/task-test-004")" -eq 0 ]] || fail 'contract approval created a planning-only commit'
+[[ "$(jq -r '.contractCommit' "$runtime_root/evidence/TASK-TEST-004/origin.json")" == "null" ]] || fail 'contract approval recorded a commit before product integration'
+[[ "$(git -C "$fixture" status --porcelain --untracked-files=all -- docs/plans/TASK-TEST-004.md automation/tasks/TASK-TEST-004.json | wc -l | tr -d ' ')" -eq 2 ]] || fail 'sealed planning artifacts were not left pending on the task branch'
+[[ -f "$runtime_root/locks/repository.workspace.lease/lease.json" ]] || fail 'persistent repository lease was not created'
+leased_status="$(run_fixture ./scripts/automation/status.sh TASK-TEST-004)"
+[[ "$(jq -r '.runtime.repositoryLeaseMatches' <<< "$leased_status")" == "true" ]] || fail 'status did not verify the repository lease'
+[[ "$(jq -r '.runtime.originalBranchDrifted' <<< "$leased_status")" == "false" ]] || fail 'status reported false branch drift'
+if run_fixture bash -c 'source ./scripts/automation/lib.sh; automation_acquire_repository_lease TASK-TEST-999 "$PWD" inPlaceExclusive' >/dev/null 2>&1; then
+    fail 'a second task acquired the persistent repository lease'
+fi
+pass 'persistent repository lease rejects a concurrent automation task'
+[[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 1 ]] || fail 'in-place preparation created an unexpected worktree'
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-004.json")" == "PENDING" ]] || fail 'prepared task did not become PENDING'
-pass 'contract approval commits its baseline and creates an outside task worktree'
+pass 'contract approval switches to a leased task branch while deferring the sealed plan and contract to the product commit'
 
-run_task "$task_worktree" ./scripts/automation/claim-task.sh TASK-TEST-004 >/dev/null
-printf '%s\n' 'class OrchestratedFlowTest { fun expectedBehavior() = Unit }' > "$task_worktree/app/src/test/java/com/example/cctest/OrchestratedFlowTest.kt"
-run_task "$task_worktree" ./scripts/automation/record-red.sh TASK-TEST-004 'expected missing behavior' -- com.example.cctest.OrchestratedFlowTest >/dev/null
-printf '%s\n' 'class OrchestratedFlow { fun value() = "integrated" }' > "$task_worktree/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
-run_task "$task_worktree" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/quality-gate.sh TASK-TEST-004 >/dev/null
-run_task "$task_worktree" ./scripts/automation/begin-review.sh TASK-TEST-004 >/dev/null
-run_task "$task_worktree" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-004 APPROVED 'Fresh review confirms the sealed behavior and scope.' >/dev/null
-run_task "$task_worktree" ./scripts/automation/acceptance-report.sh TASK-TEST-004 >/dev/null
+run_task "$task_root" ./scripts/automation/claim-task.sh TASK-TEST-004 >/dev/null
+printf '%s\n' 'class OrchestratedFlowTest { fun expectedBehavior() = Unit }' > "$task_root/app/src/test/java/com/example/cctest/OrchestratedFlowTest.kt"
+run_task "$task_root" ./scripts/automation/record-red.sh TASK-TEST-004 'expected missing behavior' -- com.example.cctest.OrchestratedFlowTest >/dev/null
+printf '%s\n' 'class OrchestratedFlow { fun value() = "integrated" }' > "$task_root/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
+run_task "$task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/quality-gate.sh TASK-TEST-004 >/dev/null
+run_task "$task_root" ./scripts/automation/begin-review.sh TASK-TEST-004 >/dev/null
+run_task "$task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-004 APPROVED 'Fresh review confirms the sealed behavior and scope.' >/dev/null
+run_task "$task_root" ./scripts/automation/acceptance-report.sh TASK-TEST-004 >/dev/null
 [[ "$(jq -r '.changedPaths | length' "$runtime_root/evidence/TASK-TEST-004/acceptance-report.json")" -eq 2 ]] || fail 'acceptance package omitted product paths'
 [[ "$(jq -r '.evidence.qualityGate' "$runtime_root/evidence/TASK-TEST-004/acceptance-report.json")" == "PASSED" ]] || fail 'acceptance package omitted quality-gate status'
 acceptance_card="$(run_fixture ./scripts/automation/show-acceptance-review.sh TASK-TEST-004)"
@@ -459,59 +477,179 @@ acceptance_card="$(run_fixture ./scripts/automation/show-acceptance-review.sh TA
 [[ "$acceptance_card" == *"sealed diff SHA"* ]] || fail 'acceptance review omitted sealed binding'
 pass 'automated evidence becomes one focused, SHA-verified human acceptance card'
 
-printf '%s\n' 'class OrchestratedFlow { fun value() = "tampered after review" }' > "$task_worktree/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
+printf '%s\n' 'class OrchestratedFlow { fun value() = "tampered after review" }' > "$task_root/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
 if run_fixture ./scripts/automation/show-acceptance-review.sh TASK-TEST-004 >/dev/null 2>&1; then
     fail 'acceptance review displayed a diff changed after sealing'
 fi
-printf '%s\n' 'class OrchestratedFlow { fun value() = "integrated" }' > "$task_worktree/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
+printf '%s\n' 'class OrchestratedFlow { fun value() = "integrated" }' > "$task_root/app/src/main/java/com/example/cctest/OrchestratedFlow.kt"
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-004.json")" == "AWAITING_HUMAN" ]] || fail 'read-only acceptance display changed task state'
 pass 'acceptance display rejects a changed diff and never advances state'
 
-original_branch="$(git -C "$fixture" symbolic-ref --short HEAD)"
+original_branch="$(jq -er '.originalBranch' "$runtime_root/evidence/TASK-TEST-004/origin.json")"
 if run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-004 '拒绝' >/dev/null 2>&1; then
     fail 'integrator accepted an invalid final confirmation'
 fi
 pass 'integrator requires final acceptance bound to the sealed diff'
 
 run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-004 '验收通过，提交到原分支。' >/dev/null
+combined_commit="$(jq -er '.productCommit' "$runtime_root/workspaces/TASK-TEST-004.json")"
 [[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-004.json")" == "COMPLETED" ]] || fail 'final integration did not reach COMPLETED'
 [[ "$(git -C "$fixture" symbolic-ref --short HEAD)" == "$original_branch" ]] || fail 'integrator changed the original branch identity'
 [[ -f "$fixture/app/src/main/java/com/example/cctest/OrchestratedFlow.kt" ]] || fail 'product change was not integrated into original branch'
+[[ "$(git -C "$fixture" rev-list --count "$approved_baseline..$combined_commit")" -eq 1 ]] || fail 'final integration created more than one task commit'
+for combined_path in \
+    docs/plans/TASK-TEST-004.md \
+    automation/tasks/TASK-TEST-004.json \
+    app/src/main/java/com/example/cctest/OrchestratedFlow.kt \
+    app/src/test/java/com/example/cctest/OrchestratedFlowTest.kt; do
+    git -C "$fixture" diff-tree --no-commit-id --name-only -r "$combined_commit" | \
+        awk -v expected="$combined_path" '$0 == expected { found = 1 } END { exit !found }' || \
+        fail "combined task commit omitted $combined_path"
+done
+[[ "$(jq -r '.contractCommit' "$runtime_root/evidence/TASK-TEST-004/origin.json")" == "$combined_commit" ]] || fail 'origin evidence did not bind the contract to the combined task commit'
 [[ "$(jq -r '.pushed' "$runtime_root/evidence/TASK-TEST-004/integration.json")" == "false" ]] || fail 'integration evidence did not forbid push'
-[[ ! -d "$task_worktree" ]] || fail 'successful flow did not clean the task worktree'
-pass 'verified candidate is committed to the recorded original branch without push'
+[[ "$(jq -r '.method' "$runtime_root/evidence/TASK-TEST-004/integration.json")" == "inPlaceExclusive-fast-forward" ]] || fail 'integration did not use the in-place fast-forward path'
+[[ ! -d "$runtime_root/locks/repository.workspace.lease" ]] || fail 'successful integration did not release the repository lease'
+[[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 1 ]] || fail 'final integration created an unexpected candidate worktree'
+pass 'one verified commit carries product code, tests, plan, and contract to the original branch without push'
+
+printf '%s\n' '# Abort archival safety plan' > "$fixture/docs/plans/TASK-TEST-008.md"
+jq \
+    '.id = "TASK-TEST-008" |
+     .title = "Archive an interrupted in-place task" |
+     .planPath = "docs/plans/TASK-TEST-008.md" |
+     .targetTests = ["com.example.cctest.AbortArchiveTest"]' \
+    "$fixture/automation/tasks/TASK-TEST-001.json" \
+    > "$fixture/automation/tasks/TASK-TEST-008.json"
+run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-008 '批准方案，生成计划和任务合同。' >/dev/null
+run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/approve-and-run.sh TASK-TEST-008 '合同已复核，批准自动执行到人工验收阶段。' >/dev/null
+printf '%s\n' 'class AbortArchive { fun value() = "preserved" }' > "$fixture/app/src/main/java/com/example/cctest/AbortArchive.kt"
+printf '%s\n' 'must not be archived automatically' > "$fixture/out-of-contract.txt"
+if run_fixture ./scripts/automation/abort-task.sh TASK-TEST-008 '中止任务，封存修改并恢复原分支。' >/dev/null 2>&1; then
+    fail 'abort archived an out-of-contract path'
+fi
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-008.json")" == "PENDING" ]] || fail 'rejected abort changed task state'
+[[ -d "$runtime_root/locks/repository.workspace.lease" ]] || fail 'rejected abort released the repository lease'
+rm "$fixture/out-of-contract.txt"
+run_fixture ./scripts/automation/abort-task.sh TASK-TEST-008 '中止任务，封存修改并恢复原分支。' >/dev/null
+abort_recovery_commit="$(jq -er '.recoveryCommit' "$runtime_root/evidence/TASK-TEST-008/abort.json")"
+git -C "$fixture" cat-file -e "$abort_recovery_commit:app/src/main/java/com/example/cctest/AbortArchive.kt" || fail 'abort recovery commit omitted the allowed change'
+git -C "$fixture" cat-file -e "$abort_recovery_commit:docs/plans/TASK-TEST-008.md" || fail 'abort recovery commit omitted the sealed plan'
+git -C "$fixture" cat-file -e "$abort_recovery_commit:automation/tasks/TASK-TEST-008.json" || fail 'abort recovery commit omitted the sealed contract'
+[[ ! -f "$fixture/app/src/main/java/com/example/cctest/AbortArchive.kt" ]] || fail 'abort left archived code on the original branch'
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-008.json")" == "ABORTED" ]] || fail 'allowed abort did not reach ABORTED'
+[[ ! -d "$runtime_root/locks/repository.workspace.lease" ]] || fail 'allowed abort did not release the repository lease'
+pass 'abort refuses unrelated files and archives allowed uncommitted changes in a recovery commit'
+
+planning_only_baseline="$(git -C "$fixture" rev-parse HEAD)"
+printf '%s\n' '# Planning-only abort plan' > "$fixture/docs/plans/TASK-TEST-009.md"
+jq \
+    '.id = "TASK-TEST-009" |
+     .title = "Abort before product editing" |
+     .planPath = "docs/plans/TASK-TEST-009.md" |
+     .targetTests = ["com.example.cctest.PlanningOnlyAbortTest"]' \
+    "$fixture/automation/tasks/TASK-TEST-001.json" \
+    > "$fixture/automation/tasks/TASK-TEST-009.json"
+run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-009 '批准方案，生成计划和任务合同。' >/dev/null
+run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/approve-and-run.sh TASK-TEST-009 '合同已复核，批准自动执行到人工验收阶段。' >/dev/null
+run_fixture ./scripts/automation/abort-task.sh TASK-TEST-009 '中止任务，封存修改并恢复原分支。' >/dev/null
+[[ "$(jq -r '.recoveryCommit' "$runtime_root/evidence/TASK-TEST-009/abort.json")" == "null" ]] || fail 'planning-only abort created a recovery commit'
+[[ "$(jq -r '.planningOnlyArchivedWithoutCommit' "$runtime_root/evidence/TASK-TEST-009/abort.json")" == "true" ]] || fail 'planning-only abort did not record its no-commit archival policy'
+[[ "$(git -C "$fixture" rev-parse HEAD)" == "$planning_only_baseline" ]] || fail 'planning-only abort changed original branch history'
+[[ ! -e "$fixture/docs/plans/TASK-TEST-009.md" && ! -e "$fixture/automation/tasks/TASK-TEST-009.json" ]] || fail 'planning-only abort left generated artifacts in the original worktree'
+pass 'aborting before product edits archives planning artifacts without creating a planning-only commit'
+
+isolated_config_tmp="$(mktemp "$fixture/automation/.config.XXXXXX")"
+jq '.workspaceStrategy = "isolatedWorktree"' "$fixture/automation/config.json" > "$isolated_config_tmp"
+mv "$isolated_config_tmp" "$fixture/automation/config.json"
+(
+    cd "$fixture"
+    git add automation/config.json
+    git commit -qm 'Use isolated workspace fixture mode'
+)
+printf '%s\n' '# Optional isolated-workspace plan' > "$fixture/docs/plans/TASK-TEST-007.md"
+jq \
+    '.id = "TASK-TEST-007" |
+     .title = "Keep optional isolated workspace support" |
+     .planPath = "docs/plans/TASK-TEST-007.md" |
+     .targetTests = ["com.example.cctest.IsolatedFlowTest"]' \
+    "$fixture/automation/tasks/TASK-TEST-001.json" \
+    > "$fixture/automation/tasks/TASK-TEST-007.json"
+run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-007 '批准方案，生成计划和任务合同。' >/dev/null
+run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/approve-and-run.sh TASK-TEST-007 '合同已复核，批准自动执行到人工验收阶段。' >/dev/null
+isolated_task_root="$(jq -er '.taskRoot' "$runtime_root/workspaces/TASK-TEST-007.json")"
+[[ "$isolated_task_root" != "$fixture" && -d "$isolated_task_root" ]] || fail 'optional isolated strategy did not create a separate task root'
+[[ -f "$isolated_task_root/docs/plans/TASK-TEST-007.md" && -f "$isolated_task_root/automation/tasks/TASK-TEST-007.json" ]] || fail 'isolated task root did not receive the sealed planning artifacts'
+[[ ! -e "$fixture/docs/plans/TASK-TEST-007.md" && ! -e "$fixture/automation/tasks/TASK-TEST-007.json" ]] || fail 'isolated preparation left duplicate planning artifacts in the source root'
+[[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 2 ]] || fail 'isolated strategy created more than one additional worktree'
+run_task "$isolated_task_root" ./scripts/automation/claim-task.sh TASK-TEST-007 >/dev/null
+printf '%s\n' 'class IsolatedFlowTest { fun expectedBehavior() = Unit }' > "$isolated_task_root/app/src/test/java/com/example/cctest/IsolatedFlowTest.kt"
+run_task "$isolated_task_root" ./scripts/automation/record-red.sh TASK-TEST-007 'expected missing behavior' -- com.example.cctest.IsolatedFlowTest >/dev/null
+printf '%s\n' 'class IsolatedFlow { fun value() = "integrated" }' > "$isolated_task_root/app/src/main/java/com/example/cctest/IsolatedFlow.kt"
+run_task "$isolated_task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/quality-gate.sh TASK-TEST-007 >/dev/null
+run_task "$isolated_task_root" ./scripts/automation/begin-review.sh TASK-TEST-007 >/dev/null
+run_task "$isolated_task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-007 APPROVED 'Independent review approves the isolated fixture.' >/dev/null
+run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-007 '验收通过，提交到原分支。' >/dev/null
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-007.json")" == "COMPLETED" ]] || fail 'isolated task did not reach COMPLETED'
+[[ "$(jq -r '.method' "$runtime_root/evidence/TASK-TEST-007/integration.json")" == "isolatedWorktree-fast-forward" ]] || fail 'isolated task used the wrong integration method'
+[[ ! -d "$isolated_task_root" ]] || fail 'isolated task root was not cleaned after successful integration'
+[[ "$(git -C "$fixture" worktree list --porcelain | awk '/^worktree / { count++ } END { print count + 0 }')" -eq 1 ]] || fail 'isolated integration left an extra candidate worktree'
+[[ -f "$fixture/app/src/main/java/com/example/cctest/IsolatedFlow.kt" ]] || fail 'isolated product change was not integrated'
+pass 'optional isolation uses one task worktree and never creates a second integration candidate'
+
+in_place_config_tmp="$(mktemp "$fixture/automation/.config.XXXXXX")"
+jq '.workspaceStrategy = "inPlaceExclusive"' "$fixture/automation/config.json" > "$in_place_config_tmp"
+mv "$in_place_config_tmp" "$fixture/automation/config.json"
+(
+    cd "$fixture"
+    git add automation/config.json
+    git commit -qm 'Restore in-place fixture mode'
+)
 
 printf '%s\n' '# Advanced-original integration plan' > "$fixture/docs/plans/TASK-TEST-006.md"
 jq \
     '.id = "TASK-TEST-006" |
-     .title = "Integrate onto an advanced original branch" |
+     .title = "Block an advanced original branch" |
      .planPath = "docs/plans/TASK-TEST-006.md" |
      .targetTests = ["com.example.cctest.AdvancedOriginalTest"]' \
     "$fixture/automation/tasks/TASK-TEST-001.json" \
     > "$fixture/automation/tasks/TASK-TEST-006.json"
 run_fixture ./scripts/automation/prepare-contract-review.sh TASK-TEST-006 '批准方案，生成计划和任务合同。' >/dev/null
 run_fixture env AUTOMATION_SKIP_AGENT_RUN=1 ./scripts/automation/approve-and-run.sh TASK-TEST-006 '合同已复核，批准自动执行到人工验收阶段。' >/dev/null
-advanced_task_worktree="$(jq -er '.taskWorktree' "$runtime_root/workspaces/TASK-TEST-006.json")"
-run_task "$advanced_task_worktree" ./scripts/automation/claim-task.sh TASK-TEST-006 >/dev/null
-printf '%s\n' 'class AdvancedOriginalTest { fun expectedBehavior() = Unit }' > "$advanced_task_worktree/app/src/test/java/com/example/cctest/AdvancedOriginalTest.kt"
-run_task "$advanced_task_worktree" ./scripts/automation/record-red.sh TASK-TEST-006 'expected missing behavior' -- com.example.cctest.AdvancedOriginalTest >/dev/null
-printf '%s\n' 'class AdvancedOriginal { fun value() = "integrated after drift" }' > "$advanced_task_worktree/app/src/main/java/com/example/cctest/AdvancedOriginal.kt"
-run_task "$advanced_task_worktree" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/quality-gate.sh TASK-TEST-006 >/dev/null
-run_task "$advanced_task_worktree" ./scripts/automation/begin-review.sh TASK-TEST-006 >/dev/null
-run_task "$advanced_task_worktree" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-006 APPROVED 'Independent review approves the advanced-branch fixture.' >/dev/null
+advanced_task_root="$(jq -er '.taskRoot' "$runtime_root/workspaces/TASK-TEST-006.json")"
+run_task "$advanced_task_root" ./scripts/automation/claim-task.sh TASK-TEST-006 >/dev/null
+printf '%s\n' 'class AdvancedOriginalTest { fun expectedBehavior() = Unit }' > "$advanced_task_root/app/src/test/java/com/example/cctest/AdvancedOriginalTest.kt"
+run_task "$advanced_task_root" ./scripts/automation/record-red.sh TASK-TEST-006 'expected missing behavior' -- com.example.cctest.AdvancedOriginalTest >/dev/null
+printf '%s\n' 'class AdvancedOriginal { fun value() = "must not integrate after drift" }' > "$advanced_task_root/app/src/main/java/com/example/cctest/AdvancedOriginal.kt"
+run_task "$advanced_task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/quality-gate.sh TASK-TEST-006 >/dev/null
+run_task "$advanced_task_root" ./scripts/automation/begin-review.sh TASK-TEST-006 >/dev/null
+run_task "$advanced_task_root" env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/submit-review.sh TASK-TEST-006 APPROVED 'Independent review approves the advanced-branch fixture.' >/dev/null
 
-printf '%s\n' 'unrelated original-branch advance' > "$fixture/original-branch-note.txt"
-(
-    cd "$fixture"
-    git add original-branch-note.txt
-    git commit -qm 'Advance original branch independently'
-)
-[[ "$(git -C "$fixture" rev-parse HEAD)" != "$(jq -r '.baselineHead' "$runtime_root/workspaces/TASK-TEST-006.json")" ]] || fail 'original branch did not advance for drift test'
+advanced_baseline="$(jq -er '.baselineHead' "$runtime_root/workspaces/TASK-TEST-006.json")"
+advanced_original_branch="$(jq -er '.originalBranch' "$runtime_root/workspaces/TASK-TEST-006.json")"
+advanced_original_commit="$(printf '%s\n' 'Advance original branch independently' | git -C "$fixture" commit-tree "$advanced_baseline^{tree}" -p "$advanced_baseline")"
+git -C "$fixture" update-ref "refs/heads/$advanced_original_branch" "$advanced_original_commit" "$advanced_baseline"
+[[ "$(git -C "$fixture" rev-parse "refs/heads/$advanced_original_branch")" == "$advanced_original_commit" ]] || fail 'original branch did not advance for drift test'
 pass 'a clean descendant commit is recognized as original-branch drift'
 
-run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-006 '验收通过，提交到原分支。' >/dev/null
-[[ "$(jq -r '.method' "$runtime_root/evidence/TASK-TEST-006/integration.json")" == "cherry-pick-onto-advanced-original" ]] || fail 'advanced integration did not use a verified candidate cherry-pick'
-[[ -f "$fixture/original-branch-note.txt" && -f "$fixture/app/src/main/java/com/example/cctest/AdvancedOriginal.kt" ]] || fail 'advanced integration lost source or product changes'
-pass 'verified cherry-pick integrates product code without losing an advanced original branch'
+if run_fixture env AUTOMATION_FAKE_GREEN=1 ./scripts/automation/accept-and-integrate.sh TASK-TEST-006 '验收通过，提交到原分支。' >/dev/null 2>&1; then
+    fail 'integrator accepted an original branch that drifted from the recorded pre-task baseline'
+fi
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-006.json")" == "INTEGRATION_BLOCKED" ]] || fail 'branch drift did not create INTEGRATION_BLOCKED'
+[[ "$(git -C "$fixture" rev-parse "refs/heads/$advanced_original_branch")" == "$advanced_original_commit" ]] || fail 'blocked integration changed the advanced original branch'
+[[ ! -f "$runtime_root/evidence/TASK-TEST-006/integration.json" ]] || fail 'blocked integration recorded false success evidence'
+pass 'original-branch drift blocks integration without cherry-picking or modifying the original branch'
+
+if run_fixture ./scripts/automation/abort-task.sh TASK-TEST-006 '中止' >/dev/null 2>&1; then
+    fail 'abort accepted an unbound confirmation'
+fi
+run_fixture ./scripts/automation/abort-task.sh TASK-TEST-006 '中止任务，封存修改并恢复原分支。' >/dev/null
+[[ "$(jq -r '.state' "$runtime_root/state/TASK-TEST-006.json")" == "ABORTED" ]] || fail 'deterministic abort did not reach ABORTED'
+[[ "$(git -C "$fixture" symbolic-ref --short HEAD)" == "$advanced_original_branch" ]] || fail 'abort did not restore the source directory to the original branch'
+[[ "$(git -C "$fixture" rev-parse HEAD)" == "$advanced_original_commit" ]] || fail 'abort changed the advanced original branch ref'
+[[ "$(jq -r '.recoveryCommit' "$runtime_root/evidence/TASK-TEST-006/abort.json")" == "$(jq -r '.productCommit' "$runtime_root/workspaces/TASK-TEST-006.json")" ]] || fail 'abort did not preserve the product commit as recovery evidence'
+[[ ! -f "$fixture/app/src/main/java/com/example/cctest/AdvancedOriginal.kt" ]] || fail 'aborted product code remained in the restored original working tree'
+[[ ! -d "$runtime_root/locks/repository.workspace.lease" ]] || fail 'abort did not release the repository lease'
+pass 'explicit abort preserves recovery evidence and restores the original branch without changing its ref'
 
 printf '1..%d\n' "$pass_count"

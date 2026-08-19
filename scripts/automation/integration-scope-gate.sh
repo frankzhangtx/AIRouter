@@ -18,7 +18,24 @@ git -C "$AUTOMATION_ROOT" cat-file -e "$head^{commit}" 2>/dev/null || automation
 "$SCRIPT_DIR/validate-contract.sh" "$task_id" >/dev/null
 
 contract="$(automation_contract_path "$task_id")"
-changed_file_list="$(automation_changed_paths_between "$base" "$head")"
+workspace_file="$(automation_workspace_path "$task_id")"
+planning_commit_policy="$(jq -r '.planningArtifactsCommitPolicy // "legacyCommittedSeparately"' "$workspace_file")"
+if [[ "$planning_commit_policy" == "withProductChanges" ]]; then
+    automation_assert_planning_artifacts_sealed "$task_id" "$AUTOMATION_ROOT" || exit 40
+    all_changed_file_list="$(automation_changed_paths_between "$base" "$head")"
+    origin_file="$(automation_origin_path "$task_id")"
+    contract_rel="$(jq -er '.contractPath' "$origin_file")"
+    plan_rel="$(jq -er '.planPath' "$origin_file")"
+    for planning_path in "$plan_rel" "$contract_rel"; do
+        if ! printf '%s\n' "$all_changed_file_list" | awk -v expected="$planning_path" '$0 == expected { found = 1 } END { exit !found }'; then
+            automation_die "integration candidate omitted approved planning artifact: $planning_path"
+            exit 40
+        fi
+    done
+    changed_file_list="$(automation_product_changed_paths_between "$task_id" "$base" "$head" "$AUTOMATION_ROOT")"
+else
+    changed_file_list="$(automation_changed_paths_between "$base" "$head")"
+fi
 [[ -n "$changed_file_list" ]] || { automation_die "integration candidate has no product changes"; exit 40; }
 
 max_changed="$(jq -r '.maxChangedFiles' "$contract")"
@@ -62,5 +79,9 @@ if printf '%s\n' "$added_test_lines" | rg -n "$weakening_pattern" >/dev/null; th
     exit 40
 fi
 
-automation_info "integration scope gate passed ($changed_count changed files)"
+if [[ "$planning_commit_policy" == "withProductChanges" ]]; then
+    automation_info "integration scope gate passed ($changed_count product files plus the two sealed planning artifacts)"
+else
+    automation_info "integration scope gate passed ($changed_count changed files)"
+fi
 printf '%s\n' "$changed_file_list"

@@ -1,9 +1,9 @@
-# OpenCode coding orchestration V2
+# OpenCode coding orchestration V3
 
 This directory contains the versioned policy for a low-intervention coding
 flow. The user stays in one `scheduled-planner` conversation; deterministic
-scripts own worktree creation, state transitions, evidence, agent launches,
-commits, and local integration.
+scripts own transactional branch preparation, persistent workspace leasing,
+state transitions, evidence, agent launches, commits, and local integration.
 
 ## One-time setup
 
@@ -22,81 +22,102 @@ To persist the SDK variables for future Terminal windows, put the two `export`
 lines in `~/.zshrc` and run `source ~/.zshrc` once. The automation never writes
 `local.properties` and never prepends environment assignments to Gradle.
 
+## Workspace strategy
+
+`workspaceStrategy` defaults to `inPlaceExclusive`. Contract approval seals but
+does not commit the plan and contract, acquires a persistent repository lease,
+creates the task branch from the unchanged original HEAD, and switches the
+existing source directory to that branch. The two planning artifacts remain
+uncommitted and hash-protected while Coder, Reviewer, and all gates operate in
+the same path, so the normal flow does not copy tracked files or create
+duplicate Gradle build directories.
+
+While the lease exists, do not edit the source directory or start another
+automation task. The lease remains active across process exits and the human
+acceptance wait; it is released only by successful integration or an explicit
+deterministic abort.
+
+Set `workspaceStrategy` to `isolatedWorktree` only when the original directory
+must remain available. That mode creates one task worktree. It still verifies
+the combined task commit in that task root and never creates a second integration
+candidate worktree. Successful completion removes the task worktree when
+`autoCleanupWorktrees` is enabled.
+
+Both strategies use `originalBranchDriftPolicy: "block"`. If the original
+branch no longer equals the recorded pre-task baseline, integration enters
+`INTEGRATION_BLOCKED`; the automation does not cherry-pick, rebase, or resolve
+conflicts automatically.
+
 ## Normal interaction
 
-Inside OpenCode, use `/change` for one natural-language requirement. The three
-intentional human gates are:
+Inside OpenCode, use `/change` for one natural-language requirement. Planner
+renders all three normal human gates as `question` single-select controls:
 
-1. `批准方案，生成计划和任务合同。`
-2. Select `合同已复核，批准自动执行到人工验收阶段。` from the
-   automatically displayed contract-review question. Typing the same exact
-   phrase remains valid.
-3. Review the automatically displayed result card, then select
-   `验收通过，提交到原分支。` from the final question. Typing the same exact
-   phrase remains valid.
+| Gate | Control | Approve option |
+| --- | --- | --- |
+| Proposal | `方案确认` | `批准方案，生成计划和任务合同。` |
+| Contract | `合同复核` | `合同已复核，批准自动执行到人工验收阶段。` |
+| Acceptance | `成果验收` | `验收通过，提交到原分支。` |
 
-After gate 1, Planner creates and seals exactly one plan and one JSON contract,
-automatically displays their review card, and asks for gate 2. The user does
-not need to enter a task ID or request contract fields manually.
-After gate 2, `approve-and-run.sh` commits those planning artifacts, records the
-actual current branch, creates an outside task worktree, and continuously runs
-the restricted Coder and a fresh read-only Reviewer. It stops at
-`AWAITING_HUMAN` or a hard failure state. At `AWAITING_HUMAN`, Planner
-immediately displays a SHA-verified acceptance card organized by behavior,
-regression/scope, evidence, and remaining risk, then opens the final approval
-question. The user does not need to compose a report request or inspect raw
-JSON. If the card is missed, `/acceptance <TASK-ID>` displays it again. After
-gate 3,
-`accept-and-integrate.sh` creates one product commit, verifies it in a separate
-integration-candidate worktree, and fast-forwards the recorded original branch
-only if all checks pass.
+The user clicks an option and never needs to type an approval phrase. Direct
+chat text does not approve any of these three gates, even when it repeats an
+option label exactly. The configured phrases remain internal tokens passed by
+Planner to deterministic scripts only after the matching option is selected.
 
-There is no normal-path Terminal command for worktree creation, queueing,
-Coder launch, Reviewer launch, commit, or merge. Final acceptance never grants
-push permission; successful integration records `pushed: false`.
+After the first approve option is selected, Planner creates and seals exactly one plan and one JSON contract,
+displays their review card, and asks for gate 2. After gate 2,
+`approve-and-run.sh` records the actual original branch, prepares the configured
+task workspace, and continuously runs the restricted Coder and a fresh
+read-only Reviewer. It stops at `AWAITING_HUMAN` or a hard failure state.
 
-If a read-only Reviewer exhausts its session budget before submitting a
-decision, the sealed implementation is not discarded. Run
-`/resume-review <TASK-ID>` in the Planner conversation. The guarded recovery
-validates baseline, RED/ready evidence, task branch, HEAD, scope, and diff SHA,
-then goes directly from `BLOCKED` to `REVIEWING`. It neither requeues Coder nor
-uses a code-repair cycle. Do not recover this failure through `PENDING` or by
-resetting the task worktree.
+At `AWAITING_HUMAN`, Planner immediately displays a SHA-verified acceptance
+card organized by behavior, regression/scope, evidence, branch drift, and
+remaining risk. `/acceptance <TASK-ID>` displays it again. After the third approve option is selected,
+`accept-and-integrate.sh` creates exactly one combined commit containing the
+approved plan, task contract, code, tests, and other authorized product
+changes. It verifies that exact commit in the task root and fast-forwards the
+recorded original branch only when it still equals the pre-task baseline. The
+plan and contract never receive a standalone normal-path commit. It never
+pushes.
+
+If a read-only Reviewer exits before submitting a decision, use
+`/resume-review <TASK-ID>`. The recovery verifies baseline, RED/ready evidence,
+task branch, HEAD, scope, and diff SHA, then goes directly from `BLOCKED` to
+`REVIEWING` without rerunning Coder or consuming a repair cycle.
+
+For a supported stopped state, `/abort-task <TASK-ID>` presents a separate
+explicit confirmation. `abort-task.sh` refuses out-of-contract changes,
+archives the current diff and, when product changes exist, one combined
+recovery commit. If the task is aborted before product editing, it archives the
+planning diff without creating a planning-only commit. It then restores the
+original branch without moving its ref, releases the lease, and records
+`ABORTED` with `pushed: false`.
 
 ## Components
 
-- `config.json` is portable versioned policy. It contains no per-task absolute
-  worktree path.
+- `config.json` is portable V3 policy with no per-task absolute path.
 - `config.schema.json` and `task-contract.schema.json` document configuration
   and task-contract formats.
 - `tasks/` contains approved contracts; `docs/plans/` contains their plans.
 - `.opencode/agents/` separates interactive Planner, write-limited Coder, and
   read-only Reviewer permissions.
-- `.opencode/skills/scheduled-quality-orchestrator/` defines the three approval
-  boundaries; the coder/reviewer skills define their narrower workflows.
-- `.opencode/commands/acceptance.md` provides the read-only
-  `/acceptance <TASK-ID>` fallback for redisplaying the final review card.
-- `.opencode/commands/resume-review.md` provides the bounded
-  `/resume-review <TASK-ID>` path for a Reviewer interruption with an unchanged
-  sealed diff.
-- `scripts/automation/` implements all state, scope, evidence, worktree, and
-  integration operations. `show-acceptance-review.sh` verifies the live sealed
-  diff and renders the human review focus without changing task state.
-  `status.sh` includes compact baseline, RED, gate, review, and live sealed-SHA
-  evidence so the read-only Reviewer never needs direct access to the external
-  runtime directory.
+- `.opencode/commands/acceptance.md`, `resume-review.md`, and `abort-task.md`
+  expose bounded, state-checked recovery and review paths.
+- `scripts/automation/` implements state, scope, evidence, workspace, and
+  integration operations. Models never own Git mutations.
 
-Runtime data is shared by all linked worktrees under:
+Runtime data lives under the shared Git common directory:
 
 ```text
 <git-common-dir>/automation-runtime/
 ├── state/
 ├── evidence/
 ├── locks/
+│   └── repository.workspace.lease/
 └── workspaces/
 ```
 
-The default task worktree base is a sibling directory named
+The optional isolated worktree base defaults to the sibling directory
 `<repository>-worktrees`. Absolute paths are discovered at runtime and are not
 committed to `config.json`.
 
@@ -108,14 +129,13 @@ CONTRACT_REVIEW → APPROVED_CONTRACT → PREPARING → PENDING → CODING
 ```
 
 Hard failures stop in `BLOCKED`, `TEST_FAILED`, `NEEDS_HUMAN`, or
-`INTEGRATION_BLOCKED`. Coder and Reviewer cannot create worktrees, commit,
-merge, rebase, or push. The integrator cannot update a different branch,
-accept a changed diff, skip candidate verification, resolve conflicts
-automatically, or push.
+`INTEGRATION_BLOCKED`. Explicit archival ends in `ABORTED`. Coder and Reviewer
+cannot create worktrees, commit, merge, rebase, or push. The integrator cannot
+update a different branch, accept a changed diff, skip candidate verification,
+resolve drift automatically, or push.
 
 `maxReviewCycles` bounds code repair after a Reviewer finding;
-`maxReviewerRestarts` separately bounds no-code Reviewer restarts. This keeps a
-transient review-session interruption from consuming a repair cycle.
+`maxReviewerRestarts` separately bounds no-code Reviewer restarts.
 
 ## Verification
 
@@ -127,8 +147,9 @@ transient review-session interruption from consuming a repair cycle.
 ./gradlew lint
 ```
 
-The shell suite exercises approval rejection, shared runtime state, TDD gates,
-diff sealing (including untracked files), reviewer handoff, outside worktree
-creation, reviewer-only recovery without a Coder rerun, product commit,
-candidate verification, original-branch integration, cleanup, and the no-push
+The shell suite exercises approval rejection, persistent lease exclusion,
+in-place preparation without extra worktrees, optional single-worktree mode,
+TDD gates, diff sealing, reviewer handoff/recovery, product verification,
+single-commit plan/contract integration, original-branch drift blocking,
+explicit archival without planning-only commits, cleanup, and the no-push
 invariant.

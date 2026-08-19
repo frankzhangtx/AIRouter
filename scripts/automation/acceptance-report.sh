@@ -26,18 +26,32 @@ review_verification_exit_code="$(jq -er '.verificationExitCode' "$review_file")"
 [[ "$red_exit_code" -ne 0 ]] || automation_die "RED evidence does not contain a failing test result"
 [[ "$review_verification_exit_code" -eq 0 ]] || automation_die "independent review verification did not pass"
 
-recorded_worktree="$(jq -er '.taskWorktree' "$workspace_file")"
-[[ "$(cd "$recorded_worktree" && pwd)" == "$AUTOMATION_ROOT" ]] || automation_die "acceptance report must run in the recorded task worktree"
+recorded_task_root="$(automation_workspace_task_root "$workspace_file")"
+workspace_strategy="$(automation_workspace_strategy "$workspace_file")"
+source_root="$(jq -er '.sourceRoot' "$workspace_file")"
+original_branch="$(jq -er '.originalBranch' "$origin_file")"
+baseline_head="$(jq -er '.baselineHead' "$workspace_file")"
+original_head_current="$(git -C "$source_root" rev-parse "refs/heads/$original_branch")"
+original_branch_drifted=false
+if [[ "$original_head_current" != "$baseline_head" ]]; then
+    original_branch_drifted=true
+fi
+[[ "$(cd "$recorded_task_root" && pwd)" == "$AUTOMATION_ROOT" ]] || automation_die "acceptance report must run in the recorded task root"
+if [[ "$(jq -r '.repositoryLeaseRequired // false' "$workspace_file")" == "true" ]]; then
+    automation_require_repository_lease "$task_id" "$source_root" "$workspace_strategy"
+fi
 current_diff_sha="$(automation_worktree_diff_sha)"
 [[ "$current_diff_sha" == "$(jq -er '.diffSha256' "$ready_file")" ]] || automation_die "sealed diff changed after the quality gate"
 [[ "$current_diff_sha" == "$(jq -er '.diffSha256' "$review_file")" ]] || automation_die "sealed diff changed after independent review"
+automation_assert_planning_artifacts_sealed "$task_id" "$AUTOMATION_ROOT"
 
 "$SCRIPT_DIR/scope-gate.sh" "$task_id" >/dev/null
 changed_paths=()
 while IFS= read -r path; do
     [[ -n "$path" ]] && changed_paths+=("$path")
-done < <(automation_changed_paths)
+done < <(automation_product_changed_paths_at "$task_id" "$AUTOMATION_ROOT")
 changed_paths_json="$(printf '%s\n' "${changed_paths[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))')"
+planning_artifacts_json="$(jq -c '[.planPath, .contractPath]' "$origin_file")"
 diff_stat="$(git -C "$AUTOMATION_ROOT" diff --stat HEAD --)"
 untracked_paths="$(git -C "$AUTOMATION_ROOT" ls-files --others --exclude-standard | LC_ALL=C sort)"
 
@@ -55,11 +69,13 @@ jq -n \
     --arg taskId "$task_id" \
     --arg title "$(jq -er '.title' "$contract")" \
     --arg generatedAt "$(automation_now)" \
-    --arg originalBranch "$(jq -er '.originalBranch' "$origin_file")" \
+    --arg originalBranch "$original_branch" \
     --arg originalHeadBeforeContract "$(jq -er '.originalHeadBeforeContract' "$origin_file")" \
-    --arg baselineHead "$(jq -er '.baselineHead' "$workspace_file")" \
+    --arg baselineHead "$baseline_head" \
+    --arg originalHeadCurrent "$original_head_current" \
     --arg taskBranch "$(jq -er '.taskBranch' "$workspace_file")" \
-    --arg taskWorktree "$AUTOMATION_ROOT" \
+    --arg workspaceStrategy "$workspace_strategy" \
+    --arg taskRoot "$AUTOMATION_ROOT" \
     --arg sealedDiffSha256 "$current_diff_sha" \
     --arg diffStat "$diff_stat" \
     --arg sealedDiffPath "$sealed_diff" \
@@ -73,6 +89,8 @@ jq -n \
     --argjson codingCycle "$(jq -er '.codingCycle' "$ready_file")" \
     --argjson reviewVerificationExitCode "$review_verification_exit_code" \
     --argjson changedPaths "$changed_paths_json" \
+    --argjson planningArtifacts "$planning_artifacts_json" \
+    --argjson originalBranchDrifted "$original_branch_drifted" \
     --argjson allowedPaths "$(jq -c '.allowedPaths' "$contract")" \
     --argjson acceptanceCriteria "$(jq -c '.acceptanceCriteria' "$contract")" \
     --argjson nonGoals "$(jq -c '.nonGoals' "$contract")" \
@@ -80,9 +98,13 @@ jq -n \
     '{taskId: $taskId, title: $title, state: "AWAITING_HUMAN",
       generatedAt: $generatedAt, originalBranch: $originalBranch,
       originalHeadBeforeContract: $originalHeadBeforeContract,
-      baselineHead: $baselineHead, taskBranch: $taskBranch,
-      taskWorktree: $taskWorktree, sealedDiffSha256: $sealedDiffSha256,
+      baselineHead: $baselineHead, originalHeadCurrent: $originalHeadCurrent,
+      originalBranchDrifted: $originalBranchDrifted, taskBranch: $taskBranch,
+      workspaceStrategy: $workspaceStrategy, taskRoot: $taskRoot,
+      sealedDiffSha256: $sealedDiffSha256,
       changedPaths: $changedPaths, maxChangedFiles: $maxChangedFiles,
+      planningArtifacts: $planningArtifacts,
+      planningArtifactsCommitPolicy: "withProductChanges",
       allowedPaths: $allowedPaths, diffStat: $diffStat,
       sealedDiffPath: $sealedDiffPath, acceptanceCriteria: $acceptanceCriteria,
       nonGoals: $nonGoals, targetTests: $targetTests,

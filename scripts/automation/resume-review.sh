@@ -29,18 +29,23 @@ trap 'automation_release_run_lock' EXIT
 
 [[ "$(automation_read_state "$task_id")" == "BLOCKED" ]] || automation_die "$task_id is not BLOCKED"
 
-task_root="$(jq -er '.taskWorktree' "$workspace_file")"
+task_root="$(automation_workspace_task_root "$workspace_file")"
+workspace_strategy="$(automation_workspace_strategy "$workspace_file")"
+source_root="$(jq -er '.sourceRoot' "$workspace_file")"
 source_root="$(jq -er '.sourceRoot' "$workspace_file")"
 task_branch="$(jq -er '.taskBranch' "$workspace_file")"
 baseline_head="$(jq -er '.baselineHead' "$workspace_file")"
 coding_cycle="$(jq -er '.codingCycle // 0' "$workspace_file")"
 
-[[ -d "$task_root" ]] || automation_die "task worktree is missing: $task_root"
+[[ -d "$task_root" ]] || automation_die "task root is missing: $task_root"
+if [[ "$(jq -r '.repositoryLeaseRequired // false' "$workspace_file")" == "true" ]]; then
+    automation_require_repository_lease "$task_id" "$source_root" "$workspace_strategy"
+fi
 task_root="$(cd "$task_root" && pwd -P)"
 source_root="$(cd "$source_root" && pwd -P)"
 [[ "$source_root" == "$AUTOMATION_ROOT" ]] || automation_die "workspace sourceRoot does not match this repository"
-[[ "$(automation_current_branch "$task_root")" == "$task_branch" ]] || automation_die "task worktree branch changed"
-[[ "$(git -C "$task_root" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "task worktree HEAD changed after sealing"
+[[ "$(automation_current_branch "$task_root")" == "$task_branch" ]] || automation_die "task branch changed"
+[[ "$(git -C "$task_root" rev-parse HEAD)" == "$baseline_head" ]] || automation_die "task HEAD changed after sealing"
 [[ "$(jq -er '.head' "$evidence_dir/baseline.json")" == "$baseline_head" ]] || automation_die "baseline evidence does not match workspace metadata"
 [[ "$(jq -er '.head' "$ready_file")" == "$baseline_head" ]] || automation_die "ready evidence does not match the baseline"
 [[ "$(jq -er '.codingCycle // 0' "$ready_file")" == "$coding_cycle" ]] || automation_die "ready evidence belongs to a different coding cycle"

@@ -27,6 +27,7 @@ private val phoneTailPattern = Regex("尾号\\s*(\\d{4})(?!\\d)")
 fun String.normalizedInput(): String {
     return trim()
         .replace('，', ' ')
+        .replace('；', ' ')
         .replace('。', ' ')
         .replace('：', ' ')
         .replace('\n', ' ')

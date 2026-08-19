@@ -164,4 +164,23 @@ class RuleBasedIntentParserTest {
         assertEquals(UserGoal.FillPersonalInfo, result.userGoal)
         assertEquals("13800001001", result.slots.personalInfoFields.phone)
     }
+
+    @Test
+    fun parseFormIntent_chineseSemicolonSeparatesAddressAndCompany() = runBlocking {
+        val outcome = parser.parse(
+            ParseRequest(
+                inputText = "更新个人信息，地址是上海市浦东新区；公司是星河科技",
+                entrySource = "test"
+            )
+        )
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.FillPersonalInfo, result.userGoal)
+        assertEquals(
+            "地址应精确为上海市浦东新区，分号后的公司字段不应被地址贪婪捕获",
+            "上海市浦东新区",
+            result.slots.personalInfoFields.address
+        )
+        assertEquals("星河科技", result.slots.personalInfoFields.company)
+    }
 }

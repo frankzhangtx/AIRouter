@@ -5,7 +5,7 @@
 | 字段 | 内容 |
 | --- | --- |
 | 任务 ID | `TASK-OPENCODE-ANDROID-ORCHESTRATOR-PLUGIN-001` |
-| 状态 | `IN_PROGRESS`，安装前备份与 manifest 已完成，冲突安全的受管文件安装尚未实现 |
+| 状态 | `IN_PROGRESS`，安装前备份、manifest 与冲突检测已完成，`init` 尚未实现 |
 | 创建日期 | 2026-08-19 |
 | 最近核对日期 | 2026-08-24 |
 | 任务类型 | OpenCode 插件开发、Android 工程初始化器、双版本兼容与 npm 发布 |
@@ -13,7 +13,7 @@
 | 目标电脑 OpenCode | `1.14.22` |
 | 当前方案基线 | OpenCode coding orchestration V3，Git HEAD `829693652e3737ad94c7cc75214b09fb2b58715b` |
 | 插件源码 | `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` |
-| 插件开发基线 | Git `74bfef945960f3aac6239a8dfa60e5cf83978548` |
+| 插件开发基线 | Git `8e4b7908805badf5b87a97b258978203da3ae56b` |
 | 正式包名 | `@frankzhang2026/opencode-android-orchestrator` |
 | 已发布版本 | `0.1.0`，2026-08-20 发布的早期空壳包，不具备可用安装器 |
 | 下一开发版本 | `0.2.0`，仅本地开发，尚未批准或执行发布 |
@@ -197,7 +197,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 - [x] 将配置中的工程名称、模块名和绝对路径改为动态生成。
 - [x] 实现安全的 `opencode.json` JSON/JSONC 合并。
 - [x] 实现安装前备份和安装 manifest。
-- [ ] 实现文件冲突检测，默认不覆盖用户修改。
+- [x] 实现文件冲突检测，默认不覆盖用户修改。
 - [ ] 实现 `init`。
 - [ ] 完善安装态 `doctor`（依赖、资源、权限、配置和 manifest）。
 - [ ] 实现 `upgrade`，仅升级未被用户修改的受管文件。
@@ -208,14 +208,14 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 
 ## 九、测试待办
 
-> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 54/54
+> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 58/58
 > 通过，V3 Shell 事务回归为 38/38 通过，`npm run pack:check` 通过且预览包含
 > 101 个文件。测试已覆盖工程名、namespace/applicationId、自定义模块目录、
 > 主模块自动选择与歧义阻断、Git 根目录外路径阻断、只读动态配置/任务示例生成、
 > 动态生产/测试路径门禁、安装前备份顺序、manifest Schema、SHA-256/权限完整性、
-> 计划防篡改、prepared 状态回滚、Scheduler 与本机路径清理；并已使用本工程完成
-> 一次只读渲染验证。以上结果仍不等于完整安装生命周期、双版本实机兼容或发布
-> 验收通过。
+> 计划防篡改、prepared 状态回滚、同名文件内容/权限冲突阻断、相同文件复用、显式
+> merge 处理、Scheduler 与本机路径清理；并已使用本工程完成一次只读渲染验证。
+> 以上结果仍不等于完整安装生命周期、双版本实机兼容或发布验收通过。
 
 ### 包和初始化器
 
@@ -225,7 +225,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 - [ ] Groovy DSL Android fixture 初始化测试。
 - [x] 多模块 Android 工程检测测试。
 - [x] 已存在配置的无损合并测试。
-- [ ] 同名文件冲突和无静默覆盖测试。
+- [x] 同名文件冲突和无静默覆盖测试。
 - [ ] 重复执行 `init` 的幂等性测试。
 - [ ] `upgrade` 保留用户修改测试。
 - [ ] `uninstall` 安全删除和保留修改文件测试。
@@ -346,5 +346,5 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 5. Superpowers 继续作为固定伴随依赖，不内置到第一版。
 6. 第一版插件工具只提供只读诊断，事务入口继续使用现有 Shell 白名单。
 
-上述决策已使任务进入 `IN_PROGRESS`；当前下一阶段是实现同名文件冲突检测和
-安全的受管文件写入，再接入 `init`，而不是执行当前工程切换或 npm 发布。
+上述决策已使任务进入 `IN_PROGRESS`；当前下一阶段是实现安全的受管文件写入并
+接入 `init`，而不是执行当前工程切换或 npm 发布。

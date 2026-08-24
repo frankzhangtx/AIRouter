@@ -5,7 +5,7 @@
 | 字段 | 内容 |
 | --- | --- |
 | 任务 ID | `TASK-OPENCODE-ANDROID-ORCHESTRATOR-PLUGIN-001` |
-| 状态 | `IN_PROGRESS`，基础能力与模板迁移已完成，安装生命周期尚未实现 |
+| 状态 | `IN_PROGRESS`，完整 V3 资源模板迁移已完成，动态适配与安装生命周期尚未实现 |
 | 创建日期 | 2026-08-19 |
 | 最近核对日期 | 2026-08-24 |
 | 任务类型 | OpenCode 插件开发、Android 工程初始化器、双版本兼容与 npm 发布 |
@@ -13,7 +13,7 @@
 | 目标电脑 OpenCode | `1.14.22` |
 | 当前方案基线 | OpenCode coding orchestration V3，Git HEAD `829693652e3737ad94c7cc75214b09fb2b58715b` |
 | 插件源码 | `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` |
-| 插件开发基线 | Git `e9fd8b7f1b7b8e10449f50a19c3391cd4b9507f7` |
+| 插件开发基线 | Git `7fcc371b05739af7bc19c671f703a406fc84c5c9` |
 | 正式包名 | `@frankzhang2026/opencode-android-orchestrator` |
 | 已发布版本 | `0.1.0`，2026-08-20 发布的早期空壳包，不具备可用安装器 |
 | 下一开发版本 | `0.2.0`，仅本地开发，尚未批准或执行发布 |
@@ -192,7 +192,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 - [x] 实现插件入口和公共 API 兼容层。
 - [x] 实现 OpenCode 版本检测与基础 `doctor`（OpenCode、Git、Android、Gradle Wrapper）。
 - [x] 实现 Android/Gradle 工程检测。
-- [x] 将当前 V3 Agent、Command、Skill 转为安装模板。
+- [x] 将当前 V3 Agent、Command、Skill、配置、Schema、任务示例、计划说明和 AGENTS 片段转为安装模板。
 - [x] 将 28 个自动化 Shell 文件转为安装模板并保持文件权限。
 - [ ] 将配置中的工程名称、模块名和绝对路径改为动态生成。
 - [x] 实现安全的 `opencode.json` JSON/JSONC 合并。
@@ -208,8 +208,9 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 
 ## 九、测试待办
 
-> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 32/32
-> 通过，`npm run pack:check` 通过。当前测试覆盖基础检测与只读合并规划，
+> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 37/37
+> 通过，`npm run pack:check` 通过且预览包含 92 个文件。当前测试覆盖基础检测、
+> 只读合并规划、模板库存、源文件 SHA-256、权限及 AGENTS 受管片段边界，
 > 尚不等于安装生命周期、双版本实机兼容或发布验收通过。
 
 ### 包和初始化器

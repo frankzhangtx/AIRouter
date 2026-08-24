@@ -5,7 +5,7 @@
 | 字段 | 内容 |
 | --- | --- |
 | 任务 ID | `TASK-OPENCODE-ANDROID-ORCHESTRATOR-PLUGIN-001` |
-| 状态 | `IN_PROGRESS`，安全 `init` 与安装态 `doctor` 已完成，下一步实现安全 `upgrade` |
+| 状态 | `IN_PROGRESS`，安全 `init`、安装态 `doctor` 与安全 `upgrade` 已完成，下一步实现安全 `uninstall` |
 | 创建日期 | 2026-08-19 |
 | 最近核对日期 | 2026-08-24 |
 | 任务类型 | OpenCode 插件开发、Android 工程初始化器、双版本兼容与 npm 发布 |
@@ -13,7 +13,7 @@
 | 目标电脑 OpenCode | `1.14.22` |
 | 当前方案基线 | OpenCode coding orchestration V3，Git HEAD `829693652e3737ad94c7cc75214b09fb2b58715b` |
 | 插件源码 | `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` |
-| 插件开发基线 | Git `911243049767f28a605e2388f268b4744e0f7404` |
+| 插件开发基线 | Git `62f9b6aa6569e6392b0e1317bad40c5690ea556b` |
 | 正式包名 | `@frankzhang2026/opencode-android-orchestrator` |
 | 已发布版本 | `0.1.0`，2026-08-20 发布的早期空壳包，不具备可用安装器 |
 | 下一开发版本 | `0.2.0`，仅本地开发，尚未批准或执行发布 |
@@ -200,7 +200,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 - [x] 实现文件冲突检测，默认不覆盖用户修改。
 - [x] 实现 `init`。
 - [x] 完善安装态 `doctor`（依赖、资源、权限、配置和 manifest）。
-- [ ] 实现 `upgrade`，仅升级未被用户修改的受管文件。
+- [x] 实现 `upgrade`，仅升级未被用户修改的受管文件。
 - [ ] 实现 `uninstall`，只移除哈希仍匹配的受管文件。
 - [ ] 为只读 `status/doctor` 提供插件自定义工具。
 - [ ] 评估第二阶段是否将高层脚本入口包装成类型化工具。
@@ -208,17 +208,19 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 
 ## 九、测试待办
 
-> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 79/79
+> 2026-08-24 基线验证：`npm run typecheck` 通过，`npm test` 为 90/90
 > 通过，V3 Shell 事务回归为 38/38 通过，`npm run pack:check` 通过且预览包含
-> 113 个文件。`init` 当前会规划并安装 45 个受管文件，覆盖 10 个 OpenCode
+> 117 个文件。`init` 当前会规划并安装 45 个受管文件，覆盖 10 个 OpenCode
 > 定义、28 个 Shell 文件、动态配置和任务示例、两个 Schema、计划说明，以及
 > `AGENTS.md`/`opencode.json` 的无损合并。安装态 `doctor` 会只读核对命令和 SDK、
 > 固定包版本与 45 文件清单、包内模板哈希、受管内容和权限、原文件备份，以及
-> OpenCode/AGENTS/Android 自适应配置。测试已覆盖 Kotlin/Groovy DSL、依赖失败
-> 零写入、重复初始化字节幂等、安装失败自动回滚、内容与权限漂移分离、缺失 manifest、
-> 备份丢失、不安全配置、同步改写文件和 manifest 的篡改、JSON 输出与失败退出码、
-> Scheduler 与本机路径清理。以上结果仍不等于双版本实机兼容、完整升级/卸载生命周期
-> 或发布验收通过。
+> OpenCode/AGENTS/Android 自适应配置。安全 `upgrade` 会先拒绝受管文件或原始备份漂移，
+> 从首次安装前原文件重建合并结果，保留原始恢复链，保存即时升级快照，恢复或移除废弃
+> 资源，并在 38 项事务测试与 shadow run 通过后原子替换 manifest；验证失败会完整恢复旧版。
+> 测试已覆盖 Kotlin/Groovy DSL、依赖失败零写入、初始化与同版本升级字节幂等、安装和升级
+> 失败自动回滚、内容与权限漂移分离、缺失 manifest、备份丢失、不安全配置、同步改写文件
+> 和 manifest 的篡改、同版本资源不可变、未完成升级标记、降级拒绝、JSON 输出与失败退出码、
+> Scheduler 与本机路径清理。以上结果仍不等于双版本实机兼容、安全卸载生命周期或发布验收通过。
 
 ### 包和初始化器
 
@@ -231,7 +233,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 - [x] 同名文件冲突和无静默覆盖测试。
 - [x] 重复执行 `init` 的幂等性测试。
 - [x] 安装态 `doctor` 健康、篡改、权限、备份、配置和缺失 manifest 测试。
-- [ ] `upgrade` 保留用户修改测试。
+- [x] `upgrade` 保留用户修改测试。
 - [ ] `uninstall` 安全删除和保留修改文件测试。
 - [x] manifest 与 SHA-256 完整性测试。
 
@@ -350,6 +352,6 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 5. Superpowers 继续作为固定伴随依赖，不内置到第一版。
 6. 第一版插件工具只提供只读诊断，事务入口继续使用现有 Shell 白名单。
 
-上述决策已使任务进入 `IN_PROGRESS`；安全受管文件写入、`init`、安装失败自动回滚
-和安装态 `doctor` 已经完成。当前下一阶段是实现安全 `upgrade`，仅升级未被用户修改
-的受管文件，而不是执行当前工程切换或 npm 发布。
+上述决策已使任务进入 `IN_PROGRESS`；安全受管文件写入、`init`、安装失败自动回滚、
+安装态 `doctor` 和安全 `upgrade` 已经完成。当前下一阶段是实现安全 `uninstall`，只移除
+哈希仍匹配的受管文件并恢复首次安装前内容，而不是执行当前工程切换或 npm 发布。

@@ -32,6 +32,24 @@ class RuleBasedIntentParserTest {
     }
 
     @Test
+    fun parseDashboardIntent_openWorkbench_mapsToWorkTab() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "打开工作台", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.OpenHouseDashboard, result.userGoal)
+        assertEquals(HouseDashboardTab.WORK, result.slots.dashboardTab)
+    }
+
+    @Test
+    fun parseDashboardIntent_houseDashboard_keepsHomeTab() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "打开家居看板", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.OpenHouseDashboard, result.userGoal)
+        assertEquals(HouseDashboardTab.HOME, result.slots.dashboardTab)
+    }
+
+    @Test
     fun parseFormIntent_extractsFields() = runBlocking {
         val outcome = parser.parse(
             ParseRequest(

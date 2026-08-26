@@ -2,7 +2,6 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     "opencode-scheduler@1.3.0",
-    "superpowers@git+https://github.com/obra/superpowers.git#v6.2.0",
-    "@frankzhang2026/opencode-android-orchestrator@0.2.0"
+    "superpowers@git+https://github.com/obra/superpowers.git#v6.2.0"
   ]
 }

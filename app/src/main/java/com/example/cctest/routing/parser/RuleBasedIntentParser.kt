@@ -87,7 +87,8 @@ class RuleBasedIntentParser : IntentParser {
     private fun looksLikeDashboard(text: String): Boolean {
         return text.contains("看板") ||
             text.contains("dashboard", ignoreCase = true) ||
-            text.contains("工作台")
+            text.contains("工作台") ||
+            text.contains("家庭中心")
     }
 
     private fun looksLikeForm(text: String): Boolean {

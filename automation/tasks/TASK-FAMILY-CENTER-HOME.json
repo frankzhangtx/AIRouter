@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "TASK-FAMILY-CENTER-HOME",
+  "title": "规则解析器将「进入家庭中心」识别为家居看板 HOME 标签",
+  "designApproved": true,
+  "planPath": "docs/plans/TASK-FAMILY-CENTER-HOME.md",
+  "ambiguityPolicy": "BLOCKED",
+  "maxFixLoops": 1,
+  "maxChangedFiles": 2,
+  "allowedPaths": [
+    "app/src/main/java/com/example/cctest/routing/parser/RuleBasedIntentParser.kt",
+    "app/src/test/java/com/example/cctest/routing/RuleBasedIntentParserTest.kt"
+  ],
+  "forbiddenPaths": [
+    ".opencode/**",
+    ".automation-plugin/**",
+    "automation/**",
+    "scripts/automation/**",
+    "opencode.json",
+    "opencode.jsonc",
+    "AGENTS.md",
+    "gradle/**",
+    "gradlew",
+    "gradlew.bat",
+    "settings.gradle",
+    "settings.gradle.kts",
+    "build.gradle",
+    "build.gradle.kts",
+    "**/build.gradle",
+    "**/build.gradle.kts",
+    "app/build.gradle.kts"
+  ],
+  "allowedSuperpowers": [
+    "test-driven-development",
+    "systematic-debugging",
+    "verification-before-completion"
+  ],
+  "acceptanceCriteria": [
+    "输入「进入家庭中心」经 RuleBasedIntentParser.parse 返回 Success，userGoal 为 OpenHouseDashboard，slots.dashboardTab 为 HOME",
+    "回归：输入「打开 Work 看板」「打开工作台」仍返回 WORK，「打开家居看板」仍返回 HOME，list/form 既有用例全部保持通过",
+    "聚焦测试 RuleBasedIntentParserTest 提供 RED 证据后转 GREEN；单元测试、debug 构建与 lint 全部通过"
+  ],
+  "nonGoals": [
+    "不改动 TextParsingSupport.extractDashboardTab、LLM/远程网关提示词或 FakeIntentParsingGateway",
+    "不更新 strings.xml 提示文案、destinations.json、journey_graph.json 或导航逻辑",
+    "不新增 WORK 标签别名",
+    "不扩展 androidTest 设备用例"
+  ],
+  "targetTests": [
+    "com.example.cctest.routing.RuleBasedIntentParserTest"
+  ],
+  "deviceTestsRequired": false,
+  "testPolicy": "required",
+  "testPolicyReason": "行为变化需要聚焦回归测试；改动位于纯 JVM 规则解析器，本地单测即可完整覆盖"
+}

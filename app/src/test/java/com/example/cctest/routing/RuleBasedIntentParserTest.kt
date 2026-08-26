@@ -50,6 +50,15 @@ class RuleBasedIntentParserTest {
     }
 
     @Test
+    fun parseDashboardIntent_familyCenter_mapsToHomeTab() = runBlocking {
+        val outcome = parser.parse(ParseRequest(inputText = "进入家庭中心", entrySource = "test"))
+        assertTrue(outcome is ParseOutcome.Success)
+        val result = (outcome as ParseOutcome.Success).result
+        assertEquals(UserGoal.OpenHouseDashboard, result.userGoal)
+        assertEquals(HouseDashboardTab.HOME, result.slots.dashboardTab)
+    }
+
+    @Test
     fun parseFormIntent_extractsFields() = runBlocking {
         val outcome = parser.parse(
             ParseRequest(

@@ -447,13 +447,14 @@
         <section class="hero">
             <div class="eyebrow-row">
                 <span class="eyebrow">WordPress Quick Start</span>
-                <span class="status">0.5.0 已公开发布 · npm latest</span>
+                <span class="status">0.6.0 已公开发布 · npm latest</span>
             </div>
             <h1>最简单地安装并使用 Orchestrator</h1>
             <p class="lead">
                 首次接入包含一项可选版本核验，以及初始化、提交生成文件、启动 Planner 三个必做步骤。
                 <code>init .</code> 会从 Gradle 已注册任务自动生成全模块与 flavor 质量矩阵，
-                不再依赖 WordPress 专用 JSON 或其他工程的绝对路径；精确路径工作树白名单继续保留。
+                不再依赖 WordPress 专用 JSON 或其他工程的绝对路径；0.6.0 还会仅在临时发现调用中
+                禁用 Configuration Cache，精确路径工作树白名单继续保留。
             </p>
             <div class="meta-grid">
                 <div class="meta">
@@ -462,7 +463,7 @@
                 </div>
                 <div class="meta">
                     <strong>安装版本</strong>
-                    <code>@frankzhang2026/opencode-android-orchestrator@0.5.0</code>
+                    <code>@frankzhang2026/opencode-android-orchestrator@0.6.0</code>
                 </div>
                 <div class="meta">
                     <strong>质量矩阵</strong>
@@ -483,8 +484,8 @@
             <div class="quick-grid">
                 <article class="quick-card">
                     <div class="number">1</div>
-                    <h3>可选：确认 0.5.0 存在</h3>
-                    <p><code>npm view</code> 返回 <code>0.5.0</code> 即可；跳过不影响后续安装。</p>
+                    <h3>可选：确认 0.6.0 存在</h3>
+                    <p><code>npm view</code> 返回 <code>0.6.0</code> 即可；跳过不影响后续安装。</p>
                 </article>
                 <article class="quick-card">
                     <div class="number">2</div>
@@ -512,7 +513,7 @@
             <div class="reading-grid">
                 <article class="reading-card">
                     <h3>1. Gradle 质量矩阵自动生成</h3>
-                    <p>临时只读 init script 发现实际注册任务；普通任务折叠为通用选择器，flavor 任务保留精确模块路径。</p>
+                    <p>临时只读 init script 发现实际注册任务；0.6.0 只为这次调用禁用配置缓存。普通任务折叠为通用选择器，flavor 任务保留精确路径。</p>
                 </article>
                 <article class="reading-card">
                     <h3>2. 白名单是精确文件列表</h3>
@@ -527,29 +528,48 @@
                     <p>命中白名单的 tracked、untracked、staged 改动不进入范围、哈希、证据和提交；原有 staged 状态也会保留。</p>
                 </article>
             </div>
+            <div class="code-shell">
+<pre><code><span class="comment">// 阅读标注：以下参数来自 src/installer/gradle-verification.ts</span>
+const result = runner(
+  detection.gradleWrapper.script,
+  [
+    "help",
+    <span class="comment">// 只关闭本次配置阶段发现调用的 Configuration Cache</span>
+    "--no-configuration-cache",
+    "--init-script",
+    initScript,
+    "--console=plain",
+    "--quiet",
+  ],
+  {
+    cwd: detection.projectRoot,
+    timeoutMs: options.timeoutMs ?? DEFAULT_DISCOVERY_TIMEOUT_MS,
+  },
+);</code></pre>
+            </div>
             <div class="callout">
-                2026-08-31 的只读核对结果：WordPress 分支
+                2026-09-01 的只读核对结果：WordPress 分支
                 <code>feature-0602-cases-opencode-test</code> 工作区干净，且不存在
                 <code>.automation-plugin/manifest.json</code>，因此当前应走“首次安装”，不是升级。
-                0.5.0 已公开发布，npm <code>latest</code> 指向 <code>0.5.0</code>；候选源码为
-                <code>2160328</code>，发布证据为 <code>e9cea71</code>，门禁为 Node
-                <code>134/134</code>、Shell <code>42/42</code>；
-                新发现器已在真实 WordPress 工程自动识别 <code>:WordPress</code>、WordPress/Jetpack
-                两个 Debug flavor 和 7 个 Android 库模块。正式接入直接固定使用 <code>@0.5.0</code>，
-                不需要 WordPress 专用 Gradle JSON。
+                0.6.0 已公开发布，npm <code>latest</code> 指向 <code>0.6.0</code>；候选源码为
+                <code>db6f61b</code>，发布证据为 <code>f9de12b</code>，门禁为 Node
+                <code>135/135</code>、Shell <code>42/42</code>。0.5.0 已在真实 WordPress 工程自动识别
+                <code>:WordPress</code>、WordPress/Jetpack 两个 Debug flavor 和 7 个 Android 库模块；
+                0.6.0 保留同一矩阵推导规则，并增加连续发现的配置缓存回归测试。正式接入固定使用
+                <code>@0.6.0</code>，不需要 WordPress 专用 Gradle JSON。
             </div>
         </section>
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 1 步（可选）：确认 0.5.0 版本存在</h2>
+                <h2 class="panel-title">第 1 步（可选）：确认 0.6.0 版本存在</h2>
                 <p class="panel-subtitle">这是只读检查，可以跳过，不会改动 WordPress 工程文件。</p>
             </div>
             <div class="code-shell">
-<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.5.0 version</code></pre>
+<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.6.0 version</code></pre>
             </div>
             <div class="callout">
-                命令输出 <code>0.5.0</code> 就表示该固定版本存在。它只查询 Registry，
+                命令输出 <code>0.6.0</code> 就表示该固定版本存在。它只查询 Registry，
                 不会安装插件；即使跳过本步，也可以直接执行第 2 步。第 2 步的固定版本
                 <code>npx</code> 会取得并运行该包，不需要先做全局安装。
             </div>
@@ -570,8 +590,8 @@ git status --short
 <span class="comment"># 首次初始化执行一次；项目已忽略该目录时可跳过</span>
 echo ".automation-plugin/" &gt;&gt; .git/info/exclude
 
-<span class="comment"># 固定使用已发布的 0.5.0，自动识别模块、flavor 和 Gradle 验证任务</span>
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
+<span class="comment"># 固定使用已发布的 0.6.0，自动识别模块、flavor 和 Gradle 验证任务</span>
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
   init . \
   --json</code></pre>
             </div>
@@ -582,7 +602,19 @@ npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
                 旧的 WordPress 专用 Gradle 验证 JSON 已无用途，不应复制到 WordPress 工程或重新传给 CLI。
                 <code>init</code> 还会在根目录缺失时自动创建只含注释的
                 <code>.automation-worktree-allowlist</code>，已有普通文件则原样保留。
+                WordPress 的 <code>gradle.properties</code> 已启用 Configuration Cache；0.6.0 内部只对
+                临时 <code>gradlew help</code> 发现调用增加 <code>--no-configuration-cache</code>，不会修改
+                项目文件，正常构建继续使用原有缓存配置。
                 查询失败会在安装写入前以 <code>GRADLE_DISCOVERY_FAILED</code> 结束，不会使用漏测矩阵继续。
+            </div>
+            <div class="code-shell">
+<pre><code><span class="comment"># 仅在任务发现失败时复现同一配置阶段边界</span>
+./gradlew help --no-configuration-cache --console=plain</code></pre>
+            </div>
+            <div class="callout warn">
+                不要通过删除 Configuration Cache 或关闭
+                <code>org.gradle.configuration-cache=true</code> 长期绕过错误；应修复命令报告的
+                JDK、依赖解析或 Gradle 配置问题。
             </div>
         </section>
 
@@ -593,7 +625,7 @@ npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
             </div>
             <div class="code-shell">
 <pre><code><span class="comment"># 验证安装</span>
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
   doctor . --json
 
 <span class="comment"># 查看安装产生的文件</span>
@@ -844,16 +876,16 @@ git -C "$task_root" commit --only \
                 <summary>WordPress 已安装旧版本，如何升级到自动发现版本？</summary>
                 <div class="details-body">
                     先用目标版本运行 doctor，再升级并复核已安装质量矩阵。升级默认保留旧安装的
-                    矩阵，不会因为切换到 0.5.0 自动重新发现：
+                    矩阵，不会因为切换到 0.6.0 自动重新发现：
                     <div class="code-shell">
-<pre><code>npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
+<pre><code>npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
   doctor . --json
 
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
   upgrade . \
   --json</code></pre>
                     </div>
-                    如果旧矩阵漏掉 flavor，应先在临时干净 checkout 中执行 0.5.0 首次
+                    如果旧矩阵漏掉 flavor，应先在临时干净 checkout 中执行 0.6.0 首次
                     <code>init</code> 核对自动发现结果，再使用经审核的工程内覆盖文件，或安全卸载后
                     重新初始化。当前 WordPress 没有安装 manifest，应直接首次 <code>init</code>，不走升级。
                     如果从缺少 <code>moduleScope</code> 的 <code>0.2.0</code> 直接升级，默认会保留为
@@ -887,6 +919,7 @@ npx --yes @frankzhang2026/opencode-android-orchestrator@0.5.0 \
                     <ul class="check-list">
                         <li>先运行固定版本的 <code>doctor . --json</code>，按失败项处理。</li>
                         <li>确认从 WordPress Git 根目录运行，且 <code>gradlew</code> 可执行。</li>
+                        <li>任务发现失败时运行 <code>./gradlew help --no-configuration-cache --console=plain</code>；不要关闭项目级 Configuration Cache 掩盖根因。</li>
                         <li>确认 OpenCode 版本为认证过的 <code>1.14.22</code> 或 <code>1.15.13</code>。</li>
                         <li>白名单校验失败时修正具体条目；不要把目录改成 glob，也不要放宽 <code>protectedPaths</code> 绕过错误。</li>
                         <li>不要删除或手工修改 <code>.automation-plugin/</code>。</li>

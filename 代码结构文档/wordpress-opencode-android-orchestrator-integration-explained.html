@@ -451,7 +451,7 @@
             </div>
             <h1>最简单地安装并使用 Orchestrator</h1>
             <p class="lead">
-                只需要确认固定版本、执行零参数初始化、提交生成文件、启动 Planner 四步。
+                首次接入包含一项可选版本核验，以及初始化、提交生成文件、启动 Planner 三个必做步骤。
                 <code>init .</code> 会从 Gradle 已注册任务自动生成全模块与 flavor 质量矩阵，
                 不再依赖 WordPress 专用 JSON 或其他工程的绝对路径；精确路径工作树白名单继续保留。
             </p>
@@ -477,14 +477,14 @@
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">四步完成</h2>
-                <p class="panel-subtitle">第一次安装按顺序做，之后日常使用只需要第 4 步。</p>
+                <h2 class="panel-title">三步安装 + 一项可选核验</h2>
+                <p class="panel-subtitle">首次安装必做第 2–4 步；第 1 步只是提前确认固定版本存在。</p>
             </div>
             <div class="quick-grid">
                 <article class="quick-card">
                     <div class="number">1</div>
-                    <h3>确认固定版本</h3>
-                    <p>0.5.0 已公开发布并包含自动发现能力；不要使用 0.4.0 或浮动 latest。</p>
+                    <h3>可选：确认 0.5.0 存在</h3>
+                    <p><code>npm view</code> 返回 <code>0.5.0</code> 即可；跳过不影响后续安装。</p>
                 </article>
                 <article class="quick-card">
                     <div class="number">2</div>
@@ -542,18 +542,16 @@
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 1 步：确认 Registry 固定版本</h2>
-                <p class="panel-subtitle">这是只读检查，不会改动 WordPress 工程文件。</p>
+                <h2 class="panel-title">第 1 步（可选）：确认 0.5.0 版本存在</h2>
+                <p class="panel-subtitle">这是只读检查，可以跳过，不会改动 WordPress 工程文件。</p>
             </div>
             <div class="code-shell">
-<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.5.0 \
-  version dist.shasum dist.fileCount dist.unpackedSize</code></pre>
+<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.5.0 version</code></pre>
             </div>
             <div class="callout">
-                结果应包含版本 <code>0.5.0</code>、npm SHA-1
-                <code>5f63d3a63eb613bda20405414422d67c8f6f38b4</code>、134 个文件和
-                925,053 bytes 解包大小。下一步的固定版本 <code>npx</code> 会直接取得该包，
-                不需要先做全局安装。
+                命令输出 <code>0.5.0</code> 就表示该固定版本存在。它只查询 Registry，
+                不会安装插件；即使跳过本步，也可以直接执行第 2 步。第 2 步的固定版本
+                <code>npx</code> 会取得并运行该包，不需要先做全局安装。
             </div>
         </section>
 

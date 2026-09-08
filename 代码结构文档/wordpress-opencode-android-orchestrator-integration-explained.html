@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordPress 升级到 OpenCode Android Orchestrator 0.6.1</title>
+    <title>WordPress 升级到 OpenCode Android Orchestrator 0.7.0</title>
     <style>
         :root {
             color-scheme: light;
@@ -447,14 +447,14 @@
         <section class="hero">
             <div class="eyebrow-row">
                 <span class="eyebrow">WordPress Quick Start</span>
-                <span class="status">0.6.1 已公开发布 · npm latest</span>
+                <span class="status">0.7.0 已公开发布 · npm latest</span>
             </div>
-            <h1>从 0.6.0 安全升级到 0.6.1</h1>
+            <h1>从 0.6.1 安全升级到 0.7.0</h1>
             <p class="lead">
-                WordPress 已有健康的 0.6.0 manifest-managed 安装。本次先用已安装版本确认基线，
-                再由固定的 0.6.1 执行升级和升级后诊断；现有全模块与 flavor 质量矩阵原样保留，
-                不再执行 <code>init .</code>，也不依赖 WordPress 专用 JSON。0.6.1 为受管长命令增加
-                30 分钟默认超时，并加入一次受限的 baseline 恢复。
+                WordPress 已有健康的 0.6.1 manifest-managed 安装。本次先用已安装版本确认基线，
+                再由固定的 0.7.0 执行升级和升级后诊断；现有全模块与 flavor 质量矩阵原样保留，
+                不再执行 <code>init .</code>，也不依赖 WordPress 专用 JSON。0.7.0 将单元测试和 lint
+                改为配置文件开关，同时保留受管长命令超时和 baseline 恢复能力。
             </p>
             <div class="meta-grid">
                 <div class="meta">
@@ -463,15 +463,15 @@
                 </div>
                 <div class="meta">
                     <strong>目标版本</strong>
-                    <code>@frankzhang2026/opencode-android-orchestrator@0.6.1</code>
+                    <code>@frankzhang2026/opencode-android-orchestrator@0.7.0</code>
                 </div>
                 <div class="meta">
                     <strong>质量矩阵</strong>
-                    <code>保留 0.6.0 已发现矩阵，无外部文件</code>
+                    <code>保留 0.6.1 已发现矩阵，无外部文件</code>
                 </div>
                 <div class="meta">
                     <strong>核心源码依据</strong>
-                    <code>src/installer/gradle-verification.ts</code>、<code>src/config/long-command-timeout.ts</code>
+                    <code>src/installer/gradle-verification.ts</code>、<code>src/config/verification-policy.ts</code>、<code>src/config/long-command-timeout.ts</code>
                 </div>
             </div>
         </section>
@@ -484,18 +484,18 @@
             <div class="quick-grid">
                 <article class="quick-card">
                     <div class="number">1</div>
-                    <h3>可选：确认 0.6.1 存在</h3>
-                    <p><code>npm view</code> 返回 <code>0.6.1</code> 即可；跳过不影响后续升级。</p>
+                    <h3>可选：确认 0.7.0 存在</h3>
+                    <p><code>npm view</code> 返回 <code>0.7.0</code> 即可；跳过不影响后续升级。</p>
                 </article>
                 <article class="quick-card">
                     <div class="number">2</div>
-                    <h3>验证 0.6.0 并升级</h3>
-                    <p>先用 0.6.0 doctor 验证当前安装，再由 0.6.1 执行 <code>upgrade .</code>。</p>
+                    <h3>验证 0.6.1 并升级</h3>
+                    <p>先用 0.6.1 doctor 验证当前安装，再由 0.7.0 执行 <code>upgrade .</code>。</p>
                 </article>
                 <article class="quick-card">
                     <div class="number">3</div>
                     <h3>验证并提交</h3>
-                    <p>用 0.6.1 doctor 复核，审核并提交 10 个升级文件。</p>
+                    <p>用 0.7.0 doctor 复核，审核配置开关和升级文件后再提交。</p>
                 </article>
                 <article class="quick-card">
                     <div class="number">4</div>
@@ -513,7 +513,7 @@
             <div class="reading-grid">
                 <article class="reading-card">
                     <h3>1. Gradle 质量矩阵自动生成</h3>
-                    <p>临时只读 init script 发现实际注册任务；0.6.1 保留仅为这次调用禁用配置缓存的边界。普通任务折叠为通用选择器，flavor 任务保留精确路径。</p>
+                    <p>临时只读 init script 发现实际注册任务；0.6.0 起仅为这次调用禁用配置缓存。普通任务折叠为通用选择器，flavor 任务保留精确路径。</p>
                 </article>
                 <article class="reading-card">
                     <h3>2. 白名单是精确文件列表</h3>
@@ -552,30 +552,30 @@ const result = runner(
 );</code></pre>
             </div>
             <div class="callout">
-                2026-09-02 的只读核对结果：WordPress 分支
-                <code>feature-0602-cases-opencode-test</code> 工作区干净，本地比远端领先安装提交
-                <code>7bff3ee</code>；manifest 是健康的 <code>0.6.0</code> installed 状态，45 个受管文件、
-                28 个可执行脚本和 1 个备份均通过固定 0.6.0 doctor，因此当前必须升级，不能再次初始化。
-                0.6.1 已公开发布，npm <code>latest</code> 指向 <code>0.6.1</code>；候选源码为
-                <code>9fa54d3</code>，发布恢复证据为 <code>c961ba6</code>，升级复核与勘误证据为
-                <code>0b370cd</code>；候选门禁为 Node
-                <code>138/138</code>、Shell <code>44/44</code>。0.5.0 已在真实 WordPress 工程自动识别
+                2026-09-03 的只读核对结果：WordPress 分支
+                <code>feature-0602-cases-opencode-test</code> 工作区干净，当前提交为
+                <code>a3f98ba</code> 且与远端一致；manifest 是健康的 <code>0.6.1</code> installed 状态，47 个受管文件、
+                29 个可执行脚本和 1 个备份均通过固定 0.6.1 doctor，因此当前应执行升级，不能再次初始化。
+                0.7.0 已公开发布，npm <code>latest</code> 指向 <code>0.7.0</code>；发布提交为
+                <code>57d2589</code>；发布门禁为 Node
+                <code>143/143</code>、Shell <code>44/44</code>。0.5.0 已在真实 WordPress 工程自动识别
                 <code>:WordPress</code>、WordPress/Jetpack 两个 Debug flavor 和 7 个 Android 库模块；
-                0.6.1 保留同一矩阵推导与配置缓存边界，并增加长命令超时及 baseline 恢复测试。正式接入固定使用
-                <code>@0.6.1</code>，不需要 WordPress 专用 Gradle JSON。
+                0.7.0 保留同一矩阵推导、配置缓存边界、长命令超时及 baseline 恢复能力，并新增
+                <code>unitTestsEnabled</code> 与 <code>lintEnabled</code> 配置开关。正式接入固定使用
+                <code>@0.7.0</code>，不需要 WordPress 专用 Gradle JSON。
             </div>
         </section>
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 1 步（可选）：确认 0.6.1 版本存在</h2>
+                <h2 class="panel-title">第 1 步（可选）：确认 0.7.0 版本存在</h2>
                 <p class="panel-subtitle">这是只读检查，可以跳过，不会改动 WordPress 工程文件。</p>
             </div>
             <div class="code-shell">
-<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.6.1 version</code></pre>
+<pre><code>npm view @frankzhang2026/opencode-android-orchestrator@0.7.0 version</code></pre>
             </div>
             <div class="callout">
-                命令输出 <code>0.6.1</code> 就表示该固定版本存在。它只查询 Registry，
+                命令输出 <code>0.7.0</code> 就表示该固定版本存在。它只查询 Registry，
                 不会安装插件；即使跳过本步，也可以直接执行第 2 步。第 2 步的固定版本
                 <code>npx</code> 会取得并运行该包，不需要先做全局安装。
             </div>
@@ -583,7 +583,7 @@ const result = runner(
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 2 步：验证 0.6.0 并升级</h2>
+                <h2 class="panel-title">第 2 步：验证 0.6.1 并升级到 0.7.0</h2>
                 <p class="panel-subtitle">不传项目专用参数。开始前必须保证 WordPress 工作区干净且当前 manifest 健康。</p>
             </div>
             <div class="code-shell">
@@ -596,21 +596,20 @@ git status --short
 <span class="comment"># 已有忽略规则；只核对，不要重复追加</span>
 git check-ignore -v .automation-plugin/manifest.json
 
-<span class="comment"># 升级前诊断必须与当前 manifest 的 0.6.0 一致</span>
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
+<span class="comment"># 升级前诊断必须与当前 manifest 的 0.6.1 一致</span>
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
   doctor . --json
 
-<span class="comment"># 固定使用已发布的 0.6.1 执行事务升级</span>
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
+<span class="comment"># 固定使用已发布的 0.7.0 执行事务升级</span>
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.7.0 \
   upgrade . \
   --json</code></pre>
             </div>
             <div class="callout">
-                不要在升级前要求 0.6.1 doctor 通过：它会按 0.6.1 的 47 文件目标认证，因此在健康的
-                0.6.0 manifest 上正确报告版本、清单和缺失超时字段不匹配。一次性 WordPress 克隆中的
-                实际升级结果为：受管文件 45 → 47，写入 10、复用 37、无恢复、移除或清理警告；
-                <code>moduleScope: all</code>、<code>:WordPress</code> 主模块与完整 Gradle 矩阵均保留，
-                同时加入 <code>longCommandTimeoutMs: 1800000</code>、<code>/resume-task</code> 命令和脚本。
+                升级前必须使用当前安装的 0.6.1 doctor；目标版本 doctor 会按 0.7.0 清单认证，不能提前运行。
+                升级会保留现有 47 个受管文件、29 个可执行脚本、<code>moduleScope: all</code>、<code>:WordPress</code>
+                主模块与完整 Gradle 矩阵，并保留 <code>longCommandTimeoutMs: 1800000</code>、<code>/resume-task</code>
+                命令和脚本；缺少的新策略字段会按 0.7.0 默认值补齐。
             </div>
             <div class="callout warn">
                 已发布包内的 <code>docs/MIGRATION.md</code> 把目标版本 doctor 错放在升级之前；本页使用
@@ -620,16 +619,37 @@ npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 3 步：验证并提交升级结果</h2>
+                <h2 class="panel-title">第 3 步：在配置文件中选择测试与 lint</h2>
+                <p class="panel-subtitle">开关属于工程配置，不通过 <code>init</code> 或 <code>upgrade</code> 参数传入。</p>
+            </div>
+            <div class="code-shell">
+<pre><code><span class="comment"># 查看当前策略与超时；0.7.0 默认：单元测试开启、lint 关闭</span>
+jq '{unitTestsEnabled, lintEnabled, longCommandTimeoutMs}' automation/config.json
+
+<span class="comment"># 按需编辑并提交 config.json；下面是默认值示例</span>
+nano automation/config.json
+<span class="comment"># "unitTestsEnabled": true, "lintEnabled": false</span></code></pre>
+            </div>
+            <div class="callout">
+                <code>unitTestsEnabled</code> 默认是 <code>true</code>；设为 <code>false</code> 时跳过 baseline、聚焦和完整单元测试阶段，
+                但 RED 证据仍是强制门禁。<code>lintEnabled</code> 默认是 <code>false</code>；只有设为 <code>true</code> 才会执行配置中的
+                <code>lintTasks</code>。assemble、任务发现、范围校验、设备测试和超时配置不受这两个开关影响。
+                直接编辑 <code>automation/config.json</code> 后提交，升级不会把已有显式值改回默认值。
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">第 4 步：验证并提交升级结果</h2>
                 <p class="panel-subtitle">插件工作流要求源分支保持干净，因此升级生成的文件需要先审核并提交。</p>
             </div>
             <div class="code-shell">
 <pre><code><span class="comment"># 升级后改用目标版本验证</span>
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.7.0 \
   doctor . --json
 
-<span class="comment"># 核对保留项、新超时与固定插件引用</span>
-jq '.androidProject.primaryModule, .moduleScope, .longCommandTimeoutMs, .gradleVerification' automation/config.json
+<span class="comment"># 核对保留项、策略开关、超时与固定插件引用</span>
+jq '.androidProject.primaryModule, .moduleScope, .unitTestsEnabled, .lintEnabled, .longCommandTimeoutMs, .gradleVerification' automation/config.json
 jq '.plugin' opencode.json
 
 <span class="comment"># 查看升级产生的 8 个修改文件与 2 个新增文件</span>
@@ -638,12 +658,13 @@ git diff --stat
 
 <span class="comment"># 确认只有本次升级文件后提交</span>
 git add --all
-git commit -m "Upgrade OpenCode Android Orchestrator to 0.6.1"</code></pre>
+git commit -m "Upgrade OpenCode Android Orchestrator to 0.7.0"</code></pre>
             </div>
             <div class="callout warn">
                 doctor 的 JSON 中应看到 <code>"ok": true</code>、47 个受管文件和 29 个可执行脚本；
-                <code>opencode.json</code> 只把插件引用从 <code>@0.6.0</code> 更新为 <code>@0.6.1</code>。
-                提交前先审核 10 个升级文件；如果混入原有业务修改，不要执行 <code>git add --all</code>。
+                <code>opencode.json</code> 只把插件引用从 <code>@0.6.1</code> 更新为 <code>@0.7.0</code>，配置中应能看到
+                <code>unitTestsEnabled: true</code> 与 <code>lintEnabled: false</code>（除非你有意修改）。提交前先审核升级文件；
+                如果混入原有业务修改，不要执行 <code>git add --all</code>。
             </div>
         </section>
 
@@ -684,7 +705,7 @@ docs/local-review-notes.md</code></pre>
 
         <section class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">第 4 步：启动并使用</h2>
+                <h2 class="panel-title">第 5 步：启动并使用</h2>
                 <p class="panel-subtitle">以后每次使用都从 WordPress 根目录启动 Planner。</p>
             </div>
             <div class="code-shell">
@@ -886,23 +907,24 @@ git -C "$task_root" commit --only \
                 <summary>今后从已安装版本升级时，doctor 应该如何排序？</summary>
                 <div class="details-body">
                     先用已安装版本 doctor 验证当前 manifest，再由目标版本升级，最后用目标版本 doctor。
-                    当前 WordPress 的固定命令如下；升级默认保留旧安装矩阵，不会因为切换到 0.6.1
+                    当前 WordPress 的固定命令如下；升级默认保留旧安装矩阵，不会因为切换到 0.7.0
                     自动重新发现：
                     <div class="code-shell">
-<pre><code>npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.0 \
+<pre><code>npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
   doctor . --json
 
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.7.0 \
   upgrade . \
   --json
 
-npx --yes @frankzhang2026/opencode-android-orchestrator@0.6.1 \
+npx --yes @frankzhang2026/opencode-android-orchestrator@0.7.0 \
   doctor . --json</code></pre>
                     </div>
-                    如果旧矩阵漏掉 flavor，应先在临时干净 checkout 中执行 0.6.1 首次
+                    如果旧矩阵漏掉 flavor，应先在临时干净 checkout 中执行 0.7.0 首次
                     <code>init</code> 核对自动发现结果，再使用经审核的工程内覆盖文件，或安全卸载后
-                    重新初始化。当前 WordPress 已有健康的 0.6.0 manifest，应直接升级，不能再次执行
-                    <code>init</code>。
+                    重新初始化。当前 WordPress 已有健康的 0.6.1 manifest，应直接升级，不能再次执行
+                    <code>init</code>。升级会保留超时值，并为缺少的策略字段写入
+                    <code>unitTestsEnabled: true</code>、<code>lintEnabled: false</code>。
                     如果从缺少 <code>moduleScope</code> 的 <code>0.2.0</code> 直接升级，默认会保留为
                     <code>primary</code>；只有明确要扩到全部模块时，才额外传入 <code>--module-scope all</code>。
                     旧安装没有 <code>longCommandTimeoutMs</code> 时会得到默认 <code>1800000</code>；已有合法值则保留。

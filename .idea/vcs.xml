@@ -2,5 +2,41 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-KWByyw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-SO4G8K" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-VYq2SL" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-Z25ZUC" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-fIkKxy" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-android-mhW4w4" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-gradle-LiR8rD" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/inventory-gradle-MU87M9" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/legacy-lifecycle-p3Rpfa" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-1.2.1-fix/validation/wordpress-upgrade" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-android-continuity-validation/isolated-integration/real-android/orchestrator-queue-test-1xk7jH/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-android-continuity-validation/isolated-integration/real-android/orchestrator-queue-test-1xk7jH/worktrees/task-real-a-v1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-android-continuity-validation/isolated-integration/real-android/orchestrator-queue-test-p2YL8w/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-android-continuity-validation/nested-root/real-android/capabilities-android-uKRjKW" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle-6.7.1-review/real-gradle/inventory-android-lihUZH" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle-6.7.1-review/real-gradle/inventory-android-qeShRn" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle-6.7.1-review/real-gradle/inventory-gradle-7peJMh" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/capabilities-android-TCIg0d" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/capabilities-android-VjyTyl" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/inventory-android-AR1gQ1" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/inventory-android-B02pUx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/inventory-android-CXEl7n" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/inventory-android-IFVrf4" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/inventory-android-TmhNqo" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/legacy-lifecycle-KCLHw5" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/legacy-lifecycle-wmBLai" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-gradle671-fix-validation/orchestrator-queue-test-fdaOGg/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-impact-verification/validation/real-gradle-artifacts/capabilities-android-aPLhYd" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-impact-verification/validation/real-gradle-artifacts/capabilities-android-rkbQRx" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/installed-final" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/real-android-final" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/real-gradle" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/real-gradle-final" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/review-fixes/android-evidence" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-validation/review-fixes/jvm-evidence" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-test-inventory-work/source" vcs="Git" />
   </component>
 </project>

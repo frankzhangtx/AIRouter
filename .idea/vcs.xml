@@ -2,25 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/driver-fixtures/orchestrator-queue-test-3pyhdp/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261017-223514-upgrade/source" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261017-223514-upgrade/wordpress" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-1Mh89V/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-3jkJdd/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-MRm0aY/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-OwLip2/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-SuBIzw/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-WQmgEP/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/driver-fixtures/orchestrator-queue-test-m4kbwK/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/source" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261018-trial-recovery/wordpress" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/argument-transport-fix/probe" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/driver-fixtures/orchestrator-queue-test-7uunoH/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/driver-fixtures/orchestrator-queue-test-Ilu0I8/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/host-budget-probe/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/host-load-probe/project" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/isolated-wordpress" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/native-argument-diagnostic" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-local-package-wordpress-validation/source" vcs="Git" />
   </component>
 </project>

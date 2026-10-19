@@ -1,7 +1,7 @@
 # Orchestrator 本地候选包与 WordPress 无人值守验证实施方案
 
 日期：2026-10-14  
-状态：用户于 2026-10-16 明确授权将总候选上限扩展至 5，正在续作；已用 3 个名额，剩余 2 个。前三个候选的功能验收 FAILED、原版本恢复 PASSED，原报告保留。详见 [最终报告](orchestrator-local-package-wordpress-validation/final-report.md) 和 [实施进度](orchestrator-local-package-wordpress-validation/progress.md)。本文保留原设计要求，未完成项不视为已验收。  
+状态：用户于 2026-10-16 明确授权将总候选上限扩展至 5，正在续作；已用 3 个名额，剩余 2 个。前三个候选的功能验收 FAILED、原版本恢复 PASSED，原报告保留。详见 [最终报告](../../orchestrator-local-package-wordpress-validation/final-report.md) 和 [实施进度](../../orchestrator-local-package-wordpress-validation/progress.md)。本文保留原设计要求，未完成项不视为已验收。  
 本次交付范围：按本方案实施、验证并恢复 WordPress 原插件；不发布 npm。
 
 ## 1. 目标与执行边界

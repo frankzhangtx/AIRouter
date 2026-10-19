@@ -2,7 +2,7 @@
 
 审核日期：2026-09-26。
 
-2026-09-30 实现追踪：[逐项核对、已补齐内容与剩余任务](orchestrator-android-continuity-progress.md)。V5 基线恢复、V6 Worker 安全终止、V7 阶段验证恢复、Android 工程能力模型及显式嵌套构建根已同步产品源码；第七轮进一步交付 V8 显式授权的隔离自动本地集成和声明式规划输入刷新。最新 Node 完整回归 318/318、Shell 46/46、真实 Android 两任务自动集成链 1/1 通过，28 个审阅文件已同步；真实 Android 的 Gradle/JUnit 实际执行，Coder/Reviewer 为模拟响应。此前真实嵌套 Android 1/1 验证仍单独保留。尚不包含任务类型、追加证据、模型供应商自动恢复、成本预算、跨恢复任务总时限、复合构建或长期运行验收。完整验证记录和边界见进度文档。下文保留审核当时的事实和完整验收清单；不能将局部修复等同于整体长期运行验收完成。
+2026-09-30 实现追踪：[逐项核对、已补齐内容与剩余任务](../progress/orchestrator-android-continuity-progress.md)。V5 基线恢复、V6 Worker 安全终止、V7 阶段验证恢复、Android 工程能力模型及显式嵌套构建根已同步产品源码；第七轮进一步交付 V8 显式授权的隔离自动本地集成和声明式规划输入刷新。最新 Node 完整回归 318/318、Shell 46/46、真实 Android 两任务自动集成链 1/1 通过，28 个审阅文件已同步；真实 Android 的 Gradle/JUnit 实际执行，Coder/Reviewer 为模拟响应。此前真实嵌套 Android 1/1 验证仍单独保留。尚不包含任务类型、追加证据、模型供应商自动恢复、成本预算、跨恢复任务总时限、复合构建或长期运行验收。完整验证记录和边界见进度文档。下文保留审核当时的事实和完整验收清单；不能将局部修复等同于整体长期运行验收完成。
 
 审核对象：`/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` 当前源码及未提交的 V4 清单补修，结合合同验证设计、队列文档和验收记录。采用源码调用链审查和三路独立复核；本次没有修改插件实现，没有重跑完整测试，也没有进行真实模型连续运行测试。
 
@@ -153,7 +153,7 @@ GREEN 要求整个发现范围内的测试源码和资源快照与 RED 完全一
 
 原设计将受控旧行为采样、独立草稿复核、合同修订入口列为第二批；本轮清单修复明确没有覆盖它们。仅要求 Planner 填写 `baselineCapture` 等来源标签，不能保证精确预期来自真实测量。
 
-证据：[合同验证设计:224](/Users/zhanglong/files/program/cctest/taskdescriptions/orchestrator-contract-test-validation-design.md:224)、[清单修复范围:50](/Users/zhanglong/files/program/cctest/taskdescriptions/orchestrator-test-inventory-progress.md:50)。
+证据：[合同验证设计:224](/Users/zhanglong/files/program/cctest/taskdescriptions/orchestrator/design/orchestrator-contract-test-validation-design.md:224)、[清单修复范围:50](/Users/zhanglong/files/program/cctest/taskdescriptions/orchestrator/progress/orchestrator-test-inventory-progress.md:50)。
 
 建议把这部分纳入长期运行方案：固定输入和比较方式下的旧行为采样；生成草稿时检查条件冲突和可执行性；新测试身份在受控准备阶段解析并绑定；需求变化生成集中修订差异。合同内已经授权的采样和有限修复不应逐次要求人工确认。
 

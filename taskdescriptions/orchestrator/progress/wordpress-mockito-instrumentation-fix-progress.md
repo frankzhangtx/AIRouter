@@ -84,7 +84,7 @@ FluxC 4 个时区/数据失败，以及 WordPress 两个变体各自相同的 5 
 - 按仓库规范独立执行 `./gradlew testDebugUnitTest`；只剩 FluxC 原有 4 项失败。扫描全部 `TEST-*.xml`
   后，`Could not initialize inline Byte Buddy mock maker`、`Could not self-attach`、
   `attempted to delete a method` 均为 0。
-- 可落地补丁：`taskdescriptions/wordpress-mockito-instrumentation-fix.patch`。
+- 可落地补丁：`taskdescriptions/orchestrator/patches/wordpress-mockito-instrumentation-fix.patch`。
 
 ## 正式集成记录
 

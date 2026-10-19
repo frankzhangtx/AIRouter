@@ -5,12 +5,12 @@
 ## 开发范围
 
 继续 2026-09-12 晚间授权的队列设计实现，目标版本为 `1.0.0`。
-设计依据：[后台队列设计](../流程说明文档/orchestrator-auto-agent-queue-design-explained.html)。
+设计依据：[后台队列设计](../../../流程说明文档/orchestrator-auto-agent-queue-design-explained.html)。
 
 - 源码仓库：`/Users/zhanglong/files/npmprogram/opencode_android_orchestrator`
 - 起点：`main` / `4964292` / `0.10.0`，恢复时工作区干净。
 - 验证工作副本：`/private/tmp/orchestrator-v1-finish-kieusokl/source`
-- 持久恢复补丁：[完整实现补丁](orchestrator-v1-work-in-progress.patch)。补丁包含新增文件，可直接应用于上述起点。
+- 持久恢复补丁：[完整实现补丁](../patches/orchestrator-v1-work-in-progress.patch)。补丁包含新增文件，可直接应用于上述起点。
 
 ## 已实现
 
@@ -36,7 +36,7 @@
 - 最终安装包静态审计通过：202 个文件、297889 字节；没有源码、测试目录、依赖目录和本机绝对路径。
 - 安装包 SHA-256：`7a01bd2eeac58d5d9c22ed4ca435cfb792243436bb17ae50ed59e6f16f08d422`。
 
-日志与本地安装包已保存在 [验证目录](orchestrator-v1-validation/)。
+日志与本地安装包已保存在 [验证目录](../../orchestrator-v1-validation)。
 队列端到端及安装生命周期用例使用真实 Git/脚本，OpenCode 模型与 Android Gradle 命令由测试替身模拟；真实 Gradle 和真实 OpenCode 离线发现另行验证。
 
 ## 完成状态
@@ -44,6 +44,6 @@
 - 已将完整补丁写回 Orchestrator 源码仓库。
 - 写回后再次构建通过，149 个源码文件与验证副本内容、权限一致。
 - 安装包内 202 个文件与写回后的源码及构建结果逐字节一致。
-- [开发验证记录](orchestrator-v1-validation/development-validation.md) 和 [写回核对结果](orchestrator-v1-validation/writeback-verification.json) 已持久保存。
+- [开发验证记录](../../orchestrator-v1-validation/development-validation.md) 和 [写回核对结果](../../orchestrator-v1-validation/writeback-verification.json) 已持久保存。
 
 本次仅授权开发。未提交源码仓库、未推送、未发布 npm；真实模型在两个支持版本上的端到端认证仍属于发布前验证。

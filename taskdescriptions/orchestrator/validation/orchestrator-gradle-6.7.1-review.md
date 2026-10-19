@@ -2,7 +2,7 @@
 
 审查日期：2026-09-30；2026-10-01 续做并补充真实 Gradle 6.7.1 诊断。产品提交：`9bd6cd553aa42f4f7f79397e7da248d961ada234`，npm 版本 1.1.0。
 
-2026-10-08 更新：本审查对应的开发修复已同步产品源码，全量 325/325、真实新旧 Android 4/4、Shell 46/46 通过，尚未发布新版本。具体实现、保留边界和验证证据见[修复交付记录](orchestrator-gradle671-fix-progress.md)。以下保留原审查结论，描述的是原始 1.1.0 基准，不代表修复后源码仍存在同样缺陷。
+2026-10-08 更新：本审查对应的开发修复已同步产品源码，全量 325/325、真实新旧 Android 4/4、Shell 46/46 通过，尚未发布新版本。具体实现、保留边界和验证证据见[修复交付记录](../progress/orchestrator-gradle671-fix-progress.md)。以下保留原审查结论，描述的是原始 1.1.0 基准，不代表修复后源码仍存在同样缺陷。
 
 **结论：目前不应把 1.1.0 视为已验证可用于 Gradle 6.7.1 的无人值守方案。** 现有证据门禁存在可复现的判定缺口；旧版 Android 实测还确认了采集器初始化阻断和 Kotlin 源集遗漏。目标工程仍没有经过完整验证。无需因此强制升级用户的 Gradle，应该修复兼容问题并为 6.7.1 建立独立验收。
 
@@ -16,9 +16,9 @@
 
 在真实 **Gradle 6.7.1 / AGP 4.2.2 / Kotlin 1.4.32 / Corretto 8u312** 的 Android 夹具中，配置 `org.gradle.jvmargs=-Xmx1536m` 后，初始化脚本的 `System.getProperty('orchestrator.inventoryRequest')` 返回 null；同一参数在 `gradle.startParameter.systemPropertiesArgs` 中仍存在。产品直接 `new File(null)`，在 baseline discovery 阶段报 `Ambiguous method overloading for method java.io.File#<init>`，尚未执行测试。
 
-2026-10-01 使用重新下载并校验的发行包复验，普通 daemon 与 `--no-daemon` 均观察到相同参数差异；直接执行**原版**采集器并添加 `--no-daemon` 仍复现初始化失败。因此，Worker 已有的 `--no-daemon` 不能绕过这个问题。属性探针故意以退出码 1 停在工程配置前；这两次非零退出是诊断设计，原版采集器的非零退出才是产品缺陷复现。详见 [探针与原版运行记录](orchestrator-gradle-6.7.1-review/resumed-diagnostics/results.json)。
+2026-10-01 使用重新下载并校验的发行包复验，普通 daemon 与 `--no-daemon` 均观察到相同参数差异；直接执行**原版**采集器并添加 `--no-daemon` 仍复现初始化失败。因此，Worker 已有的 `--no-daemon` 不能绕过这个问题。属性探针故意以退出码 1 停在工程配置前；这两次非零退出是诊断设计，原版采集器的非零退出才是产品缺陷复现。详见 [探针与原版运行记录](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/results.json)。
 
-诊断副本仅将请求路径改为优先读取 `gradle.startParameter.systemPropertiesArgs`，再回退到 System 属性；其余四个验证模块与产品逐字节一致。该副本完成两项既有 Java/Kotlin 测试的基线、新增行为用例的预期 RED、三项 GREEN 和最终 check，真实 Gradle 日志、事件及 XML 均已保存。见 [诊断副本](orchestrator-gradle-6.7.1-review/diagnostic-verification/collect.init.gradle)、[Android 诊断日志](orchestrator-gradle-6.7.1-review/real-gradle-android-diagnostic.log)。
+诊断副本仅将请求路径改为优先读取 `gradle.startParameter.systemPropertiesArgs`，再回退到 System 属性；其余四个验证模块与产品逐字节一致。该副本完成两项既有 Java/Kotlin 测试的基线、新增行为用例的预期 RED、三项 GREEN 和最终 check，真实 Gradle 日志、事件及 XML 均已保存。见 [诊断副本](../../orchestrator-gradle-6.7.1-review/diagnostic-verification/collect.init.gradle)、[Android 诊断日志](../../orchestrator-gradle-6.7.1-review/real-gradle-android-diagnostic.log)。
 
 建议把请求参数解析修复纳入正式产品，并明确拒绝缺失或无效路径，再验证 6.7.1 与现有新版本、daemon/单次 daemon、安装升级及完整队列。诊断只确认此环境中的读取问题与候选修复效果，不宣称所有 Gradle 6.7.1 配置均失败，也不把临时副本当作已发布修复。
 
@@ -26,9 +26,9 @@
 
 证据：[capabilities-script.ts:25](/Users/zhanglong/files/npmprogram/opencode_android_orchestrator/src/installer/capabilities-script.ts:25)、[adaptive-templates.ts:433](/Users/zhanglong/files/npmprogram/opencode_android_orchestrator/src/installer/adaptive-templates.ts:433)。
 
-在同一旧版 Android 夹具执行产品原始工程发现脚本，Gradle 退出码为 0，模型通过产品 `parseProjectCapabilities` 校验，并成功生成 Debug/Release 单测与构建任务矩阵。但模型遗漏了 DSL 中明确声明且实际执行过测试的 `library/checks/kotlin/**`；Java、resources、assets、res 目录仍在。证据：[原始发现日志](orchestrator-gradle-6.7.1-review/resumed-diagnostics/capability-discovery.log)、[解析后的模型和矩阵](orchestrator-gradle-6.7.1-review/resumed-diagnostics/capabilities.json)。
+在同一旧版 Android 夹具执行产品原始工程发现脚本，Gradle 退出码为 0，模型通过产品 `parseProjectCapabilities` 校验，并成功生成 Debug/Release 单测与构建任务矩阵。但模型遗漏了 DSL 中明确声明且实际执行过测试的 `library/checks/kotlin/**`；Java、resources、assets、res 目录仍在。证据：[原始发现日志](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/capability-discovery.log)、[解析后的模型和矩阵](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/capabilities.json)。
 
-独立 Gradle 探针确认：旧 Kotlin 插件向 source set 暴露的 `kotlin` 能被 `sourceSet.hasProperty('kotlin')` 和 `sourceSet.kotlin.srcDirs` 访问，而 `sourceSet.metaClass.hasProperty(sourceSet, 'kotlin')` 返回 null。产品能力脚本的通用 getter 先检查 metaClass，因此把这个有效动态属性当作不存在。详见 [属性探针](orchestrator-gradle-6.7.1-review/resumed-diagnostics/kotlin-property.log)。
+独立 Gradle 探针确认：旧 Kotlin 插件向 source set 暴露的 `kotlin` 能被 `sourceSet.hasProperty('kotlin')` 和 `sourceSet.kotlin.srcDirs` 访问，而 `sourceSet.metaClass.hasProperty(sourceSet, 'kotlin')` 返回 null。产品能力脚本的通用 getter 先检查 metaClass，因此把这个有效动态属性当作不存在。详见 [属性探针](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/kotlin-property.log)。
 
 影响：安装器根据能力模型生成 productionPaths、testPaths 和默认 allowedPaths，可能遗漏真实 Kotlin 输入并阻止合法 Kotlin 修改。模型校验只核对已报告的数据，未发现此遗漏。当前测试采集器使用另一套 `hasProperty` 逻辑，诊断副本能收集此测试目录，因此不能据此声称测试冻结已被绕过；也不能把采集器通过等同于安装能力发现完整。实测直接覆盖自定义测试源集，生产 Kotlin 源集及更多插件组合仍需专项验证。
 
@@ -111,7 +111,7 @@ RED 后对测试源和资源使用整份快照一致性校验。Reviewer 要求�
 
 ## 本次最小复现与建议验收顺序
 
-[复现脚本](orchestrator-gradle-6.7.1-review/reproduce.mjs)直接调用已发布源码的合同/RED 判定模块；[结果](orchestrator-gradle-6.7.1-review/reproduction-results.json)记录错误栈位置获准、未覆盖验收条件获准，以及 Java 21 的命令检查通过。本次复现不修改产品源码，不声称绕过完整端到端 Reviewer 或提交事务。
+[复现脚本](../../orchestrator-gradle-6.7.1-review/reproduce.mjs)直接调用已发布源码的合同/RED 判定模块；[结果](../../orchestrator-gradle-6.7.1-review/reproduction-results.json)记录错误栈位置获准、未覆盖验收条件获准，以及 Java 21 的命令检查通过。本次复现不修改产品源码，不声称绕过完整端到端 Reviewer 或提交事务。
 
 1. 确认目标工程的 wrapper URL、AGP、Kotlin、运行 JDK、SDK/NDK 和必要本地配置；保持用户要求的 Gradle 6.7.1。
 2. 修复 R7 的旧版初始化阻断、R8 的 Kotlin 源集遗漏与 R1 的 RED 来源判定；补齐 R2 的实际构建环境诊断及绑定，避免错误环境进入长任务。
@@ -125,12 +125,12 @@ RED 后对测试源和资源使用整份快照一致性校验。Reviewer 要求�
 
 | 检查 | 结果与边界 |
 | --- | --- |
-| 阿里镜像 Gradle 6.7.1 发行包 | 102842885 字节；SHA-256 `3239b5ed86c3838a37d983ac100573f64c1f3fd8e1eb6c89fa5f9529b5ec091d` 与官方校验文件相符。昨天临时目录已丢失，本次重新下载核验；[记录](orchestrator-gradle-6.7.1-review/distribution-verification-resumed.json)。 |
-| 原版 JVM 清单集成 | 上次 1/1 通过，包含参数化身份、过滤合并、跳过/空基线、重复 GREEN、输入篡改拒绝；持久日志已核对，本次未重跑。[日志](orchestrator-gradle-6.7.1-review/real-gradle-jvm.log)。 |
+| 阿里镜像 Gradle 6.7.1 发行包 | 102842885 字节；SHA-256 `3239b5ed86c3838a37d983ac100573f64c1f3fd8e1eb6c89fa5f9529b5ec091d` 与官方校验文件相符。昨天临时目录已丢失，本次重新下载核验；[记录](../../orchestrator-gradle-6.7.1-review/distribution-verification-resumed.json)。 |
+| 原版 JVM 清单集成 | 上次 1/1 通过，包含参数化身份、过滤合并、跳过/空基线、重复 GREEN、输入篡改拒绝；持久日志已核对，本次未重跑。[日志](../../orchestrator-gradle-6.7.1-review/real-gradle-jvm.log)。 |
 | 原版 Android 采集器 | 上次 baseline discovery 初始化失败；本次带 `--no-daemon` 再次复现；见 R7。 |
 | 诊断副本 Android 清单集成 | 上次 1/1 通过，约 55 秒；2 项 baseline、1 项预期 RED、3 项 GREEN、check 通过；本次核对副本差异和持久证据。不是正式产品修复，也没有执行安装/完整队列/Reviewer/集成/恢复。 |
 | 普通 daemon / `--no-daemon` 参数探针 | 本次均确认 System 属性缺失而启动参数保留；探针主动以退出码 1 停止，不能统计为构建通过。 |
 | 原版工程能力发现 | 本次 Gradle 命令成功、模型结构校验通过，但自定义 Kotlin 测试目录遗漏。最初完整性断言失败后保留为产品发现，最终诊断脚本显式断言缺陷可复现；并未把期望降低后声称产品验收通过。 |
 | Kotlin 动态属性探针 | 本次确认 metaClass 读取与 Gradle 动态属性读取不同；见 R8。 |
 
-本次诊断脚本：[resume-diagnostics.mjs](orchestrator-gradle-6.7.1-review/resume-diagnostics.mjs)。最终结果：[results.json](orchestrator-gradle-6.7.1-review/resumed-diagnostics/results.json)。首次沙箱运行被本地端口权限阻断，保留 [失败日志](orchestrator-gradle-6.7.1-review/resumed-diagnostics/property-daemon-sandbox.log)，随后经授权在沙箱外运行。产品仓库保持原提交且无工作区修改；没有重新发布 npm 或更改当前 Android 工程的安装实例。
+本次诊断脚本：[resume-diagnostics.mjs](../../orchestrator-gradle-6.7.1-review/resume-diagnostics.mjs)。最终结果：[results.json](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/results.json)。首次沙箱运行被本地端口权限阻断，保留 [失败日志](../../orchestrator-gradle-6.7.1-review/resumed-diagnostics/property-daemon-sandbox.log)，随后经授权在沙箱外运行。产品仓库保持原提交且无工作区修改；没有重新发布 npm 或更改当前 Android 工程的安装实例。

@@ -1,6 +1,6 @@
 # Android 普适性与持续运行实现进度
 
-更新日期：2026-09-30。对应 [评审文档](orchestrator-portability-and-continuity-review.md)。
+更新日期：2026-09-30。对应 [评审文档](../design/orchestrator-portability-and-continuity-review.md)。
 
 ## 最新发布：1.1.0 已发布 npm
 
@@ -11,7 +11,7 @@
 - 新构建的发布包与下午审阅包的 SHA-1/SHA-512 完全一致；Registry 下载包与实际发布包逐字节一致，共 223 个文件。
 - SHA-256：`28e8718c122bfe62624e99dd69a2fb5419c3886acdac7d20a9655dc90067006f`。
 - npm 处理期间短暂返回版本不存在，等待后版本查询及固定版本下载均成功；没有重复发布。
-- [发布核验](orchestrator-android-continuity-validation/version-1.1.0/npm-publication/publication-status.json)、[Registry 元数据](orchestrator-android-continuity-validation/version-1.1.0/npm-publication/registry-metadata.json)。
+- [发布核验](../../orchestrator-android-continuity-validation/version-1.1.0/npm-publication/publication-status.json)、[Registry 元数据](../../orchestrator-android-continuity-validation/version-1.1.0/npm-publication/registry-metadata.json)。
 
 未升级当前 Android 工程安装实例。下方“未发布 npm”等表述保留为发布前历史记录。
 
@@ -24,7 +24,7 @@
 - 本地远程引用日志记录原推送时间为 **2026-09-30 16:55:23 +08:00**；今晚通过 `git ls-remote origin refs/heads/main` 实时确认 GitHub main 与本地提交一致。
 - 产品仓库工作区干净；92 个提交文件的内容摘要及权限与下午审阅清单全部一致。
 - 下午最终版本专项 **71/71 通过**，构建与打包预检通过，包内 223 个文件；功能实现此前全量 **318/318**、Shell **46/46**、真实 Android 集成链 **1/1** 通过。本次未修改产品源码，未重复运行测试。
-- [版本专项日志](orchestrator-android-continuity-validation/version-1.1.0/version-tests.log)、[交付核验](orchestrator-android-continuity-validation/version-1.1.0/final-verification.json)。
+- [版本专项日志](../../orchestrator-android-continuity-validation/version-1.1.0/version-tests.log)、[交付核验](../../orchestrator-android-continuity-validation/version-1.1.0/final-verification.json)。
 
 版本升级及 Git 远程交付请求已完成。未发布 npm、未创建 Git tag/GitHub Release、未升级当前 Android 工程安装实例；其他功能待办仍保持原状态。以下各轮版本与未提交描述为当时交付记录。
 
@@ -68,10 +68,10 @@
 ## 交付记录
 
 - `npm run build`：工作副本和同步后的产品仓库均通过；132 个编译输出文件逐字节一致。
-- `npm test`：最终 241 项通过、0 失败、0 跳过，耗时约 278 秒。初次完整回归的 3 项旧模板摘要/断言失败已更新并通过复验；最终完整结果见 [full-final.log](orchestrator-android-continuity-validation/full-final.log)。
-- `npm run pack:check`：通过，205 个发布文件；见 [pack-check.log](orchestrator-android-continuity-validation/pack-check.log)。这是打包预检，未发布包。
-- 同步状态：24 个文件已同步到产品源码并验证摘要，141 个未涉及的基准文件保持原样，保留原有未提交 V4 修改。同步清单见 [reviewed-changes.json](orchestrator-android-continuity-validation/reviewed-changes.json)，可审阅补丁见 [continuity-changes.patch](orchestrator-android-continuity-validation/continuity-changes.patch)。
-- `git diff --check`：产品仓库通过。汇总证明见 [final-verification.json](orchestrator-android-continuity-validation/final-verification.json)。
+- `npm test`：最终 241 项通过、0 失败、0 跳过，耗时约 278 秒。初次完整回归的 3 项旧模板摘要/断言失败已更新并通过复验；最终完整结果见 [full-final.log](../../orchestrator-android-continuity-validation/full-final.log)。
+- `npm run pack:check`：通过，205 个发布文件；见 [pack-check.log](../../orchestrator-android-continuity-validation/pack-check.log)。这是打包预检，未发布包。
+- 同步状态：24 个文件已同步到产品源码并验证摘要，141 个未涉及的基准文件保持原样，保留原有未提交 V4 修改。同步清单见 [reviewed-changes.json](../../orchestrator-android-continuity-validation/reviewed-changes.json)，可审阅补丁见 [continuity-changes.patch](../../orchestrator-android-continuity-validation/continuity-changes.patch)。
+- `git diff --check`：产品仓库通过。汇总证明见 [final-verification.json](../../orchestrator-android-continuity-validation/final-verification.json)。
 - 未发布 npm、未推送远程、未升级当前 Android 工程的安装实例。
 
 ## 下一批建议实现边界
@@ -108,11 +108,11 @@
 
 验证与同步已完成：
 
-- `npm test`：266 项通过，0 失败、0 跳过，耗时约 459 秒；[最终完整日志](orchestrator-android-continuity-validation/recovery/full-final.log)。首轮 5 项旧 Schema/管理文件数量断言失败已修正，首轮日志保留备查。
-- `npm run pack:check`：通过，206 个发布文件；[打包预检日志](orchestrator-android-continuity-validation/recovery/pack-check.log)。新增恢复模块后共 51 个项目管理资源。
+- `npm test`：266 项通过，0 失败、0 跳过，耗时约 459 秒；[最终完整日志](../../orchestrator-android-continuity-validation/recovery/full-final.log)。首轮 5 项旧 Schema/管理文件数量断言失败已修正，首轮日志保留备查。
+- `npm run pack:check`：通过，206 个发布文件；[打包预检日志](../../orchestrator-android-continuity-validation/recovery/pack-check.log)。新增恢复模块后共 51 个项目管理资源。
 - 工作副本及产品源码 `npm run build` 均通过；132 个编译输出逐字节一致；产品仓库 `git diff --check` 通过。
 - 37 个文件已同步至 `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` 并核对摘要；131 个未涉及的基准文件保持原样，原有未提交修改保留。
-- [审阅补丁](orchestrator-android-continuity-validation/recovery/recovery-changes.patch)、[文件清单](orchestrator-android-continuity-validation/recovery/reviewed-changes.json)、[汇总核验](orchestrator-android-continuity-validation/recovery/final-verification.json)。
+- [审阅补丁](../../orchestrator-android-continuity-validation/recovery/recovery-changes.patch)、[文件清单](../../orchestrator-android-continuity-validation/recovery/reviewed-changes.json)、[汇总核验](../../orchestrator-android-continuity-validation/recovery/final-verification.json)。
 - 未发布 npm、未推送远程、未升级当前 Android 工程的安装实例。V5 为待发布开发能力，包版本仍为 1.0.5；发布前须使用新包版本，不能把同版本 upgrade 当作模板更新入口。
 
 本次验证使用真实队列、独立 Worker 进程和安装 Shell，Gradle 与 Agent 为确定性夹具。队列重载证明持久预算与退避不丢失，不等同于机器重启/休眠或真实模型故障恢复。`maxElapsedMs` 限制恢复窗口和新尝试启动，不会终止卡死进程。第二轮交付时，Worker 安全终止仍未实现（第三轮见下）。Android 工程能力模型、其他阶段分类恢复、追加测试证据、隔离自动集成和长期实测仍未完成；整体评审验收清单保持未完成状态。
@@ -136,12 +136,12 @@
 
 验证与同步已完成：
 
-- 首次完整 `npm test`：275 项，274 通过、1 项因夹具超时取消，原有 266 项全部通过。问题是故意保留 Worker 后，夹具仍等待其输出管道关闭，且已退出 Supervisor 的超时清理触发 ESRCH；已修正等待方式和夹具清理，并按归属清理测试残留。[首次全量日志](orchestrator-android-continuity-validation/worker-termination/full-initial.log) 保留。修正后没有重跑整套全量，以下为最终增量复验。
-- `node --test tests/worker-supervision.test.mjs`：10 项全部通过，0 失败/取消/跳过，约 220 秒；覆盖权限边界、墙钟预算、CLI/Shell 脱敏、真实进程信号、停止的 Worker、TERM 抵抗及脱离进程组的子进程、不误杀旁路进程、独立/依赖任务、TERM 宽限期重启、归属拒绝、正常集成和同一提交恢复。[专项最终日志](orchestrator-android-continuity-validation/worker-termination/worker-final.log)。
-- 最终模板迁移、文档、工具和队列服务复验 33 项全部通过；[相关回归日志](orchestrator-android-continuity-validation/worker-termination/related-final.log)。
+- 首次完整 `npm test`：275 项，274 通过、1 项因夹具超时取消，原有 266 项全部通过。问题是故意保留 Worker 后，夹具仍等待其输出管道关闭，且已退出 Supervisor 的超时清理触发 ESRCH；已修正等待方式和夹具清理，并按归属清理测试残留。[首次全量日志](../../orchestrator-android-continuity-validation/worker-termination/full-initial.log) 保留。修正后没有重跑整套全量，以下为最终增量复验。
+- `node --test tests/worker-supervision.test.mjs`：10 项全部通过，0 失败/取消/跳过，约 220 秒；覆盖权限边界、墙钟预算、CLI/Shell 脱敏、真实进程信号、停止的 Worker、TERM 抵抗及脱离进程组的子进程、不误杀旁路进程、独立/依赖任务、TERM 宽限期重启、归属拒绝、正常集成和同一提交恢复。[专项最终日志](../../orchestrator-android-continuity-validation/worker-termination/worker-final.log)。
+- 最终模板迁移、文档、工具和队列服务复验 33 项全部通过；[相关回归日志](../../orchestrator-android-continuity-validation/worker-termination/related-final.log)。
 - `npm run typecheck`、工作副本及产品源码的 `npm run build` 均通过；140 个编译输出逐字节一致；产品仓库 `git diff --check` 通过。
-- `npm run pack:check` 通过，214 个发布文件，项目管理资源仍为 51；[打包日志](orchestrator-android-continuity-validation/worker-termination/pack-check.log)。
-- 30 个审阅文件已同步产品仓库，141 个未涉及基准文件保持原样；原有未提交修改保留。对应 [文件清单](orchestrator-android-continuity-validation/worker-termination/reviewed-changes.json)、[审阅补丁](orchestrator-android-continuity-validation/worker-termination/worker-termination-changes.patch)、[汇总核验](orchestrator-android-continuity-validation/worker-termination/final-verification.json)。
+- `npm run pack:check` 通过，214 个发布文件，项目管理资源仍为 51；[打包日志](../../orchestrator-android-continuity-validation/worker-termination/pack-check.log)。
+- 30 个审阅文件已同步产品仓库，141 个未涉及基准文件保持原样；原有未提交修改保留。对应 [文件清单](../../orchestrator-android-continuity-validation/worker-termination/reviewed-changes.json)、[审阅补丁](../../orchestrator-android-continuity-validation/worker-termination/worker-termination-changes.patch)、[汇总核验](../../orchestrator-android-continuity-validation/worker-termination/final-verification.json)。
 - V6 为未发布开发协议；包版本仍为 1.0.5，发布前需新版本。未发布 npm、未推送远程、未升级当前 Android 工程的安装实例。
 
 
@@ -160,13 +160,13 @@
 
 当前验证记录：
 
-- 续做初始专项 11/11 通过，约 180 秒；[初始专项](orchestrator-android-continuity-validation/stage-recovery/focused-resumed.log)。
-- 首次完整回归 288 项，287 通过、1 失败：Reviewer 耗尽用例在 GREEN 完成时被监督状态拒绝，单独复验通过。该次夹具没有保存完整监督诊断，不能仅凭退出文字断言唯一根因；已增加脱敏诊断，并补修审查发现的事务锁读取竞态。[首次全量](orchestrator-android-continuity-validation/stage-recovery/full-final.log)、[单独复验](orchestrator-android-continuity-validation/stage-recovery/review-exhaustion-diagnostic.log)。
-- 新增锁边界专项 2/2 通过，验证部分写入保持原字节、活锁/未知死锁拒绝接管、已证明归属的死锁允许恢复；[锁专项](orchestrator-android-continuity-validation/stage-recovery/lock-final.log)。
-- Shell 46/46 通过；[Shell 日志](orchestrator-android-continuity-validation/stage-recovery/shell-final.log)。
-- 最终完整 `npm test`：290/290 通过，0 失败、0 取消、0 跳过，约 499 秒；包含 V7 的 12 项专项、新增锁边界 2 项、V6 的 10 项监督测试及旧协议回归。[最终全量](orchestrator-android-continuity-validation/stage-recovery/full-verified.log)。
-- 最终类型检查、工作副本及产品源码构建均通过；140 个编译产物逐字节和权限一致。最终打包预检通过，共 214 个发布文件、51 个项目管理资源；[类型检查](orchestrator-android-continuity-validation/stage-recovery/typecheck-final.log)、[打包预检](orchestrator-android-continuity-validation/stage-recovery/pack-verified.log)。最初打包预检被沙箱的 npm 缓存写入限制阻断，提权重跑通过；失败日志保留。
-- 30 个审阅文件已同步产品源码，143 个未涉及基准文件保持原样，保留之前的未提交修改；`git diff --check` 与补丁反向应用检查通过。[文件清单](orchestrator-android-continuity-validation/stage-recovery/reviewed-changes.json)、[审阅补丁](orchestrator-android-continuity-validation/stage-recovery/stage-recovery-changes.patch)、[最终核验](orchestrator-android-continuity-validation/stage-recovery/final-verification.json)。
+- 续做初始专项 11/11 通过，约 180 秒；[初始专项](../../orchestrator-android-continuity-validation/stage-recovery/focused-resumed.log)。
+- 首次完整回归 288 项，287 通过、1 失败：Reviewer 耗尽用例在 GREEN 完成时被监督状态拒绝，单独复验通过。该次夹具没有保存完整监督诊断，不能仅凭退出文字断言唯一根因；已增加脱敏诊断，并补修审查发现的事务锁读取竞态。[首次全量](../../orchestrator-android-continuity-validation/stage-recovery/full-final.log)、[单独复验](../../orchestrator-android-continuity-validation/stage-recovery/review-exhaustion-diagnostic.log)。
+- 新增锁边界专项 2/2 通过，验证部分写入保持原字节、活锁/未知死锁拒绝接管、已证明归属的死锁允许恢复；[锁专项](../../orchestrator-android-continuity-validation/stage-recovery/lock-final.log)。
+- Shell 46/46 通过；[Shell 日志](../../orchestrator-android-continuity-validation/stage-recovery/shell-final.log)。
+- 最终完整 `npm test`：290/290 通过，0 失败、0 取消、0 跳过，约 499 秒；包含 V7 的 12 项专项、新增锁边界 2 项、V6 的 10 项监督测试及旧协议回归。[最终全量](../../orchestrator-android-continuity-validation/stage-recovery/full-verified.log)。
+- 最终类型检查、工作副本及产品源码构建均通过；140 个编译产物逐字节和权限一致。最终打包预检通过，共 214 个发布文件、51 个项目管理资源；[类型检查](../../orchestrator-android-continuity-validation/stage-recovery/typecheck-final.log)、[打包预检](../../orchestrator-android-continuity-validation/stage-recovery/pack-verified.log)。最初打包预检被沙箱的 npm 缓存写入限制阻断，提权重跑通过；失败日志保留。
+- 30 个审阅文件已同步产品源码，143 个未涉及基准文件保持原样，保留之前的未提交修改；`git diff --check` 与补丁反向应用检查通过。[文件清单](../../orchestrator-android-continuity-validation/stage-recovery/reviewed-changes.json)、[审阅补丁](../../orchestrator-android-continuity-validation/stage-recovery/stage-recovery-changes.patch)、[最终核验](../../orchestrator-android-continuity-validation/stage-recovery/final-verification.json)。
 - 包版本仍为 1.0.5，V7 属于未发布开发能力；未发布 npm、未推送、未升级当前 Android 工程安装实例。发布前须使用新版本。
 
 边界：以上阶段用例执行真实队列、Supervisor、Worker 和安装 Shell；Gradle 与 Agent 使用确定性夹具。等待保留当前 Worker 槽位，V6 截止仍有效；崩溃留下未知结果或恢复锁时要求诊断及批准归档/新合同，不能声称支持自动续接被杀死的模型调用或机器重启后原地续跑。整个任务总时限、模型成本预算、Android 工程能力模型、追加证据、自动隔离集成、规划刷新及长期实测仍待完成。
@@ -204,9 +204,9 @@
 - 第三次完整回归 296 项：295 通过、1 个监督重启超时（`full-final.log`），锁读取竞态专项通过。重启用例单独 1/1 和与恢复用例并发 41/41 均通过；分别见 `restart-diagnostic.log` 和 `restart-concurrent-diagnostic.log`，未复现时不能断言全量超时的唯一根因。
 - 进一步消除锁创建窗口：先写入并刷盘完整拥有者记录，再以同目录独占硬链接原子创建锁；创建前崩溃不占用事务锁，创建后崩溃留下完整归属。旧空锁/未知锁仍拒绝接管。新增真实进程在原子创建前后被 KILL 的专项，加锁竞争和服务回归，共 7/7 通过（`atomic-lock-final.log`）。崩溃前的 pending 文件可能留存，不自动删除其他进程的 pending 文件。
 - 原子锁修复后全量 297 项：296 通过、1 个阶段账本篡改用例失败（`full-delivery.log`）；监督重启已通过。发现退避循环重复保存可能覆盖外部修改，以及写入后读取摘要可能吸收外部修改的窗口；修正为等待期不写账本、更新前验证旧摘要、以待写内容的摘要封存，并在封存前后复核。新增确定性测试在更新前、原子发布后及封存回调中篡改，专项和模板校验 6/6 通过。
-- 最终完整 `npm test` **298/298 通过**，0 失败、0 取消、0 跳过，约 501 秒；含阶段账本拒绝、监督重启、原子锁崩溃测试、Android 模型及旧协议回归。[最终全量日志](orchestrator-android-continuity-validation/android-model/full-complete.log)。
-- 最终类型检查、工作副本及产品源码构建通过；148 个编译文件内容和权限完全一致。打包预检通过，223 个发布文件、52 个项目管理资源。[类型检查](orchestrator-android-continuity-validation/android-model/typecheck-delivery.log)、[打包预检](orchestrator-android-continuity-validation/android-model/pack-delivery.log)。
-- **30 个审阅文件已同步**到 `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` 并核对摘要；149 个未涉及基准文件保持原样，保留既有未提交修改。产品仓库 `git diff --check` 和补丁反向检查通过。[审阅清单](orchestrator-android-continuity-validation/android-model/reviewed-changes.json)、[完整补丁](orchestrator-android-continuity-validation/android-model/android-model-changes.patch)、[最终核验](orchestrator-android-continuity-validation/android-model/final-verification.json)。
+- 最终完整 `npm test` **298/298 通过**，0 失败、0 取消、0 跳过，约 501 秒；含阶段账本拒绝、监督重启、原子锁崩溃测试、Android 模型及旧协议回归。[最终全量日志](../../orchestrator-android-continuity-validation/android-model/full-complete.log)。
+- 最终类型检查、工作副本及产品源码构建通过；148 个编译文件内容和权限完全一致。打包预检通过，223 个发布文件、52 个项目管理资源。[类型检查](../../orchestrator-android-continuity-validation/android-model/typecheck-delivery.log)、[打包预检](../../orchestrator-android-continuity-validation/android-model/pack-delivery.log)。
+- **30 个审阅文件已同步**到 `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator` 并核对摘要；149 个未涉及基准文件保持原样，保留既有未提交修改。产品仓库 `git diff --check` 和补丁反向检查通过。[审阅清单](../../orchestrator-android-continuity-validation/android-model/reviewed-changes.json)、[完整补丁](../../orchestrator-android-continuity-validation/android-model/android-model-changes.patch)、[最终核验](../../orchestrator-android-continuity-validation/android-model/final-verification.json)。
 - 包版本仍为 1.0.5，本轮为未发布开发能力。未发布 npm、未推送、未升级当前 Android 工程的安装实例。发布须使用新版本。
 
 能力边界：本轮模型记录 DSL 声明源集，不证明被禁用变体的覆盖率，也不处理任意插件生成的源文件；真实验证覆盖上述 Staging 组合，不等同于所有 flavor、AGP 或工程插件兼容。任务类型、追加证据、自动隔离集成、规划刷新和长期实测仍保持未完成。
@@ -231,10 +231,10 @@
 
 - 昨晚全量 304 项：297 通过、7 失败，包含 3 项旧模板摘要和 4 项 90 秒夹具超时；保留 `full-tests.log`，不计为通过。昨晚真实嵌套 Android 1/1 通过，但临时目录已丢失，本次重新验证并持久保存产物。
 - 更新两个摘要测试文件后定向复验 34 项：33 通过、1 失败，暴露上述 V7 审批摘要问题；见 `focused-resumed.log`。修复后专项 **2/2** 通过，包含合同篡改拒绝与 V7 嵌套目录完整本地集成；见 `authorization-fix.log`。
-- 最终完整 `npm test` **305/305 通过**，0 失败、0 取消、0 跳过，约 576 秒。覆盖根目录旧协议、嵌套 V3/V4/V7、固定/隔离工作区、人工批准本地集成、错误 wrapper 拒绝、恢复账本及监督流程。[完整日志](orchestrator-android-continuity-validation/nested-root/full-final.log)。没有放宽测试时限或产品截止预算；本次全量与真实 Android 构建分开执行，不据此断言昨晚超时的唯一根因。
-- 真实 Gradle 9.4.1 / AGP 9.2.1 / SDK 36 嵌套 Android 集成 **1/1 通过**，约 148 秒：Staging 变体、自定义源集、Android→Android→JVM 依赖、66 项构建任务实际执行、安装/doctor、模拟旧 manifest 的升级与重新发现、独立工作区全量单测、baseline→RED→GREEN→check、卸载及复合构建拒绝。[真实日志](orchestrator-android-continuity-validation/nested-root/real-android-final.log)，构建日志、JUnit XML 和采集证据保存在 `nested-root/real-android/capabilities-android-uKRjKW/`。
-- Shell **46/46** 通过；沿用昨晚 `shell-tests.log`，之后未修改 Shell 模板。最终类型检查和打包预检通过，共 223 个发布文件、52 个项目管理资源。[类型检查](orchestrator-android-continuity-validation/nested-root/typecheck.log)、[打包预检](orchestrator-android-continuity-validation/nested-root/pack-check.log)。
-- **27 个审阅文件已同步产品源码**，153 个未涉及基准文件保持原样；工作副本与产品源码构建通过，148 个编译输出的内容和权限一致。产品仓库 `git diff --check` 与审阅补丁反向检查通过。[审阅清单](orchestrator-android-continuity-validation/nested-root/reviewed-changes.json)、[完整补丁](orchestrator-android-continuity-validation/nested-root/nested-root-changes.patch)、[最终核验](orchestrator-android-continuity-validation/nested-root/final-verification.json)。
+- 最终完整 `npm test` **305/305 通过**，0 失败、0 取消、0 跳过，约 576 秒。覆盖根目录旧协议、嵌套 V3/V4/V7、固定/隔离工作区、人工批准本地集成、错误 wrapper 拒绝、恢复账本及监督流程。[完整日志](../../orchestrator-android-continuity-validation/nested-root/full-final.log)。没有放宽测试时限或产品截止预算；本次全量与真实 Android 构建分开执行，不据此断言昨晚超时的唯一根因。
+- 真实 Gradle 9.4.1 / AGP 9.2.1 / SDK 36 嵌套 Android 集成 **1/1 通过**，约 148 秒：Staging 变体、自定义源集、Android→Android→JVM 依赖、66 项构建任务实际执行、安装/doctor、模拟旧 manifest 的升级与重新发现、独立工作区全量单测、baseline→RED→GREEN→check、卸载及复合构建拒绝。[真实日志](../../orchestrator-android-continuity-validation/nested-root/real-android-final.log)，构建日志、JUnit XML 和采集证据保存在 `nested-root/real-android/capabilities-android-uKRjKW/`。
+- Shell **46/46** 通过；沿用昨晚 `shell-tests.log`，之后未修改 Shell 模板。最终类型检查和打包预检通过，共 223 个发布文件、52 个项目管理资源。[类型检查](../../orchestrator-android-continuity-validation/nested-root/typecheck.log)、[打包预检](../../orchestrator-android-continuity-validation/nested-root/pack-check.log)。
+- **27 个审阅文件已同步产品源码**，153 个未涉及基准文件保持原样；工作副本与产品源码构建通过，148 个编译输出的内容和权限一致。产品仓库 `git diff --check` 与审阅补丁反向检查通过。[审阅清单](../../orchestrator-android-continuity-validation/nested-root/reviewed-changes.json)、[完整补丁](../../orchestrator-android-continuity-validation/nested-root/nested-root-changes.patch)、[最终核验](../../orchestrator-android-continuity-validation/nested-root/final-verification.json)。
 
 边界：真实 Android 测试的 Gradle 编译和单测实际执行；安装时 OpenCode 版本/smoke 响应与队列测试中的模型仍为夹具。未执行真实模型、设备测试、机器休眠/重启或长期运行验收。复合构建、多构建联合调度、最小反向影响矩阵及更多 flavor/插件组合仍未交付。任务类型、追加证据、隔离自动集成、规划刷新和长期验收清单保持未完成。
 
@@ -258,7 +258,7 @@
 - Shell **46/46 通过**（`shell-final.log`）。补齐随插件安装的 Orchestrator 操作指引后，模板校验 **4/4** 通过（`orchestrator-template-final.log`），最终打包预检重新通过。
 - 首次完整回归 **315/318**，约 714 秒，保留 `full-initial.log`：doctor 旧断言已修正；V7 三阶段重试用例触发 90 秒夹具超时，日志已到 AWAITING_HUMAN；升级回滚用例被 PLAN_STALE 拒绝，运行期间补齐过模板，不能将这次运行视为固定输入的最终验证。后两项冻结源码定向复验 **2/2 通过**（`failure-diagnostic.log`），阶段重试约 46 秒；未修改旧夹具超时或产品截止预算。
 - 最终完整 `npm test` **318/318 通过**，0 失败、0 取消、0 跳过，约 699 秒（`full-final.log`）。本次对冻结源码单独运行，包含全部 13 项 V8 用例，以及旧合同、安装升级、监督、恢复、嵌套构建和提交事务回归；此前三项失败均通过。新增夹具的等待时限单独配置，旧夹具超时及产品预算未放宽。
-- **28 个审阅文件已同步产品源码**，136 个未涉及基准文件保持原样；保留已有未提交修改。产品仓库重新构建通过，148 个编译产物与工作副本内容/权限一致，`git diff --check` 与补丁反向检查通过。[审阅清单](orchestrator-android-continuity-validation/isolated-integration/reviewed-changes.json)、[完整补丁](orchestrator-android-continuity-validation/isolated-integration/isolated-integration-changes.patch)、[最终核验](orchestrator-android-continuity-validation/isolated-integration/final-verification.json)。
+- **28 个审阅文件已同步产品源码**，136 个未涉及基准文件保持原样；保留已有未提交修改。产品仓库重新构建通过，148 个编译产物与工作副本内容/权限一致，`git diff --check` 与补丁反向检查通过。[审阅清单](../../orchestrator-android-continuity-validation/isolated-integration/reviewed-changes.json)、[完整补丁](../../orchestrator-android-continuity-validation/isolated-integration/isolated-integration-changes.patch)、[最终核验](../../orchestrator-android-continuity-validation/isolated-integration/final-verification.json)。
 
 交付边界：仅新的 V8 合同可以明确授予隔离自动本地集成和规划刷新权限；原合同与规划 HEAD 不改写，旧任务不会因默认配置变化获得新权限。任务执行后遇到目标漂移时，不自动 merge/rebase，也不重复生成提交。声明式规划输入不等于自动推导全部语义依赖，不确定时应拒绝刷新。任务类型、Review 追加证据、成本/跨恢复总时限、归档守护及真实模型/机器重启/24 小时验收仍属未完成事项。
 

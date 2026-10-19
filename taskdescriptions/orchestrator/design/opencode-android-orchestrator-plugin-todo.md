@@ -258,7 +258,7 @@ superpowers@git+https://github.com/obra/superpowers.git#v6.2.0
 > 130 个文件；OpenCode `1.15.13` 与 `1.14.22` 的 shadow run 均报告
 > `mutationPerformed: false`。真实 tarball 的 SHA-256、安装生命周期、双版本发现结果与
 > 清理状态记录在
-> [验证报告](opencode-android-orchestrator-plugin-validation-2026-08-26.md)。包内现已包含
+> [验证报告](../validation/opencode-android-orchestrator-plugin-validation-2026-08-26.md)。包内现已包含
 > `docs/MIGRATION.md`、`docs/TROUBLESHOOTING.md` 和 `docs/SECURITY.md`，自动测试会核对
 > 文档清单、仓库内链接、固定版本命令、恢复标记、安全边界以及本机路径泄漏。
 > `init` 当前会规划并安装 45 个受管文件，覆盖 10 个 OpenCode

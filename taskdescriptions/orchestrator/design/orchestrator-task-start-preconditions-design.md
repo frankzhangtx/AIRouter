@@ -4,7 +4,7 @@
 
 状态：1.3.0 开发及产物验证已完成（2026-10-12），已同步产品仓库并提交、
 推送 GitHub `main`（`ec31c8e`）；npm `1.3.0` 已发布并核验，未升级实际 WordPress。完整回归及修复后复验分别记录于
-[完成记录](orchestrator-1.3.0-preconditions/completion.md)。第 8 节任务逐项证据见该记录。本文记录“避免已入队、尚未开始编码就被阻塞”的方案，
+[完成记录](../../orchestrator-1.3.0-preconditions/completion.md)。第 8 节任务逐项证据见该记录。本文记录“避免已入队、尚未开始编码就被阻塞”的方案，
 并纳入用户明确要求：**`automation/automation-commit-prefix` 文件有修改，不算工作区不干净。**
 
 ## 1. 背景与目标
@@ -15,7 +15,7 @@ Planner 仍从旧提交读取配置；后台执行器在创建任务工作区前
 
 已通过临时 Git 环境复现：旧基线加升级后的工作树产生 14 个变更，干净工作区
 检查失败；以升级提交作为基线，同一工作树检查通过。完整证据见
-[WordPress 1.2.3 启动诊断](wordpress-1.2.3-start-diagnosis/diagnosis.md)。
+[WordPress 1.2.3 启动诊断](../../wordpress-1.2.3-start-diagnosis/diagnosis.md)。
 
 目标是“审批前检查 + 执行前复查 + 条件等待”：
 

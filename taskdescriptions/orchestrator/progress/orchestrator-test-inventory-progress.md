@@ -14,17 +14,17 @@
 
 下面实施记录保留首轮交付快照；当前以 F01–F05 和最新报告为准。E07、U02、U03 已重新验收。F02 明确采用安全归档/新任务路线，没有新增原任务自动恢复能力。
 
-当前交付入口：[补修验收报告](orchestrator-test-inventory-validation/review-fixes/development-validation.md)、[当前完整补丁](orchestrator-test-inventory-validation/review-fixes/final-source.patch)、[文件摘要清单](orchestrator-test-inventory-validation/review-fixes/source-inventory.json)、[写回核对结果](orchestrator-test-inventory-validation/review-fixes/writeback-verification.json)。上层验证目录的旧包和旧补丁保留为首轮历史证据。
+当前交付入口：[补修验收报告](../../orchestrator-test-inventory-validation/review-fixes/development-validation.md)、[当前完整补丁](../../orchestrator-test-inventory-validation/review-fixes/final-source.patch)、[文件摘要清单](../../orchestrator-test-inventory-validation/review-fixes/source-inventory.json)、[写回核对结果](../../orchestrator-test-inventory-validation/review-fixes/writeback-verification.json)。上层验证目录的旧包和旧补丁保留为首轮历史证据。
 
 ## 本轮实施记录（持续更新）
 
 - 授权：用户要求“按照该文档进行实施，并及时更新进度”；本轮包括恢复、开发、验证和验证后写回，不含发布。
 - 持久开发副本：`taskdescriptions/orchestrator-test-inventory-work/source`，起点 `8a3d1c410cd0a8beb95c52015e540d48fcf2bd66`，从干净源码复制；后续改动先在此验证。
 - R01–R03 已完成：从会话恢复 3 个核心文件和 13 个已有文件的改动；同时恢复原先未落盘的 7 组测试草稿。
-- R04 已完成：[恢复补丁（未验收）](orchestrator-test-inventory-validation/recovered-unverified.patch) 已保存，包含 3 个新增核心文件和专项测试草稿；恢复后的已跟踪 diff 与历史统计一致（13 文件、+382/-62）。
+- R04 已完成：[恢复补丁（未验收）](../../orchestrator-test-inventory-validation/recovered-unverified.patch) 已保存，包含 3 个新增核心文件和专项测试草稿；恢复后的已跟踪 diff 与历史统计一致（13 文件、+382/-62）。
 - R05 已完成：恢复构建通过；7/7 专项测试通过。修正草稿将“重新跳过”误判为预期不符的断言，实际应报告覆盖缺失。
 - 首个真实 Gradle 9.4.1/JUnit4 验证通过：双模块、8 个基线用例（含 2 个既有跳过）、新增 1 个批准行为、RED → GREEN → 再次 GREEN；第二轮编译保持 UP-TO-DATE，目标 Test 真实执行。发现并修正 macOS `/var` 与 `/private/var` 根路径别名误判。
-- 真实 Gradle 已扩展通过：既有跳过拒绝、空过滤 reject/allow、新测试类 RED/GREEN、NO-SOURCE 空基线、空 RED 拒绝、重复 GREEN、资源/生产代码/RED 文件变更拒绝。原始工程和证据已保存到 [真实 Gradle 记录](orchestrator-test-inventory-validation/real-gradle/)。
+- 真实 Gradle 已扩展通过：既有跳过拒绝、空过滤 reject/allow、新测试类 RED/GREEN、NO-SOURCE 空基线、空 RED 拒绝、重复 GREEN、资源/生产代码/RED 文件变更拒绝。原始工程和证据已保存到 [真实 Gradle 记录](../../orchestrator-test-inventory-validation/real-gradle)。
 - 队列 V4 专项 5/5 通过：自动本地提交完整链路及 baseline/regression/interrupted/missing-green 四类失败；测试使用真实 Git/Shell，Gradle 和模型为替身，真实 Gradle 另行验证。
 - 已接入最终 `check` 和 V4 验收报告；报告确认 Gradle 实际 exit=0 与批准失败用例数分别记录。GREEN 还绑定已验证 HEAD/工作区，后续代码变化拒绝旧证据。
 - 已同步 Planner/Coder/Reviewer 说明、状态工具输出及 50 文件安装清单；模板/安装回归通过。

@@ -41,10 +41,10 @@
 
 ### 最终交付
 
-- 冻结候选的完整 `npm test` **325/325 通过**，0 失败、0 取消、0 跳过，约 692 秒；[最终日志](orchestrator-gradle671-fix-validation/resumed-full-final.log)。前次 15 项失败均已通过，新增实际 JVM 变化拒绝测试也包含在内。
-- Shell **46/46 通过**，见 [日志](orchestrator-gradle671-fix-validation/resumed-shell.log)。类型检查、源码构建、打包预检通过，225 个发布文件、53 个安装管理资源。
+- 冻结候选的完整 `npm test` **325/325 通过**，0 失败、0 取消、0 跳过，约 692 秒；[最终日志](../../orchestrator-gradle671-fix-validation/resumed-full-final.log)。前次 15 项失败均已通过，新增实际 JVM 变化拒绝测试也包含在内。
+- Shell **46/46 通过**，见 [日志](../../orchestrator-gradle671-fix-validation/resumed-shell.log)。类型检查、源码构建、打包预检通过，225 个发布文件、53 个安装管理资源。
 - 经文件系统授权，已同步 **42 个审阅文件**到 `/Users/zhanglong/files/npmprogram/opencode_android_orchestrator`。同步前复核完整原始摘要并备份被替换文件；**150 个未涉及的基准文件保持不变**。
-- 产品重新构建成功；**192 个源码文件**与冻结候选一致，**148 个编译文件**的内容和权限一致。`git diff --check`、审阅补丁反向检查均通过。[最终核验](orchestrator-gradle671-fix-validation/final-verification.json)、[同步记录](orchestrator-gradle671-fix-validation/sync-result.json)、[审阅补丁](orchestrator-gradle671-fix-validation/reviewed-changes.patch)。
+- 产品重新构建成功；**192 个源码文件**与冻结候选一致，**148 个编译文件**的内容和权限一致。`git diff --check`、审阅补丁反向检查均通过。[最终核验](../../orchestrator-gradle671-fix-validation/final-verification.json)、[同步记录](../../orchestrator-gradle671-fix-validation/sync-result.json)、[审阅补丁](../../orchestrator-gradle671-fix-validation/reviewed-changes.patch)。
 - 保留 npm 版本 1.1.0；这些新增修复仍属未发布开发代码。没有 Git 提交、推送、npm 发布或修改当前 Android 项目的安装实例；发布时必须使用新版本。
 
 剩余边界：用户目标工程路径及实际工具组合尚未提供，因此不能宣称目标工程已通过；真实 Android 测试没有调用真实 Coder/Reviewer 模型或执行设备测试。纯重构、无行为变化、失败初始基线等新任务协议、Review 修改原断言或新增依赖新实现的测试、缩小全变体矩阵、任意忽略文件环境注入及长期无人值守验收仍未实现。当前实现对此保持拒绝/显式边界，不把这些能力列为本轮交付。实际测试 JVM 子进程与任意后置执行钩子也不在运行时记录的完整证明范围内。

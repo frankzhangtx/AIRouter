@@ -2,5 +2,16 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/candidate-source" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-06Pz4e/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-5Yxn5I/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-KHQ0iy/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-R2WVur/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-UFyHL3/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-m9RDpv/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/driver-fixtures/orchestrator-queue-test-r4HW7Q/project" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/source" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/wordpress" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/taskdescriptions/orchestrator-fix-20261020-resilience/wordpress-worktrees/task-resilience-phone-rc3-20261020-v1" vcs="Git" />
   </component>
 </project>
